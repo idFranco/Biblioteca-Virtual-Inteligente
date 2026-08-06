@@ -37,7 +37,7 @@ project-memory-mcp/project_state.json
 .idea/
 *.swp
 *.swo
-*~
+*~ 
 
 # Environment
 .env
