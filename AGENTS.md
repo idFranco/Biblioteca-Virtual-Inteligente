@@ -31,6 +31,7 @@ The following constraints override any natural tendency, internal checklist, or 
 11. **NO RULE NEGOTIATION OR WORKAROUND SUGGESTIONS:** You are STRICTLY FORBIDDEN from asking the user for permission to bypass any constraints (e.g., never ask "Would you like me to proceed with local git operations?"). Rules are absolute. If a required tool (like GitHub MCP) is missing or fails, you must report the failure and STOP. Do not offer alternative paths that violate your established Hard Constraints.
 
 ## Session Recovery Rule
+
 If an agent resumes after a session interruption (restart, logout, or context loss),
 before executing any command it must:
 
@@ -118,7 +119,11 @@ Do NOT guess architectural rules or conventions. Based on the task, you MUST use
 ## AI Engineering & Lifecycle Rules
 - **User Story Driven:** No agent may implement code directly from a new requirement unless the User Story has been planned and the user explicitly approves implementation.
 - **Evolutive Development:** Agents must not assume all modules exist. Read the project graph, detect current state, identify smallest increment, propose plan, implement, and update MCP context.
+  - **Scope constraint:** This rule applies ONLY when there is no active User Story in progress, or when the current story has reached `Validated` status. During an active story's lifecycle (`In Progress` or `Implemented`), the **Phase Transitions & Handoffs** rule takes precedence — the agent must only report status and output the required terminal command, never propose or suggest the next increment.
 - **Validation Failure:** If QA validation fails, set status to `Rejected` via MCP. Do not revert code automatically.
+  - **Rework Transition:** A story in `Rejected` status MUST return to `In Progress` (not to a new User Story) to allow corrections. The agent must re-run the `implement-user-story` SOP steps 2–11 in full (branch verification, indexing, fixes, push via MCP, and the final push after re-reaching `Implemented`) on the SAME existing branch — do not create a new branch for a rework. This is safe by construction: `Rejected` only occurs before a PR exists (see `qa-check.md` step 4 vs. step 7), so the branch is never deleted at that point. Mergeability with `main` is checked exclusively through the GitHub MCP tool when the PR is created (see `git-rules.md` → **Merge Conflict Detection (MCP-Only)**) — never via local `git merge`.
+  - The only valid transition out of `Rejected` is to `In Progress`, enforced by `project_memory_advance_status` (see `project-memory-mcp/server.js`, `flow["Rejected"] = "In Progress"`).
+  - After rework reaches `Implemented` again, `qa-check` must be re-executed from the top.
 - **PR Gate:** A User Story CANNOT be moved to `Validated` status without successfully executing the GitHub MCP tool `create_pull_request`. Do not simulate or skip this step.
 - **Documentation Gate:** Before moving to `Validated`, the QA agent MUST physically update the corresponding file in `workflow/opencode/user-stories/` (adding executed Technical Plan and QA results) and log the iteration in a specific file inside `workflow/opencode/ai-engineering/`. The filename MUST be based on the active branch, but you MUST replace any slashes (`/`) with dashes (`-`) to avoid creating subdirectories (e.g., `workflow/opencode/ai-engineering/feature-US-001-ai-engineering.md`).
 

@@ -34,12 +34,17 @@ Whenever you need to create a new branch for a User Story, you MUST follow this 
   - Must use kebab-case for the description (e.g., `feature/US-001-auth-setup`).
 - If the user provides a name that does not match this format, the agent MUST reject it, explain the format error, and ask again. It cannot proceed with `git checkout -b` until a valid name is provided.
 
+## Explicit File Discovery Before Every MCP Push
+Before invoking `push_files`, the agent MUST NEVER hardcode or assume a fixed list of files to upload. Instead:
+1. Run `git status --porcelain` to get the real, current list of modified/untracked files.
+2. Pass that full list to `push_files`.
+3. This guarantees that side-effect writes from any MCP tool (lifecycle state files, audit logs, indexing caches, etc.) are captured, regardless of which tool produced them.
+
 ## Forbidden Git Actions (Hard Constraints)
 - **NO LOCAL BRANCH CREATION:** You are STRICTLY FORBIDDEN from using local bash commands like `git checkout -b <branch>` or `git branch`. You MUST exclusively use the GitHub MCP tool `create_branch`.
 - **NO CLI OR CURL FOR PULL REQUESTS:** You are STRICTLY FORBIDDEN from using `gh`, `git push` shortcuts, or `curl` to create Pull Requests. You MUST exclusively use the GitHub MCP server tool `create_pull_request`.
 - **No Human Intervention:** Never ask the user to manually create a Pull Request or to install tools. If an MCP tool fails, halt execution, report the specific JSON-RPC error, and wait for human instructions.
 
-## Final Cleanup Commit (Pre-PR)
-Before creating the Pull Request and advancing the status to `Validated`, you MUST ensure the working directory is clean. 
-*   **Rule:** After updating the User Story `.md` file with the final QA results and writing the AI Engineering Log, you MUST execute a final `git add -A` and `git commit -m "chore: update documentation and QA results"` to capture these artifacts.
-*   **Enforcement:** Never open a Pull Request if `git status` shows modified or untracked `.md` files related to the current User Story.
+## Merge Conflict Detection (MCP-Only)
+The agent must NEVER run `git merge`, `git rebase`, or `git pull` against `main` locally to sync a feature branch. All conflict detection with `main` must happen exclusively through the GitHub MCP server, by inspecting the mergeable status returned when creating (or querying) the Pull Request.
+If GitHub reports the branch is not mergeable, HALT and report it to the user — conflict resolution is a human action performed on GitHub, not an autonomous local git operation.
