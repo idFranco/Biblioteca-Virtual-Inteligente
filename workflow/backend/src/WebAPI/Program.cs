@@ -1,11 +1,13 @@
 using System.Text;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
+using BibliotecaVirtual.Infrastructure;
 using BibliotecaVirtual.Infrastructure.Data;
 using BibliotecaVirtual.Infrastructure.Services;
 using BibliotecaVirtual.WebAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -73,12 +75,24 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<BibliotecaDbContext>();
 
-builder.Services.AddScoped<IDispatcher, Dispatcher>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", limiter =>
+    {
+        limiter.PermitLimit = 10;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+});
+
+builder.Services.AddInfrastructure();
 
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionHandler>();
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -88,9 +102,22 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BibliotecaDbContext>();
     db.Database.EnsureCreated();
+    await SeedRolesAsync(scope.ServiceProvider);
 }
 
 app.Run();
+
+static async Task SeedRolesAsync(IServiceProvider serviceProvider)
+{
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<Role>>();
+    foreach (var roleName in new[] { "Admin", "Bibliotecario", "Usuario" })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new Role { Name = roleName });
+        }
+    }
+}
 
 static string ResolveLocalSqlitePath(IConfiguration configuration, string connectionString)
 {

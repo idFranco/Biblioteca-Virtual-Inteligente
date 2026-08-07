@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using BibliotecaVirtual.Application.Common;
+using FluentValidation;
 
 namespace BibliotecaVirtual.WebAPI.Middleware;
 
@@ -33,7 +35,9 @@ public sealed class GlobalExceptionHandler
 
         var (statusCode, title) = exception switch
         {
+            ValidationException => (HttpStatusCode.BadRequest, "Validation failed"),
             ArgumentException => (HttpStatusCode.BadRequest, "Invalid request"),
+            ResourceAlreadyExistsException => (HttpStatusCode.Conflict, "Resource already exists"),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized"),
             KeyNotFoundException => (HttpStatusCode.NotFound, "Resource not found"),
             _ => (HttpStatusCode.InternalServerError, "An internal error occurred")
@@ -46,7 +50,10 @@ public sealed class GlobalExceptionHandler
             type = $"https://httpstatuses.com/{(int)statusCode}",
             title,
             status = (int)statusCode,
-            detail = exception.Message,
+            detail = exception is ValidationException validationException
+                ? string.Join(" | ", validationException.Errors
+                    .Select(e => $"{e.PropertyName}: {e.ErrorMessage}"))
+                : exception.Message,
             instance = context.Request.Path
         };
 
