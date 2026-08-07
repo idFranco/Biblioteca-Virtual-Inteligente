@@ -6,6 +6,11 @@ export function Header() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
 
+  const canManageBooks = user != null &&
+    user.permissions.includes('books.create') &&
+    user.permissions.includes('books.update') &&
+    user.permissions.includes('books.delete')
+
   async function handleLogout() {
     await authService.logout()
     navigate('/login', { replace: true })
@@ -18,6 +23,11 @@ export function Header() {
         <nav className="flex items-center gap-4">
           <Link to="/" className="text-sm text-muted-foreground hover:underline">Inicio</Link>
           <Link to="/catalog" className="text-sm text-muted-foreground hover:underline">Catálogo</Link>
+          {canManageBooks && (
+            <Link to="/admin/books" className="text-sm text-muted-foreground hover:underline">
+              Gestión de libros
+            </Link>
+          )}
           {user && (
             <span className="text-sm">
               Hola, <span className="font-medium">{user.fullName}</span>

@@ -17,22 +17,26 @@ public sealed class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
     private readonly UserManager<User> _userManager;
+    private readonly RoleManager<Role> _roleManager;
     private readonly BibliotecaDbContext _context;
 
     public TokenService(
         IConfiguration configuration,
         UserManager<User> userManager,
+        RoleManager<Role> roleManager,
         BibliotecaDbContext context)
     {
         _configuration = configuration;
         _userManager = userManager;
+        _roleManager = roleManager;
         _context = context;
     }
 
     public async Task<AuthResponse> CreateAuthResponseAsync(User user, CancellationToken cancellationToken = default)
     {
         var roles = await _userManager.GetRolesAsync(user);
-        var accessToken = GenerateAccessToken(user, roles);
+        var permissions = await GetPermissionsAsync(roles, cancellationToken);
+        var accessToken = GenerateAccessToken(user, roles, permissions);
         var accessTokenExpirationMinutes = _configuration.GetValue("Jwt:AccessTokenExpirationMinutes", 15);
         var refreshTokenExpirationDays = _configuration.GetValue("Jwt:RefreshTokenExpirationDays", 7);
 
@@ -47,10 +51,31 @@ public sealed class TokenService : ITokenService
                 user.Id,
                 user.FullName ?? user.Email ?? string.Empty,
                 user.Email ?? string.Empty,
-                roles.ToArray()));
+                roles.ToArray(),
+                permissions.ToArray()));
     }
 
-    private string GenerateAccessToken(User user, IList<string> roles)
+    private async Task<IReadOnlyList<string>> GetPermissionsAsync(
+        IList<string> roles,
+        CancellationToken cancellationToken)
+    {
+        var permissions = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var roleName in roles)
+        {
+            var role = await _roleManager.FindByNameAsync(roleName)
+                ?? throw new InvalidOperationException($"No se encontró el rol '{roleName}'.");
+
+            var claims = await _roleManager.GetClaimsAsync(role);
+            foreach (var claim in claims.Where(c => c.Type == "permission"))
+            {
+                permissions.Add(claim.Value);
+            }
+        }
+
+        return permissions.ToList();
+    }
+
+    private string GenerateAccessToken(User user, IList<string> roles, IReadOnlyList<string> permissions)
     {
         var jwtKey = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT Key is not configured");
@@ -68,6 +93,7 @@ public sealed class TokenService : ITokenService
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        claims.AddRange(permissions.Select(permission => new Claim("permission", permission)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -59,7 +59,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("books.read", policy =>
+        policy.RequireClaim("permission", "books.read"));
+    options.AddPolicy("books.create", policy =>
+        policy.RequireClaim("permission", "books.create"));
+    options.AddPolicy("books.update", policy =>
+        policy.RequireClaim("permission", "books.update"));
+    options.AddPolicy("books.delete", policy =>
+        policy.RequireClaim("permission", "books.delete"));
+});
 
 builder.Services.AddCors(options =>
 {
@@ -103,6 +113,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<BibliotecaDbContext>();
     db.Database.EnsureCreated();
     await SeedRolesAsync(scope.ServiceProvider);
+    await SeedAdministratorAsync(scope.ServiceProvider, builder.Configuration);
 }
 
 app.Run();
@@ -110,13 +121,67 @@ app.Run();
 static async Task SeedRolesAsync(IServiceProvider serviceProvider)
 {
     var roleManager = serviceProvider.GetRequiredService<RoleManager<Role>>();
-    foreach (var roleName in new[] { "Admin", "Bibliotecario", "Usuario" })
+
+    var rolePermissions = new Dictionary<string, string[]>
+    {
+        ["Admin"] = ["books.read", "books.create", "books.update", "books.delete"],
+        ["Bibliotecario"] = ["books.read", "books.create", "books.update", "books.delete"],
+        ["Usuario"] = ["books.read"]
+    };
+
+    foreach (var (roleName, permissions) in rolePermissions)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
             await roleManager.CreateAsync(new Role { Name = roleName });
         }
+
+        var role = await roleManager.FindByNameAsync(roleName)
+            ?? throw new InvalidOperationException($"No se pudo recuperar el rol '{roleName}'.");
+
+        var existingClaims = await roleManager.GetClaimsAsync(role);
+        foreach (var permission in permissions)
+        {
+            if (existingClaims.All(c => c.Type != "permission" || c.Value != permission))
+            {
+                await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+            }
+        }
     }
+}
+
+static async Task SeedAdministratorAsync(IServiceProvider serviceProvider, IConfiguration configuration)
+{
+    var adminEmail = configuration["ADMIN_EMAIL"];
+    var adminPassword = configuration["ADMIN_PASSWORD"];
+    if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+    {
+        return;
+    }
+
+    var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+    var existing = await userManager.FindByEmailAsync(adminEmail);
+    if (existing is not null)
+    {
+        return;
+    }
+
+    var admin = new User
+    {
+        UserName = adminEmail,
+        Email = adminEmail,
+        FullName = "Administrador",
+        IsActive = true
+    };
+
+    var result = await userManager.CreateAsync(admin, adminPassword);
+    if (!result.Succeeded)
+    {
+        throw new InvalidOperationException(
+            $"No se pudo crear el usuario administrador inicial: {string.Join("; ", result.Errors.Select(e => e.Description))}");
+    }
+
+    await userManager.AddToRoleAsync(admin, "Admin");
 }
 
 static string ResolveLocalSqlitePath(IConfiguration configuration, string connectionString)
