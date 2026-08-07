@@ -5,6 +5,7 @@ export interface AuthUser {
   fullName: string
   email: string
   roles: string[]
+  permissions: string[]
 }
 
 export interface AuthResponse {
@@ -34,7 +35,7 @@ function toUser(user: AuthUser) {
     fullName: user.fullName,
     email: user.email,
     roles: user.roles,
-    permissions: [] as string[],
+    permissions: user.permissions ?? [],
   }
 }
 

@@ -1,8 +1,11 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from './ProtectedRoute'
+import { PermissionGuard } from './PermissionGuard'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { CatalogPage } from '@/pages/CatalogPage'
+import { BooksAdminPage } from '@/pages/BooksAdminPage'
 
 export const router = createBrowserRouter([
   {
@@ -23,10 +26,14 @@ export const router = createBrowserRouter([
     children: [
       {
         path: 'catalog',
+        element: <CatalogPage />,
+      },
+      {
+        path: 'admin/books',
         element: (
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold">Catálogo de libros</h1>
-          </div>
+          <PermissionGuard permissions={['books.create', 'books.update', 'books.delete']}>
+            <BooksAdminPage />
+          </PermissionGuard>
         ),
       },
       {
