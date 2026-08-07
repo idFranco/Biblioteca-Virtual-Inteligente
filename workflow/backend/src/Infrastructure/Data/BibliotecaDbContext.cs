@@ -13,6 +13,7 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
 
     public DbSet<Book> Books => Set<Book>();
     public DbSet<Rental> Rentals => Set<Rental>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -34,6 +35,17 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
             entity.Property(e => e.Status)
                   .HasConversion<string>()
                   .HasMaxLength(20);
+        });
+
+        builder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(255);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
