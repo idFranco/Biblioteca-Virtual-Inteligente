@@ -25,7 +25,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`)
+    let message = `API error: ${response.status}`
+    try {
+      const problem = (await response.json()) as { detail?: string; title?: string }
+      if (problem.detail) message = problem.detail
+      else if (problem.title) message = `${problem.title} (${response.status})`
+    } catch {
+      // keep the default message if the body is not JSON
+    }
+    throw new Error(message)
   }
   if (response.status === 204) {
     return undefined as T

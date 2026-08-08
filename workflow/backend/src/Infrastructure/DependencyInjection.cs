@@ -1,12 +1,17 @@
 using BibliotecaVirtual.Application.Commands.Auth;
 using BibliotecaVirtual.Application.Commands.Books;
 using BibliotecaVirtual.Application.Commands.Books.Validators;
+using BibliotecaVirtual.Application.Commands.Rentals;
+using BibliotecaVirtual.Application.Commands.Rentals.Validators;
 using BibliotecaVirtual.Application.Contracts.Auth;
 using BibliotecaVirtual.Application.Contracts.Books;
+using BibliotecaVirtual.Application.Contracts.Rentals;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Application.Queries.Books;
+using BibliotecaVirtual.Application.Queries.Rentals;
 using BibliotecaVirtual.Infrastructure.Handlers.Auth;
 using BibliotecaVirtual.Infrastructure.Handlers.Books;
+using BibliotecaVirtual.Infrastructure.Handlers.Rentals;
 using BibliotecaVirtual.Infrastructure.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,8 +34,15 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<UpdateBookCommand, BookResponse>, UpdateBookCommandHandler>();
         services.AddScoped<ICommandHandler<DeleteBookCommand, DeleteBookResult>, DeleteBookCommandHandler>();
 
+        services.AddScoped<ICommandHandler<CreateRentalCommand, RentalResponse>, CreateRentalCommandHandler>();
+        services.AddScoped<ICommandHandler<ReturnRentalCommand, RentalResponse>, ReturnRentalCommandHandler>();
+
         services.AddScoped<IQueryHandler<GetBooksQuery, PagedResult<BookResponse>>, GetBooksQueryHandler>();
         services.AddScoped<IQueryHandler<GetBookByIdQuery, BookResponse>, GetBookByIdQueryHandler>();
+
+        services.AddScoped<IQueryHandler<GetMyRentalsQuery, PagedResult<RentalResponse>>, GetMyRentalsQueryHandler>();
+        services.AddScoped<IQueryHandler<GetRentalsQuery, PagedResult<RentalResponse>>, GetRentalsQueryHandler>();
+        services.AddScoped<IQueryHandler<GetRentalByIdQuery, RentalResponse>, GetRentalByIdQueryHandler>();
 
         services.AddScoped<IValidator<RegisterCommand>, RegisterCommandValidator>();
         services.AddScoped<IValidator<LoginCommand>, LoginCommandValidator>();
@@ -40,6 +52,9 @@ public static class DependencyInjection
         services.AddScoped<IValidator<CreateBookCommand>, CreateBookCommandValidator>();
         services.AddScoped<IValidator<UpdateBookCommand>, UpdateBookCommandValidator>();
         services.AddScoped<IValidator<DeleteBookCommand>, DeleteBookCommandValidator>();
+
+        services.AddScoped<IValidator<CreateRentalCommand>, CreateRentalCommandValidator>();
+        services.AddScoped<IValidator<ReturnRentalCommand>, ReturnRentalCommandValidator>();
 
         return services;
     }

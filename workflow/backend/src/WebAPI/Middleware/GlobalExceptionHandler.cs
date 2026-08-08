@@ -38,6 +38,7 @@ public sealed class GlobalExceptionHandler
             ValidationException => (HttpStatusCode.BadRequest, "Validation failed"),
             ArgumentException => (HttpStatusCode.BadRequest, "Invalid request"),
             ResourceAlreadyExistsException => (HttpStatusCode.Conflict, "Resource already exists"),
+            ConflictException => (HttpStatusCode.Conflict, "Conflict"),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized"),
             KeyNotFoundException => (HttpStatusCode.NotFound, "Resource not found"),
             _ => (HttpStatusCode.InternalServerError, "An internal error occurred")

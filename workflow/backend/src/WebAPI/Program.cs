@@ -69,6 +69,19 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("permission", "books.update"));
     options.AddPolicy("books.delete", policy =>
         policy.RequireClaim("permission", "books.delete"));
+
+    options.AddPolicy("rentals.create", policy =>
+        policy.RequireClaim("permission", "rentals.create"));
+    options.AddPolicy("rentals.return", policy =>
+        policy.RequireClaim("permission", "rentals.return"));
+    options.AddPolicy("rentals.view_own", policy =>
+        policy.RequireClaim("permission", "rentals.view_own"));
+    options.AddPolicy("rentals.view_all", policy =>
+        policy.RequireClaim("permission", "rentals.view_all"));
+    options.AddPolicy("rentals.view", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("permission", "rentals.view_own") ||
+            context.User.HasClaim("permission", "rentals.view_all")));
 });
 
 builder.Services.AddCors(options =>
@@ -124,9 +137,14 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
 
     var rolePermissions = new Dictionary<string, string[]>
     {
-        ["Admin"] = ["books.read", "books.create", "books.update", "books.delete"],
-        ["Bibliotecario"] = ["books.read", "books.create", "books.update", "books.delete"],
-        ["Usuario"] = ["books.read"]
+        ["Admin"] = [
+            "books.read", "books.create", "books.update", "books.delete",
+            "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all"],
+        ["Bibliotecario"] = [
+            "books.read", "books.create", "books.update", "books.delete",
+            "rentals.return", "rentals.view_all"],
+        ["Usuario"] = [
+            "books.read", "rentals.create", "rentals.view_own"]
     };
 
     foreach (var (roleName, permissions) in rolePermissions)
