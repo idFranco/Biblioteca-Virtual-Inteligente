@@ -19,7 +19,7 @@ Implemented book rentals with due date (Usuario, `rentals.create`) and return fl
 1. **Application**: `CreateRentalCommand` + validator (BookId/UserId not empty, DueDate optional in [today, today+30]), `ReturnRentalCommand` + validator, `GetMyRentalsQuery`/`GetRentalsQuery`/`GetRentalByIdQuery`, `RentalContracts` (requests/responses), `ConflictException` → 409.
 2. **Infrastructure**: `CreateRentalCommandHandler` (atomic `ExecuteUpdateAsync` decrement `WHERE AvailableCopies > 0` inside a transaction; duplicate active rental → 409; default DueDate +14 days), `ReturnRentalCommandHandler` (atomic increment `WHERE AvailableCopies < TotalCopies`; already-returned → 409; `Returned` vs `Overdue`), 3 query handlers with paging/filters/ownership scoping, `RentalMapper`, DI registrations.
 3. **WebAPI**: `RentalsController` (POST /api/rentals; POST /api/rentals/{id}/return; GET /api/rentals/mine|all; GET /api/rentals/{id}); policies `rentals.create/return/view_own/view_all/view`; role seed `rentals.*` (Admin/Bibliotecario/Usuario); `GlobalExceptionHandler` maps `ConflictException` → 409; `UserId` from JWT claim `userId` (never from client input).
-4. **Frontend**: `services/rentals.ts`, types `Rental`/`PagedRentals`/`CreateRentalInput`, `CreateRentalDialog`, `MisAlquileresPage`, `AlquileresAdminPage`, guarded routes `/mis-alquileres` and `/admin/rentals`, "Alquilar" button in `CatalogPage`, conditional Header links, ProblemDetails error messages.
+4. **Frontend**: `services/rentals.ts`, types `Rental`/`PagedRentals`/`CreateRentalInput`, `CreateRentalDialog`, `MisAlquileresPage`, `AlquileresAdminPage`, guarded routes, "Alquilar" button, conditional Header links, ProblemDetails error messages.
 
 ### Pitfalls resolved
 - Identity must come from the claim (never client-supplied ids).
@@ -50,8 +50,8 @@ Integration smoke (curl) — B1–B13:
 | B6 devuelto otra vez 409 | PASS |
 | B7 vencido → Overdue | PASS |
 | B8 sin permiso 403 | PASS |
-| B9 mine scoped | PASS |
-| B10 listar paginado/filtros | PASS |
+| B9 mis alquileres scoped | PASS |
+| B10 listado paginado/filtrado | PASS |
 | B11 sin token 401 | PASS |
 | B12 id inexistente 404 | PASS |
 | B13 ajeno 404 | PASS |
