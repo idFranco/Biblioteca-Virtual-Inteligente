@@ -1,57 +1,42 @@
 # AI Engineering Iteration Log — US-005
 
-- **Branch**: `feature/US-005-rental-y-devolucion`
-- **Story**: US-005 — Alquiler de libros con fecha límite y devolución que libera el inventario
+- **Rama**: `feature/US-005-rental-y-devolucion`
+- **Story**: US-005 — Alquiler de libros con fecha límite y devolución que libera stock
 - **Status**: In Progress → Implemented → QA Validated
 
 ## Summary
 
-Implemented book rentals with due date (Usuario, rentals.create) and return flow that releases stock (Bibliotecario/Admin, rentals.return), with atomic stock updates, duplicate-active-rental protection, overdue detection, and permission-based UI.
+Implementada la funcionalidad de alquiler de libros con fecha límite (Usuario, `rentals.create`) y devolución que libera stock (Bibliotecario/Admin, `rentals.return`), con actualizaciones atómicas de stock, protección contra alquiler duplicado activo, detección de overdue y UI condicionada por permisos.
 
-## Iteration 1 (Implementation)
+## Iteración 1 (Implementación)
 
-Roles participating: Technical Lead, Backend Developer, Frontend Developer.
+### Roles participantes
+- Technical Lead — plan, rama, políticas de autorización.
+- Backend Developer — comandos/consultas/handlers de alquiler, stock atómico, permisos, controlador.
+- Frontend Developer — páginas de alquiler/diálogo, capa de servicios, rutas protegidas.
 
-### What was built (backend)
-- Commands/queries/validators/handlers/contracts para rentales y devoluciones (FluentValidation).
-- Stock atómico con `ExecuteUpdateAsync` + transacción; `ConflictException` → 409.
-- `RentalsController` con policies `rentals.create/return/view_own/view_all/view` y seed de permisos.
+### Qué se construyó
+1. **Aplicación**: `CreateRentalCommand` + validator (BookId/UserId no vacíos, DueDate opcional en [hoy, hoy+30]), `ReturnRentalCommand` + validator, `GetMyRentalsQuery`/`GetRentalsQuery`/`GetRentalByIdQuery`, `RentalContracts` (request/asquientos), `ConflictException` → 409.
+2. **Infra**: `CreateRentalCommandHandler` (decrement atómico `WHERE AvailableCopies > 0` dentro de transacción; alquiler duplicado activo → 409; DueDate por defecto +14 días), `ReturnRentalCommandHandler` (incremento atómico `WHERE AvailableCopies < TotalCopies`; ya devuelto → 409; `Returned` vs `Overdue`), 3 query handlers con paginación/filtros/scoping propietario, `RentalMapper`, registros DI.
+3. **WebAPI**: `RentalsController` (POST /api/rentals; POST /api/rentals/{id}/return; GET /api/rentals/my|mine; GET /api/rentals; GET /api/rentals/{id}); policies `rentals.create/return/view_own/view_all/view`; seed de roles `rentals.*` (Admin/Bibliotecario/Usuario); `GlobalExceptionHandler` mapea `ConflictException` → 409; `UserId` del claim JWT `userId` (nunca del cliente).
+4. **Frontend**: `services/rentals.ts`, tipos `Rental`/`PagedRentals`/`CreateRentalInput`, `CreateRentalDialog`, `MisAlquileresPage` (Mis Alquileres), `AlquileresAdminPage` (gestión + devolución), rutas protegidas `/mis-alquileres` y `/admin/rentals`, botón "Alquilar" en `CatalogPage`, enlaces condicionales en `Header`, mensajes de error desde ProblemDetails.
 
-### What was built (frontend)
-- `services/rentals.ts`, tipos, diálogo de creación, páginas "Mis alquileres" y "Gestión de alquileres", rutas protegidas y botón en catálogo.
+### Riesgos registrados
+- **NU1903 (HIGH)**: `SQLitePCLRaw.lib.e_sqlite3` 2.1.11 vulnerable — ya registrado en US-002.
+- **Promoción de rol para pruebas** hecha vía edición directa de DB (no existe endpoint de roles.manage aún; gestión de roles es historia futura).
+- **Rate limiting auth (10/min)** puede provocar 429 falsos durante bursts de registro/login scriptados — mantener retraso entre llamadas auth.
+- **JWT en sessionStorage** aceptado como constraint académico; cookies HttpOnly preferible en producción.
 
-### Pitfalls resolved
-- Identity must come from the claim (client-supplied ids ignored).
-- Re-login needed after role changes (permission claims baked into JWT).
-- Past dueDate → Overdue on return.
-- SQLite GUIDs case: raw SQL must use uppercase.
+## Validación QA (Iteration 1)
 
-## Risk Register (Riesgos)
-- NU1903 (HIGH) SQLitePCLRaw 2.1.11 — tracked in US-002.
-- Roles promoted via direct DB for tests (no roles.manage endpoint yet).
-- Auth rate limiting may false-429 during scripted tests.
+`dotnet build` → 0 errores (4 warnings, NU1903 conocido). `npm run build` + `npm run lint` → OK (warning fast-refresh preexistente en `button.tsx`).
 
-## QA Validation
+Integración smoke (curl) — B1–B13 all PASS:
 
-`dotnet build` → 0 errors. `npm run build`/`lint` OK.
-
-B1–B10 smoke through curl:
-
-| Scenario | Result |
-|---|---|
-| B1 alquiler 201 + descuento stock | PASS |
-| B2 sin stock 409 | PASS |
-| B3 dueDate inválida 400 | PASS |
-| B4 duplicado 409 | PASS |
-| B5 devolución 200 + stock | PASS |
-| B6 devuelto otra vez 409 | PASS |
-| B7 vencido → Overdue | PASS |
-| B8 sin permiso 403 | PASS |
-| B9 mis alquileres | PASS |
-| B10 listado paginado/filtros | PASS |
-| B11 sin token 401 | PASS |
-| B12 404 | PASS |
-| B13 ajeno 404 | PASS |
+| # | Escenario | Result |
+|---|---|---|
+| B1 | Alquiler OK... | PASS |
+| B13 | Protección de propiedad (ajeno sin view_all → 404) | PASS |
 
 ## Result
 - **QA**: PASS
