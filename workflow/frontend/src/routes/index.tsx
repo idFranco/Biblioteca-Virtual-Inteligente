@@ -6,6 +6,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { CatalogPage } from '@/pages/CatalogPage'
 import { BooksAdminPage } from '@/pages/BooksAdminPage'
+import { MisAlquileresPage } from '@/pages/MisAlquileresPage'
+import { AlquileresAdminPage } from '@/pages/AlquileresAdminPage'
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +35,22 @@ export const router = createBrowserRouter([
         element: (
           <PermissionGuard permissions={['books.create', 'books.update', 'books.delete']}>
             <BooksAdminPage />
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: 'mis-alquileres',
+        element: (
+          <PermissionGuard permissions={['rentals.view_own']}>
+            <MisAlquileresPage />
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: 'admin/rentals',
+        element: (
+          <PermissionGuard permissions={['rentals.view_all']}>
+            <AlquileresAdminPage />
           </PermissionGuard>
         ),
       },

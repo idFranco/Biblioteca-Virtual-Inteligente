@@ -11,6 +11,9 @@ export function Header() {
     user.permissions.includes('books.update') &&
     user.permissions.includes('books.delete')
 
+  const canViewOwnRentals = user != null && user.permissions.includes('rentals.view_own')
+  const canManageRentals = user != null && user.permissions.includes('rentals.view_all')
+
   async function handleLogout() {
     await authService.logout()
     navigate('/login', { replace: true })
@@ -26,6 +29,16 @@ export function Header() {
           {canManageBooks && (
             <Link to="/admin/books" className="text-sm text-muted-foreground hover:underline">
               Gestión de libros
+            </Link>
+          )}
+          {canViewOwnRentals && (
+            <Link to="/mis-alquileres" className="text-sm text-muted-foreground hover:underline">
+              Mis alquileres
+            </Link>
+          )}
+          {canManageRentals && (
+            <Link to="/admin/rentals" className="text-sm text-muted-foreground hover:underline">
+              Gestión de alquileres
             </Link>
           )}
           {user && (

@@ -50,3 +50,31 @@ export interface CreateBookInput {
 export interface UpdateBookInput extends CreateBookInput {
   availableCopies: number
 }
+
+export type RentalStatus = 'Active' | 'Returned' | 'Overdue'
+
+export interface Rental {
+  id: string
+  userId: string
+  bookId: string
+  bookTitle: string
+  userEmail: string
+  rentedAt: string
+  dueDate: string
+  returnedAt: string | null
+  status: RentalStatus
+  isOverdue: boolean
+}
+
+export interface PagedRentals {
+  page: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+  items: Rental[]
+}
+
+export interface CreateRentalInput {
+  bookId: string
+  dueDate: string
+}
