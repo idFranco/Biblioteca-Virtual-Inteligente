@@ -82,6 +82,9 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAssertion(context =>
             context.User.HasClaim("permission", "rentals.view_own") ||
             context.User.HasClaim("permission", "rentals.view_all")));
+
+    options.AddPolicy("roles.manage", policy =>
+        policy.RequireClaim("permission", "roles.manage"));
 });
 
 builder.Services.AddCors(options =>
@@ -100,10 +103,12 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddRateLimiter(options =>
 {
+    var authPermitLimit = builder.Configuration.GetValue("AUTH_RATE_LIMIT_PER_MINUTE", 10);
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("auth", limiter =>
     {
-        limiter.PermitLimit = 10;
+        limiter.PermitLimit = authPermitLimit;
         limiter.Window = TimeSpan.FromMinutes(1);
         limiter.QueueLimit = 0;
     });
@@ -139,7 +144,8 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
         ["Admin"] = [
             "books.read", "books.create", "books.update", "books.delete",
-            "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all"],
+            "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all",
+            "roles.manage"],
         ["Bibliotecario"] = [
             "books.read", "books.create", "books.update", "books.delete",
             "rentals.return", "rentals.view_all"],

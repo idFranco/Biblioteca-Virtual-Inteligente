@@ -3,15 +3,19 @@ using BibliotecaVirtual.Application.Commands.Books;
 using BibliotecaVirtual.Application.Commands.Books.Validators;
 using BibliotecaVirtual.Application.Commands.Rentals;
 using BibliotecaVirtual.Application.Commands.Rentals.Validators;
+using BibliotecaVirtual.Application.Commands.Users;
+using BibliotecaVirtual.Application.Commands.Users.Validators;
 using BibliotecaVirtual.Application.Contracts.Auth;
 using BibliotecaVirtual.Application.Contracts.Books;
 using BibliotecaVirtual.Application.Contracts.Rentals;
+using BibliotecaVirtual.Application.Contracts.Users;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Application.Queries.Books;
 using BibliotecaVirtual.Application.Queries.Rentals;
 using BibliotecaVirtual.Infrastructure.Handlers.Auth;
 using BibliotecaVirtual.Infrastructure.Handlers.Books;
 using BibliotecaVirtual.Infrastructure.Handlers.Rentals;
+using BibliotecaVirtual.Infrastructure.Handlers.Users;
 using BibliotecaVirtual.Infrastructure.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<CreateRentalCommand, RentalResponse>, CreateRentalCommandHandler>();
         services.AddScoped<ICommandHandler<ReturnRentalCommand, RentalResponse>, ReturnRentalCommandHandler>();
 
+        services.AddScoped<ICommandHandler<AssignUserRoleCommand, AssignRoleResult>, AssignUserRoleCommandHandler>();
+
         services.AddScoped<IQueryHandler<GetBooksQuery, PagedResult<BookResponse>>, GetBooksQueryHandler>();
         services.AddScoped<IQueryHandler<GetBookByIdQuery, BookResponse>, GetBookByIdQueryHandler>();
 
@@ -55,6 +61,8 @@ public static class DependencyInjection
 
         services.AddScoped<IValidator<CreateRentalCommand>, CreateRentalCommandValidator>();
         services.AddScoped<IValidator<ReturnRentalCommand>, ReturnRentalCommandValidator>();
+
+        services.AddScoped<IValidator<AssignUserRoleCommand>, AssignUserRoleCommandValidator>();
 
         return services;
     }
