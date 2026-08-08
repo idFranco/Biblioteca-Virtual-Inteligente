@@ -212,6 +212,11 @@ dotnet run --project src/BibliotecaVirtual.Api
 
 La API estará disponible en `https://localhost:5001/swagger`. La base de datos SQLite se crea automáticamente en `workflow/database/`.
 
+**Variables de entorno del backend:**
+
+- `AUTH_RATE_LIMIT_PER_MINUTE` (default `10`): límite de la policy `auth` del rate limiter (register/login/refresh/revoke) por ventana de 1 minuto. Eleva el valor para baterías de pruebas que disparen ráfagas sin falsos `429`.
+- `SQLitePCLRaw.lib.e_sqlite3` está pinnado a `2.1.12` para mitigar `NU1903` (GHSA-2m69-gcr7-jv3q). Las versiones parcheadas actuales requieren glibc ≥ 2.34; si tu host usa glibc antiguo (p. ej. Debian 11, glibc 2.31), ejecuta el backend vía Docker (`docker compose up --build backend`) — la imagen `dotnet/aspnet:10.0` incluye glibc compatible.
+
 #### Frontend (React + TypeScript + Vite)
 
 ```bash
