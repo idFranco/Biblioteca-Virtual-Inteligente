@@ -34,7 +34,7 @@ A dedicated MCP server audits chatbot input and output to detect prompt injectio
 
 ## ADR-009 — Backend Clean Architecture with CQRS + Custom Mediator
 
-The backend follows Clean Architecture with four projects: Domain (innermost, no dependencies), Application (CQRS Commands/Queries/Handlers + FluentValidation), Infrastructure (EF Core, Identity, JWT), and WebAPI (ASP.NET host + Controllers). Commands and Queries are routed via a custom in-house `Dispatcher` class; the external `MediatR` NuGet package is strictly forbidden.
+The backend follows Clean Architecture with four projects: Domain (innermost, no dependencies), Application (CQRS Commands/Queries/Handlers + FluentValidation), Infrastructure (EF Core, Identity, JWT), and WebAPI (ASP.NET host + Controllers). Commands and Queries are routed via a custom in-house `Dispatcher` class; MediatR is forbidden.
 
 ## ADR-010 — Frontend Tech Stack: Vite + React 18 + TypeScript + Tailwind CSS + shadcn/ui + Zustand + React Router
 
@@ -55,6 +55,18 @@ All services (Frontend, Backend, Chatbot, and MCP servers) run as separate Docke
 ## ADR-014 — MCP Activation Gating in opencode.json
 
 MCP servers defined in `opencode.json` remain with `"enabled": false` until their corresponding User Story is validated. biblioteca-mcp is enabled when its US is validated; security-audit-mcp similarly; open-library similarly.
+
+## ADR-015 — Nginx serves the SPA on port 5173 with SPA fallback
+
+The frontend container runs a custom `nginx.conf` (`listen 5173`) so compose mapping, `EXPOSE`, and the CORS origin stay aligned on one port. `try_files $uri $uri/ /index.html` avoids 404s when refreshing React Router routes. The `5173:80` mapping alternative was rejected to keep a single port for the service.
+
+## ADR-016 — Mandatory compose env vars (fail-fast, no hardcoded secrets)
+
+Backend secrets are injected exclusively at runtime: compose `Jwt__Key=${JWT_KEY:?...}`, `ADMIN_EMAIL=${ADMIN_EMAIL:?...}`, `ADMIN_PASSWORD=${ADMIN_PASSWORD:?...}` abort with a clear message if `.env` is missing (dev defaults are rejected as they would be committed). `appsettings.json` no longer carries the literal `${JWT_KEY}` placeholder; `Program.cs` fails fast when the key is empty.
+
+## ADR-017 — VITE_API_BASE_URL as Docker build arg
+
+The SPA API base URL is baked at image build time. The frontend Dockerfile exposes `ARG VITE_API_BASE_URL=http://localhost:5000` and compose passes it via `build.args`; source default (`http://localhost:5002`) remains only as local dev fallback.
 
 ## MCP Activation Rule
 
