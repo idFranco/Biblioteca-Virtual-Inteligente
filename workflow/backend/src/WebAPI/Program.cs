@@ -1,22 +1,26 @@
-using System;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using CleanArch...
+using BibliotecaVirtual.Application.Interfaces;
+using BibliotecaVirtual.Domain.Entities;
+using BibliotecaVirtual.Infrastructure;
+using BibliotecaVirtual.Infrastructure.Data;
+using BibliotecaVirtual.Infrastructure.Services;
+using BibliotecaVirtual.WebAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using WebAp
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebRequest.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
-var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-if (string.IsNullOrWhiteSpace(connectionString)) connectionString = "DataSource=Database.db";
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=../database/BibliotecaVirtual.db";
 
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey))
-{
-    throw new InvalidOperationException("JWT Key is not configured");
-}
-...
+connectionString = ResolveLocalSqlitePath(builder.Configuration, connectionString);
+
+builder.Services.AddDbContext<BibliotecaDbCommand>(options =>
+    options.UseSqlite(connectionString, value);
