@@ -34,7 +34,7 @@ A dedicated MCP server audits chatbot input and output to detect prompt injectio
 
 ## ADR-009 — Backend Clean Architecture with CQRS + Custom Mediator
 
-The backend follows Clean Architecture with four projects: Domain (innermost, no dependencies), Application (CQRS Commands/Queries/Handlers + FluentValidation), Infrastructure (EF Core, Identity, JWT), and WebAPI (ASP.NET host + Controllers). Commands and Queries are routed via a custom in-house `Dispatcher` class; MediatR is forbidden.
+The backend follows Clean Architecture with four projects: Domain (innermost, no dependencies), Application (CQRS Commands/Queries/Handlers + FluentValidation), Infrastructure (EF Core, Identity, JWT), and WebAPI (ASP.NET host + Controllers). Commands and Queries are routed via a custom in-house `Dispatcher` class; the external `MediatR` NuGet package is strictly forbidden.
 
 ## ADR-010 — Frontend Tech Stack: Vite + React 18 + TypeScript + Tailwind CSS + shadcn/ui + Zustand + React Router
 
@@ -42,7 +42,7 @@ The frontend uses Vite as the build tool (fast HMR, native ESM), React 18 with s
 
 ## ADR-011 — Chatbot Backend: FastAPI + LangChain + LangGraph
 
-The chatbot runs as an independent Python FastAPI service in `workflow/chatbot/`. LangChain provides the LLM abstraction and tool integration layer; LangGraph models conversation flows as directed state-graphs. Persistent conversational memory is stored via the Biblioteca-MCP server. The chatbot never calls the core database directly — all data access goes through MCP tools.
+The chatbot runs as an independent Python FastAPI service in `workflow/chatbot/`. LangChain provides the LLM abstraction and tool integration layer; the LangGraph flow is modeled as a directed state graph. Persistent conversational memory is stored via the Biblioteca-MCP server. The chatbot never calls the core database directly — all data access goes through MCP tools.
 
 ## ADR-012 — Repository Layout: Monorepo with `workflow/` Prefix
 
@@ -50,7 +50,7 @@ All application source code lives under the `workflow/` directory at the reposit
 
 ## ADR-013 — Multi-Container Orchestration with Docker Compose
 
-All services (Frontend, Backend, Chatbot, and MCP servers) run as separate Docker containers defined in a root-level `docker-compose.yml`. Each service has its own `Dockerfile` in its respective `workflow/<module>/` directory.
+All services (Frontend, Backend, Chatbot, and MCP servers) run as separate Docker containers defined in a root-level `docker-compose.yml`. Each service has its own `Dockerfile` in its respective directory.
 
 ## ADR-014 — MCP Activation Gating in opencode.json
 
@@ -58,15 +58,19 @@ MCP servers defined in `opencode.json` remain with `"enabled": false` until thei
 
 ## ADR-015 — Nginx serves the SPA on port 5173 with SPA fallback
 
-The frontend container runs a custom `nginx.conf` (`listen 5173`) so compose mapping, `EXPOSE`, and the CORS origin stay aligned on one port. `try_files $uri $uri/ /index.html` avoids 404s when refreshing React Router routes. The `5173:80` mapping alternative was rejected to keep a single port for the service.
+The frontend container runs a custom `nginx.conf` that listens on port `5173` (matching compose, `EXPOSE`, and the CORS origin) and serves the built SPA with `try_files $uri $uri/ /index.html` so React Router routes do not 404 on refresh. The `5173:5173` compose mapping is the single source of truth; the alternative `5173:80` was rejected to keep one port per service.
 
-## ADR-016 — Mandatory compose env vars (fail-fast, no hardcoded secrets)
+## ADR-016 — Mandatory compose env vars for backend (fail-fast, no hardcoded secrets)
 
-Backend secrets are injected exclusively at runtime: compose `Jwt__Key=${JWT_KEY:?...}`, `ADMIN_EMAIL=${ADMIN_EMAIL:?...}`, `ADMIN_PASSWORD=${ADMIN_PASSWORD:?...}` abort with a clear message if `.env` is missing (dev defaults are rejected as they would be committed). `appsettings.json` no longer carries the literal `${JWT_KEY}` placeholder; `Program.cs` fails fast when the key is empty.
+Backend secrets are injected exclusively at runtime: compose `Jwt__Key=${JWT_KEY:?...}`, `ADMIN_EMAIL=${ADMIN_EMAIL:?...}`, `ADMIN_PASSWORD=${ADMIN_PASSWORD:?...}` abort with a clear message if `.env` is missing (dev defaults are rejected as they would be committed). `AUTH_RATE_LIMIT_PER_MINUTE` keeps a dev default (`:-10`). `appsettings.json` no longer carries the literal `${JWT_KEY}` placeholder; `Jwt:Key` defaults to `""` and `Program.cs` fails fast when no key is configured.
 
 ## ADR-017 — VITE_API_BASE_URL as Docker build arg
 
-The SPA API base URL is baked at image build time. The frontend Dockerfile exposes `ARG VITE_API_BASE_URL=http://localhost:5000` and compose passes it via `build.args`; source default (`http://localhost:5002`) remains only as local dev fallback.
+The SPA bundle bakes the API base URL at build time (`import.meta.env.VITE_API_BASE_URL`). The frontend Dockerfile exposes `ARG VITE_API_BASE_URL=http://localhost:5000` (ENV before `npm run build`) and compose passes it explicitly via `build.args`; the default in code stays as the local dev fallback.
+
+## Future improvement (not in US-007): bind mount for SQLite
+
+Swapping the named volume `database_data` for a bind mount (`./workflow/database:/app/database`) would let host-side MCP servers read the same SQLite file as the compose backend, and unify the filename (`BibliotecaVirtual.db`). Deliberately excluded from US-007 because it changes the data contract and risks data loss; to be evaluated in a future story.
 
 ## MCP Activation Rule
 
