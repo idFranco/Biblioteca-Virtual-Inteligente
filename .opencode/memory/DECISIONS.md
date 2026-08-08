@@ -42,7 +42,7 @@ The frontend uses Vite as the build tool (fast HMR, native ESM), React 18 with s
 
 ## ADR-011 — Chatbot Backend: FastAPI + LangChain + LangGraph
 
-The chatbot runs as an independent Python FastAPI service in `workflow/chatbot/`. LangChain provides the LLM abstraction and tool integration layer; the LangGraph flow is modeled as a directed state graph. Persistent conversational memory is stored via the Biblioteca-MCP server. The chatbot never calls the core database directly — all data access goes through MCP tools.
+The chatbot runs as an independent Python FastAPI service in `workflow/chatbot/`. LangChain provides the LLM abstraction and tool integration layer; LangGraph models conversation flows as directed state-graphs. Persistent conversational memory is stored via the Biblioteca-MCP server. The chatbot never calls the core database directly — all data access goes through MCP tools.
 
 ## ADR-012 — Repository Layout: Monorepo with `workflow/` Prefix
 
@@ -50,7 +50,7 @@ All application source code lives under the `workflow/` directory at the reposit
 
 ## ADR-013 — Multi-Container Orchestration with Docker Compose
 
-All services (Frontend, Backend, Chatbot, and MCP servers) run as separate Docker containers defined in a root-level `docker-compose.yml`. Each service has its own `Dockerfile` in its respective directory.
+All services (Frontend, Backend, Chatbot, and MCP servers) run as separate Docker containers defined in a root-level `docker-compose.yml`. Each service has its own `Dockerfile` in its respective `workflow/<module>/` directory.
 
 ## ADR-014 — MCP Activation Gating in opencode.json
 
@@ -58,11 +58,11 @@ MCP servers defined in `opencode.json` remain with `"enabled": false` until thei
 
 ## ADR-015 — Nginx serves the SPA on port 5173 with SPA fallback
 
-The frontend container runs a custom `nginx.conf` that listens on port `5173` (matching compose, `EXPOSE`, and the CORS origin) and serves the built SPA with `try_files $uri $uri/ /index.html` so React Router routes do not 404 on refresh. The `5173:5173` compose mapping is the single source of truth; the alternative `5173:80` was rejected to keep one port per service.
+The frontend container runs a custom `nginx.conf` that listens on port `5173` (matching compose, `EXPOSE`, and the CORS origin) and serves the built SPA with `try_files $uri $uri/ /index.html` so React Router routes do not 404 on refresh. The `5173:5173` compose mapping is the single source of truth; nginx's conventional internal port 80 is deliberately not used to avoid two numbers for one service. The alternative `5173:80` was rejected.
 
 ## ADR-016 — Mandatory compose env vars for backend (fail-fast, no hardcoded secrets)
 
-Backend secrets are injected exclusively at runtime: compose `Jwt__Key=${JWT_KEY:?...}`, `ADMIN_EMAIL=${ADMIN_EMAIL:?...}`, `ADMIN_PASSWORD=${ADMIN_PASSWORD:?...}` abort with a clear message if `.env` is missing (dev defaults are rejected as they would be committed). `AUTH_RATE_LIMIT_PER_MINUTE` keeps a dev default (`:-10`). `appsettings.json` no longer carries the literal `${JWT_KEY}` placeholder; `Jwt:Key` defaults to `""` and `Program.cs` fails fast when no key is configured.
+- `Jwt__Key=${JWT_KEY:?...}`, `ADMIN_EMAIL=${ADMIN_EMAIL:?...}`, `ADMIN_PASSWORD=${ADMIN_PASSWORD:?...}` — dev defaults for secrets are rejected (they would be committed); `docker compose up` aborts with a clear message if the `.env` is missing. `AUTH_RATE_LIMIT_PER_MINUTE` keeps a dev default (`:-10`). `appsettings.json` no longer contains the literal `${JWT_KEY}` placeholder; `Jwt:Key` defaults to `""` and `Program.cs` fails explicitly when no key is configured.
 
 ## ADR-017 — VITE_API_BASE_URL as Docker build arg
 

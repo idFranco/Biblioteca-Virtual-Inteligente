@@ -48,12 +48,12 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameteres = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
-        ValidateIssuerSigninKey = true,
+        ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "BibliotecaVirtual",
         ValidAudience = builder.Configuration["Jwt:Audience"] ?? "BibliotecaVirtual",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
@@ -158,7 +158,7 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
-            roleManager.CreateAsync(new Role { Name = roleName }).Wait();
+            await roleManager.CreateAsync(new Role { Name = roleName });
         }
 
         var role = await roleManager.FindByNameAsync(roleName)
@@ -169,7 +169,7 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         {
             if (existingClaims.All(c => c.Type != "permission" || c.Value != permission))
             {
-                roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission)).Wait();
+                await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
             }
         }
     }
