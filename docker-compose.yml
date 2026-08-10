@@ -1,13 +1,15 @@
 services:
   backend:
+    image: biblioteca-virtual-backend:stable
     build:
       context: workflow/backend
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Data Source=/app/database/BibliotecaVirtual.db
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - ConnectionStrings__DefaultConnection=${SQLITE_DATA_SOURCE:-Data Source=/app/database/BibliotecaVirtual.db}
+      - SQLITE_DATA_SOURCE=${SQLITE_DATA_SOURCE:-}
       - Jwt__Key=${JWT_KEY:?Set JWT_KEY in the .env file (>= 32 bytes, HS256)}
       - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in the .env file}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in the .env file}
@@ -16,20 +18,25 @@ services:
       - database_data:/app/database
 
   frontend:
+    image: biblioteca-virtual-frontend:stable
     build:
       context: workflow/frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:5000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000}
     ports:
       - "5173:5173"
     depends_on:
       - backend
 
   chatbot:
+    image: biblioteca-virtual-chatbot:stable
     build:
       context: workflow/chatbot
       dockerfile: Dockerfile
+    environment:
+      - HOST=${CHATBOT_HOST:-0.0.0.0}
+      - PORT=${CHATBOT_PORT:-8000}
     ports:
       - "8000:8000"
 

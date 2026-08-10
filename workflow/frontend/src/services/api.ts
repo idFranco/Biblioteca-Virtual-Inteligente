@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/authStore'
 import { authService } from './auth'
+import { API_BASE_URL } from '@/config/env'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5002'
 const UNAUTHORIZED = 401
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {

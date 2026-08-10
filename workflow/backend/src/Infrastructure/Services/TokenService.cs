@@ -5,6 +5,7 @@ using System.Text;
 using BibliotecaVirtual.Application.Contracts.Auth;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
+using BibliotecaVirtual.Infrastructure.Common;
 using BibliotecaVirtual.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -37,8 +38,8 @@ public sealed class TokenService : ITokenService
         var roles = await _userManager.GetRolesAsync(user);
         var permissions = await GetPermissionsAsync(roles, cancellationToken);
         var accessToken = GenerateAccessToken(user, roles, permissions);
-        var accessTokenExpirationMinutes = _configuration.GetValue("Jwt:AccessTokenExpirationMinutes", 15);
-        var refreshTokenExpirationDays = _configuration.GetValue("Jwt:RefreshTokenExpirationDays", 7);
+        var accessTokenExpirationMinutes = _configuration.GetInt("Jwt:AccessTokenExpirationMinutes", 15);
+        var refreshTokenExpirationDays = _configuration.GetInt("Jwt:RefreshTokenExpirationDays", 7);
 
         var refreshToken = GenerateRefreshToken();
         await StoreRefreshTokenAsync(user, refreshToken, refreshTokenExpirationDays, cancellationToken);
@@ -77,11 +78,10 @@ public sealed class TokenService : ITokenService
 
     private string GenerateAccessToken(User user, IList<string> roles, IReadOnlyList<string> permissions)
     {
-        var jwtKey = _configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("JWT Key is not configured");
-        var issuer = _configuration["Jwt:Issuer"] ?? "BibliotecaVirtual";
-        var audience = _configuration["Jwt:Audience"] ?? "BibliotecaVirtual";
-        var expirationMinutes = _configuration.GetValue("Jwt:AccessTokenExpirationMinutes", 15);
+        var jwtKey = _configuration.GetRequiredString("Jwt:Key");
+        var issuer = _configuration.GetString("Jwt:Issuer", "BibliotecaVirtual");
+        var audience = _configuration.GetString("Jwt:Audience", "BibliotecaVirtual");
+        var expirationMinutes = _configuration.GetInt("Jwt:AccessTokenExpirationMinutes", 15);
 
         var claims = new List<Claim>
         {

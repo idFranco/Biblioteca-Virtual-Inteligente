@@ -2,6 +2,7 @@ using System.Text;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
 using BibliotecaVirtual.Infrastructure;
+using BibliotecaVirtual.Infrastructure.Common;
 using BibliotecaVirtual.Infrastructure.Data;
 using BibliotecaVirtual.Infrastructure.Services;
 using BibliotecaVirtual.WebAPI.Middleware;
@@ -37,9 +38,7 @@ builder.Services.AddIdentity<User, Role>(options =>
 .AddEntityFrameworkStores<BibliotecaDbContext>()
 .AddDefaultTokenProviders();
 
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey))
-    throw new InvalidOperationException("JWT Key is not configured");
+var jwtKey = builder.Configuration.GetRequiredString("Jwt:Key");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -54,8 +53,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "BibliotecaVirtual",
-        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "BibliotecaVirtual",
+        ValidIssuer = builder.Configuration.GetString("Jwt:Issuer", "BibliotecaVirtual"),
+        ValidAudience = builder.Configuration.GetString("Jwt:Audience", "BibliotecaVirtual"),
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
@@ -92,7 +91,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(builder.Configuration["Cors:Origins"] ?? "http://localhost:5173")
+        policy.WithOrigins(builder.Configuration.GetString("Cors:Origins", "http://localhost:5173"))
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -104,7 +103,7 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddRateLimiter(options =>
 {
-    var authPermitLimit = builder.Configuration.GetValue("AUTH_RATE_LIMIT_PER_MINUTE", 10);
+    var authPermitLimit = builder.Configuration.GetInt("AUTH_RATE_LIMIT_PER_MINUTE", 10);
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("auth", limiter =>

@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
+import { API_BASE_URL } from '@/config/env'
 
 export interface AuthUser {
   id: string
@@ -14,8 +15,6 @@ export interface AuthResponse {
   refreshToken: string
   user: AuthUser
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5002'
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {

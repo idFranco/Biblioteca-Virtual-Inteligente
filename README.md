@@ -157,26 +157,34 @@ La documentación detallada, endpoints y configuraciones de cada componente no e
 
 ### 6.1 Configuración de Variables de Entorno (.env)
 
-Para que el flujo de automatización y los servidores MCP funcionen correctamente, debes crear un archivo `.env` en la raíz de tu proyecto (o configurar las variables en tu entorno) con los siguientes valores obligatorios:
+Para arrancar el stack con Docker y para que la automatización y los servidores MCP funcionen correctamente, crea un archivo `.env` en la raíz del proyecto a partir de la plantilla:
 
-```env
-# Personal Access Token (Classic) de GitHub con permisos de repositorio (Necesario para que el comando qa-check abra Pull Requests automáticamente)
-GITHUB_TOKEN=ghp_tu_token_aqui
-
-# Ruta a la base de datos SQLite (Necesario para que los MCP de Python interactúen con la DB del backend)
-# Define la ruta proyectada, el backend creará el archivo automáticamente en su primer build.
-DATABASE_PATH=./workflow/database/BibliotecaVirtual.db
-
-# Clave simétrica de firma JWT del backend (Obligatoria para levantar el stack con Docker Compose)
-# Generar con: openssl rand -base64 48
-JWT_KEY=
-
-# Cuenta administradora inicial que se siembra en el primer arranque del backend
-ADMIN_EMAIL=admin@biblioteca.local
-ADMIN_PASSWORD=
+```bash
+cp .env.example .env
 ```
 
-Plantilla completa con valores de ejemplo: ver `.env.example` en la raíz del repositorio.
+Completa al menos los valores obligatorios marcados abajo. El `.env` está excluido de Git (`.gitignore`); la plantilla `.env.example` **sí** está versionada y solo contiene placeholders, nunca secretos reales.
+
+| Variable | Requerida | Valor por defecto | Consumidor |
+|---|---|---|---|
+| `GITHUB_TOKEN` | Sí | — | Automatización GitHub/`qa-check` |
+| `DATABASE_PATH` | Sí | `./workflow/database/BibliotecaVirtual.db` | MCPs Python (Biblioteca-MCP, Security-Audit-MCP) |
+| `JWT_KEY` | Sí | — (generar con `openssl rand -base64 48`) | Backend (firma JWT; `Jwt__Key`) |
+| `ADMIN_EMAIL` | Sí | `admin@biblioteca.local` | Backend (seeding admin) |
+| `ADMIN_PASSWORD` | Sí | — (≥ 8 chars, 1 mayúscula, 1 dígito) | Backend (seeding admin) |
+| `VITE_API_BASE_URL` | Sí (Docker) | `http://localhost:5000` | Frontend Vite (build arg) |
+| `AUTH_RATE_LIMIT_PER_MINUTE` | No | `10` | Backend (rate limiter `auth`) |
+| `SQLITE_DATA_SOURCE` | No | vacío (usa el connection string por defecto) | Backend (connection string SQLite) |
+| `CHATBOT_HOST` | No | `0.0.0.0` | Chatbot (uvicorn) |
+| `CHATBOT_PORT` | No | `8000` | Chatbot (uvicorn) |
+| `LLM_API_KEY` | No (futura) | — | Chatbot (LLM provider, sin cablear todavía) |
+| `LLM_API_URL` | No (futura) | — | Chatbot (LLM provider) |
+| `LLM_MODEL` | No (futura) | — | Chatbot (LLM provider) |
+| `LLM_TEMPERATURE` | No (futura) | `0.7` | Chatbot (LLM provider) |
+| `LLM_TIMEOUT_SECONDS` | No (futura) | `60` | Chatbot (LLM provider) |
+| `CHATBOT_CORS_ORIGINS` | No (futura) | `http://localhost:5173` | Chatbot (CORS) |
+
+> **Importante (Docker):** si ya existen contenedores o imágenes previas del stack, **debes recrearlos** para aplicar la nueva configuración de variables: `docker compose down` seguido de `docker compose up --build`. Construir de nuevo la imagen sobrescribe la existente (mismo tag `:stable`) en lugar de crear imágenes nuevas con tags distintos.
 
 ### 6.2 Codebase Memory MCP
 Para que los agentes de IA puedan explorar la arquitectura del proyecto de forma autónoma, este repositorio depende de Codebase Memory MCP, el cual debe estar instalado a nivel global en tu sistema.
@@ -222,10 +230,10 @@ dotnet restore
 dotnet build
 
 # Ejecutar la API (Swagger en /swagger)
-dotnet run --project src/BibliotecaVirtual.Api
+dotnet run --project src/WebAPI
 ```
 
-La API estará disponible en `https://localhost:5001/swagger`. La base de datos SQLite se crea automáticamente en `workflow/database/`.
+La API estará disponible en `http://localhost:5000/swagger` (desarrollo local). La base de datos SQLite se crea automáticamente en `workflow/database/`.
 
 **Variables de entorno del backend:**
 
@@ -289,6 +297,8 @@ cp .env.example .env
 ```
 
 > El backend requiere `JWT_KEY`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` para arrancar (fail-fast). Sin `.env`, el comando de compose aborta con un mensaje claro.
+>
+> **Si ya existen contenedores o imágenes previas del stack**, debes recrearlos para que la nueva configuración se aplique: `docker compose down` y a continuación `docker compose up --build`. Al construir, la imagen se sobrescribe con el mismo tag estable (`biblioteca-virtual-<servicio>:stable`), sin acumular tags huérfanos.
 
 **2. Levantar el stack:**
 
