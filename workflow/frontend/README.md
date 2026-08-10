@@ -2,6 +2,13 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
+## Configuración de entorno
+
+La URL base de la API se define con la variable de entorno `VITE_API_BASE_URL`. Se lee, con fallback a `http://localhost:5000`, desde el módulo `src/config/env.ts`, usado por los clientes API (`src/services/api.ts`, `src/services/auth.ts`).
+
+- **Desarrollo local:** define la variable en un archivo `.env.local` (ignorado por Git) antes de `npm run dev`, p. ej. `VITE_API_BASE_URL=http://localhost:5000`.
+- **Docker:** el valor se inyecta en build time vía `ARG VITE_API_BASE_URL` / `ENV VITE_API_BASE_URL` en el `Dockerfile`; `docker-compose.yml` lo pasa a través de `build.args.VITE_API_BASE_URL`.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

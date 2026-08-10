@@ -1,10 +1,17 @@
 import os
+import sys
+from pathlib import Path
 
 from mcp.server import FastMCP
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / "workflow" / "mcp"))
+
+from common.settings import get_database_path
+
 mcp = FastMCP("Security-Audit-MCP")
 
-DATABASE_PATH = os.getenv("DATABASE_PATH", "../database/BibliotecaVirtual.db")
+DATABASE_PATH = get_database_path()
 
 
 @mcp.tool()
