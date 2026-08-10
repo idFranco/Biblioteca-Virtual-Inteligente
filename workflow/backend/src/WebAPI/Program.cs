@@ -83,6 +83,13 @@ builder.Services.AddAuthorization(options =>
             context.User.HasClaim("permission", "rentals.view_own") ||
             context.User.HasClaim("permission", "rentals.view_all")));
 
+    options.AddPolicy("bookrequests.create", policy =>
+        policy.RequireClaim("permission", "books.request"));
+    options.AddPolicy("bookrequests.view_own", policy =>
+        policy.RequireClaim("permission", "books.request"));
+    options.AddPolicy("bookrequests.manage", policy =>
+        policy.RequireClaim("permission", "books.manage"));
+
     options.AddPolicy("roles.manage", policy =>
         policy.RequireClaim("permission", "roles.manage"));
 });
@@ -145,12 +152,15 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         ["Admin"] = [
             "books.read", "books.create", "books.update", "books.delete",
             "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all",
+            "books.request", "books.manage",
             "roles.manage"],
         ["Bibliotecario"] = [
             "books.read", "books.create", "books.update", "books.delete",
-            "rentals.return", "rentals.view_all"],
+            "rentals.return", "rentals.view_all",
+            "books.request", "books.manage"],
         ["Usuario"] = [
-            "books.read", "rentals.create", "rentals.view_own"]
+            "books.read", "rentals.create", "rentals.view_own",
+            "books.request"]
     };
 
     foreach (var (roleName, permissions) in rolePermissions)

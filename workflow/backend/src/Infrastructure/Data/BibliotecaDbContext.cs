@@ -13,6 +13,7 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
 
     public DbSet<Book> Books => Set<Book>();
     public DbSet<Rental> Rentals => Set<Rental>();
+    public DbSet<BookRequest> BookRequests => Set<BookRequest>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -27,6 +28,31 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
             entity.Property(e => e.Isbn).HasMaxLength(20);
             entity.Property(e => e.Genre).HasMaxLength(100);
             entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.OpenLibraryKey).HasMaxLength(64);
+        });
+
+        builder.Entity<BookRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Author).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Isbn).HasMaxLength(20);
+            entity.Property(e => e.Genre).HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.OpenLibraryKey).HasMaxLength(64);
+            entity.Property(e => e.AdminNotes).HasMaxLength(500);
+            entity.Property(e => e.Status)
+                  .HasConversion<string>()
+                  .HasMaxLength(20);
+            entity.HasOne(e => e.RequestedByUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.RequestedBy)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PromotedBook)
+                  .WithMany()
+                  .HasForeignKey(e => e.PromotedBookId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<Rental>(entity =>

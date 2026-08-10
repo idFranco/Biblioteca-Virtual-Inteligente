@@ -51,6 +51,7 @@ public sealed class BooksController : ControllerBase
             request.Isbn,
             request.Genre,
             request.Description,
+            request.OpenLibraryKey,
             request.TotalCopies);
 
         var result = await _dispatcher.DispatchAsync<BookResponse>(command, cancellationToken);
@@ -68,6 +69,7 @@ public sealed class BooksController : ControllerBase
             request.Isbn,
             request.Genre,
             request.Description,
+            request.OpenLibraryKey,
             request.TotalCopies,
             request.AvailableCopies);
 

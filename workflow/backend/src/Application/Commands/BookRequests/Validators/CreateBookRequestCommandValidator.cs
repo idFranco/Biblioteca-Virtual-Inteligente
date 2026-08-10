@@ -1,14 +1,14 @@
-using BibliotecaVirtual.Application.Commands.Books;
+using BibliotecaVirtual.Application.Commands.BookRequests;
 using FluentValidation;
 
-namespace BibliotecaVirtual.Application.Commands.Books.Validators;
+namespace BibliotecaVirtual.Application.Commands.BookRequests.Validators;
 
-public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCommand>
+public sealed class CreateBookRequestCommandValidator : AbstractValidator<CreateBookRequestCommand>
 {
-    public UpdateBookCommandValidator()
+    public CreateBookRequestCommandValidator()
     {
-        RuleFor(x => x.BookId)
-            .NotEmpty().WithMessage("El identificador del libro es obligatorio.");
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("El identificador del usuario es obligatorio.");
 
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("El título es obligatorio.")
@@ -29,12 +29,5 @@ public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCom
 
         RuleFor(x => x.OpenLibraryKey)
             .MaximumLength(64).WithMessage("La clave de Open Library no puede superar los 64 caracteres.");
-
-        RuleFor(x => x.TotalCopies)
-            .GreaterThanOrEqualTo(0).WithMessage("El total de copias no puede ser negativo.");
-
-        RuleFor(x => x.AvailableCopies)
-            .GreaterThanOrEqualTo(0).WithMessage("Las copias disponibles no pueden ser negativas.")
-            .LessThanOrEqualTo(x => x.TotalCopies).WithMessage("Las copias disponibles no pueden exceder el total de copias.");
     }
 }
