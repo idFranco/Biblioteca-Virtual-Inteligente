@@ -7,12 +7,23 @@ Cada invocación abre/cierra sesión para aislar fallos y evitar procesos vivos.
 from __future__ import annotations
 
 import asyncio
+import os
 import shlex
 from contextlib import AsyncExitStack
 from typing import Any
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+
+def _inherit_environment() -> dict[str, str]:
+    """Entorno propio del proceso para propagar variables (p. ej. DATABASE_PATH).
+
+    La lista segura por defecto de ``get_default_environment()`` no incluye
+    variables del proyecto (``DATABASE_PATH``, ``AUDIT_DATABASE_PATH``), por lo
+    que se hereda el entorno completo proceso.
+    """
+    return {key: value for key, value in os.environ.items() if not value.startswith("()")}
 
 
 class McpStdioClient:
@@ -23,7 +34,11 @@ class McpStdioClient:
         if not command or not command.strip():
             raise ValueError(f"El comando MCP '{self.name}' está vacío.")
         args = shlex.split(command)
-        self._parameters = StdioServerParameters(command=args[0], args=args[1:])
+        self._parameters = StdioServerParameters(
+            command=args[0],
+            args=args[1:],
+            env=_inherit_environment(),
+        )
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         async with AsyncExitStack() as stack:

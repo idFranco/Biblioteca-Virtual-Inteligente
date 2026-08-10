@@ -14,6 +14,7 @@ class ChatState:
     user_id: str | None = None
     correlation_id: str | None = None
     intent: str | None = None
+    query: str | None = None
     reading_state: str | None = None
     catalog_matches: list[dict[str, Any]] = field(default_factory=list)
     enrichment: dict[str, Any] | None = None

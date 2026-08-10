@@ -9,6 +9,7 @@ from app.graph.nodes.availability_node import availability_node
 from app.graph.nodes.block_response_node import block_response_node
 from app.graph.nodes.classify_intent_node import classify_intent_node
 from app.graph.nodes.external_enrichment_node import external_enrichment_node
+from app.graph.nodes.extract_query_node import extract_query_node
 from app.graph.nodes.internal_catalog_node import internal_catalog_node
 from app.graph.nodes.load_user_state_node import load_user_state_node
 from app.graph.nodes.response_node import response_node
@@ -31,6 +32,7 @@ def build_graph():
     workflow.add_node("block_response", block_response_node)
     workflow.add_node("load_user_state", load_user_state_node)
     workflow.add_node("classify_intent", classify_intent_node)
+    workflow.add_node("extract_query", extract_query_node)
     workflow.add_node("internal_catalog", internal_catalog_node)
     workflow.add_node("external_enrichment", external_enrichment_node)
     workflow.add_node("availability", availability_node)
@@ -46,7 +48,8 @@ def build_graph():
     )
     workflow.add_edge("block_response", "audit_output")
     workflow.add_edge("load_user_state", "classify_intent")
-    workflow.add_edge("classify_intent", "internal_catalog")
+    workflow.add_edge("classify_intent", "extract_query")
+    workflow.add_edge("extract_query", "internal_catalog")
     workflow.add_edge("internal_catalog", "external_enrichment")
     workflow.add_edge("external_enrichment", "availability")
     workflow.add_edge("availability", "response")

@@ -10,7 +10,7 @@ async def internal_catalog_node(state: ChatState) -> ChatState:
         return state
 
     try:
-        matches = await biblioteca_client.buscar_libros(state.message, limit=10)
+        matches = await biblioteca_client.buscar_libros(state.query or state.message, limit=10)
         state.catalog_matches = matches[:10]
     except Exception:
         state.catalog_matches = []

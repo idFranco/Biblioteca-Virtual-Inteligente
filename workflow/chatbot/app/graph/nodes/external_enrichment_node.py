@@ -16,7 +16,7 @@ async def external_enrichment_node(state: ChatState) -> ChatState:
         return state
 
     try:
-        results = await open_library_client.search_books(state.message, limit=3)
+        results = await open_library_client.search_books(state.query or state.message, limit=3)
     except Exception:
         state.enrichment = None
         state.enrichment_error = True
