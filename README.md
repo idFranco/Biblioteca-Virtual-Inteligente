@@ -115,16 +115,21 @@ La documentación detallada, endpoints y configuraciones de cada componente no e
 
 ```
 ├── docker-compose.yml              # Docker Compose for all services
+├── .env.example                   # Plantilla de variables de entorno (copiar a .env)
 ├── workflow/
 │   ├── backend/                     # .NET 9 Clean Architecture
 │   │   ├── BibliotecaVirtual.slnx
+│   │   ├── .dockerignore
 │   │   └── src/
 │   │       ├── BibliotecaVirtual.Domain/       # Entities, Enums, ValueObjects, Interfaces
 │   │       ├── BibliotecaVirtual.Application/  # CQRS, Commands, Queries, Validators
 │   │       ├── BibliotecaVirtual.Infrastructure/ # EF Core DbContext, Services
 │   │       └── BibliotecaVirtual.Api/          # Controllers, Middleware, Program.cs
 │   ├── frontend/                    # React 18 + TypeScript + Vite
-│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   ├── nginx.conf              # Nginx server: SPA fallback + cache de assets
+│   │   ├── .dockerignore
+│   │   └── src/
 │   │   │   ├── routes/             # Route components
 │   │   │   ├── components/         # UI components
 │   │   │   ├── services/           # API client services
@@ -160,8 +165,18 @@ GITHUB_TOKEN=ghp_tu_token_aqui
 
 # Ruta a la base de datos SQLite (Necesario para que los MCP de Python interactúen con la DB del backend)
 # Define la ruta proyectada, el backend creará el archivo automáticamente en su primer build.
-DATABASE_PATH=./workflow/database/Biblioteca.db
+DATABASE_PATH=./workflow/database/BibliotecaVirtual.db
+
+# Clave simétrica de firma JWT del backend (Obligatoria para levantar el stack con Docker Compose)
+# Generar con: openssl rand -base64 48
+JWT_KEY=
+
+# Cuenta administradora inicial que se siembra en el primer arranque del backend
+ADMIN_EMAIL=admin@biblioteca.local
+ADMIN_PASSWORD=
 ```
+
+Plantilla completa con valores de ejemplo: ver `.env.example` en la raíz del repositorio.
 
 ### 6.2 Codebase Memory MCP
 Para que los agentes de IA puedan explorar la arquitectura del proyecto de forma autónoma, este repositorio depende de Codebase Memory MCP, el cual debe estar instalado a nivel global en tu sistema.
@@ -264,12 +279,32 @@ pip install mcp fastmcp
 
 ## 7. Ejecución local rápida (Docker)
 
-El proyecto está preparado para levantarse por completo mediante contenedores para la aplicación (Frontend, Backend, Chatbot): 
+El proyecto está preparado para levantarse por completo mediante contenedores para la aplicación (Frontend, Backend, Chatbot):
+
+**1. Crear el archivo `.env` a partir de la plantilla:**
+
+```bash
+cp .env.example .env
+# Completar JWT_KEY (openssl rand -base64 48) y ADMIN_PASSWORD (>= 8 chars, 1 mayúscula, 1 dígito)
+```
+
+> El backend requiere `JWT_KEY`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` para arrancar (fail-fast). Sin `.env`, el comando de compose aborta con un mensaje claro.
+
+**2. Levantar el stack:**
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:5000
-- Chatbot API: http://localhost:8001
+| Servicio | URL | Puerto contenedor | Puerto host |
+|---|---|---|---|
+| Frontend (Nginx + SPA) | http://localhost:5173 | 5173 | 5173 |
+| Backend API (.NET 9) | http://localhost:5000 | 5000 | 5000 |
+| Chatbot API (FastAPI) | http://localhost:8000 | 8000 | 8000 |
+| SQLite | — | volumen `database_data` en `/app/database` | — |
+
+Notas:
+- El contenedor del frontend sirve la SPA con fallback para rutas de React Router (refrescar `/login` no devuelve 404) y embebe la URL base de la API `http://localhost:5000` en el bundle (build arg `VITE_API_BASE_URL`).
+- En el primer arranque el backend siembra roles/permisos y el usuario administrador definido por `ADMIN_EMAIL`/`ADMIN_PASSWORD`; el JWT se firma con `JWT_KEY`.
+- La base SQLite persiste en el volumen Docker `database_data` (`./workflow/database/` solo para desarrollo local, fuera de contenedores).
+- Para detener: `docker compose down` (añade `-v` si quieres eliminar también el volumen de datos).

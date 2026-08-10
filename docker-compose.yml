@@ -8,6 +8,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Data Source=/app/database/BibliotecaVirtual.db
+      - Jwt__Key=${JWT_KEY:?Set JWT_KEY in the .env file (>= 32 bytes, HS256)}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in the .env file}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in the .env file}
+      - AUTH_RATE_LIMIT_PER_MINUTE=${AUTH_RATE_LIMIT_PER_MINUTE:-10}
     volumes:
       - database_data:/app/database
 
@@ -15,6 +19,8 @@ services:
     build:
       context: workflow/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:5000
     ports:
       - "5173:5173"
     depends_on:

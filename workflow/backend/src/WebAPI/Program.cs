@@ -37,8 +37,9 @@ builder.Services.AddIdentity<User, Role>(options =>
 .AddEntityFrameworkStores<BibliotecaDbContext>()
 .AddDefaultTokenProviders();
 
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("JWT Key is not configured");
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("JWT Key is not configured");
 
 builder.Services.AddAuthentication(options =>
 {
