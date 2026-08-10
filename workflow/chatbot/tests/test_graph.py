@@ -3,6 +3,8 @@ import pytest
 from app.graph.build_graph import graph
 from app.graph.state import ChatState
 from app.graph.nodes.classify_intent_node import classify_intent_node
+from app.graph.nodes.extract_query_node import _extract_query
+from app.graph.nodes.extract_query_node import extract_query_node
 
 
 def normalize(raw: dict) -> ChatState:
@@ -109,6 +111,73 @@ async def test_missing_book_without_enrichment_still_responds(monkeypatch):
     assert result.action_offer is None
     assert result.response  # el grafo no colapsó
     assert "no" in result.response.lower() or "catálogo" in result.response.lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "message, expected",
+    [
+        ("¿Tienen Cien años de soledad?", "Cien años de soledad"),
+        ("Necesito el libro Cien años de soledad de García Márquez", "Cien años de soledad de García Márquez"),
+        ("Estoy buscando un libro de Prueba", "Prueba"),
+        ("«Cien años de soledad»", "Cien años de soledad"),
+    ],
+)
+async def test_extract_query_from_natural_language(message, expected):
+    state = ChatState(message=message)
+    await extract_query_node(state)
+    assert state.query == expected
+
+
+@pytest.mark.parametrize(
+    "message, expected",
+    [
+        ("¿Tienen Cien años de soledad?", "Cien años de soledad"),
+        ("Necesito el libro El principito", "El principito"),
+        ("estoy buscando un libro de Prueba", "Prueba"),
+    ],
+)
+def test_extract_query_pure(message, expected):
+    assert _extract_query(message) == expected
+
+
+@pytest.mark.asyncio
+async def test_missing_book_offers_request_with_real_query(monkeypatch):
+    """El grafo usa la query extraída (no el mensaje completo) para Open Library."""
+    import app.mcp_clients.biblioteca_client as biblioteca_client
+    import app.mcp_clients.open_library_client as open_library_client
+
+    captured = {}
+
+    async def fake_search(message, limit=10):
+        captured["catalog_query"] = message
+        return []
+
+    async def fake_ol_search(query, limit=3):
+        captured["ol_query"] = query
+        return [{
+            "key": "/works/OL1000000W",
+            "title": "Cien años de soledad",
+            "author": "Gabriel García Márquez",
+            "isbn": "9780307474728",
+            "first_publish_year": 1967,
+        }]
+
+    async def fake_details(key):
+        return {"description": "Obra cumbre del realismo mágico."}
+
+    monkeypatch.setattr(biblioteca_client, "buscar_libros", fake_search)
+    monkeypatch.setattr(open_library_client, "search_books", fake_ol_search)
+    monkeypatch.setattr(open_library_client, "get_book_details", fake_details)
+
+    state = ChatState(message="¿Tienen Cien años de soledad?")
+    result = normalize(await graph.ainvoke(state))
+
+    assert captured["catalog_query"] == "Cien años de soledad"
+    assert captured["ol_query"] == "Cien años de soledad"
+    assert result.action_offer is not None
+    assert result.action_offer.title == "Cien años de soledad"
+    assert result.action_offer.openLibraryKey == "/works/OL1000000W"
 
 
 @pytest.mark.asyncio
