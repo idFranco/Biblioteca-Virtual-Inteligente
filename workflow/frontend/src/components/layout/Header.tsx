@@ -11,6 +11,8 @@ export function Header() {
     user.permissions.includes('books.update') &&
     user.permissions.includes('books.delete')
 
+  const canManageBookRequests = user != null && user.permissions.includes('books.manage')
+
   const canViewOwnRentals = user != null && user.permissions.includes('rentals.view_own')
   const canManageRentals = user != null && user.permissions.includes('rentals.view_all')
 
@@ -39,6 +41,11 @@ export function Header() {
           {canManageRentals && (
             <Link to="/admin/rentals" className="text-sm text-muted-foreground hover:underline">
               Gestión de alquileres
+            </Link>
+          )}
+          {canManageBookRequests && (
+            <Link to="/admin/gestion-libro" className="text-sm text-muted-foreground hover:underline">
+              Gestión de libro
             </Link>
           )}
           {user && (

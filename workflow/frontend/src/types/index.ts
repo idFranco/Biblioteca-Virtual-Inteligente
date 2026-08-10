@@ -18,6 +18,7 @@ export interface Book {
   isbn: string | null
   genre: string | null
   description: string | null
+  openLibraryKey: string | null
   totalCopies: number
   availableCopies: number
   isAvailable: boolean
@@ -44,6 +45,7 @@ export interface CreateBookInput {
   isbn?: string | null
   genre?: string | null
   description?: string | null
+  openLibraryKey?: string | null
   totalCopies: number
 }
 
@@ -77,4 +79,53 @@ export interface PagedRentals {
 export interface CreateRentalInput {
   bookId: string
   dueDate: string
+}
+
+export type BookRequestStatus = 'Pending' | 'Approved' | 'Rejected'
+
+export interface BookRequest {
+  id: string
+  title: string
+  author: string
+  isbn: string | null
+  genre: string | null
+  description: string | null
+  openLibraryKey: string | null
+  requestedBy: string
+  requestedByEmail: string
+  requestedAt: string
+  status: BookRequestStatus
+  adminNotes: string | null
+  promotedBookId: string | null
+  resolvedAt: string | null
+}
+
+export interface PagedBookRequests {
+  page: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+  items: BookRequest[]
+}
+
+export interface CreateBookRequestInput {
+  title: string
+  author: string
+  isbn?: string | null
+  genre?: string | null
+  description?: string | null
+  openLibraryKey?: string | null
+}
+
+export interface ApproveBookRequestInput {
+  title?: string | null
+  author?: string | null
+  isbn?: string | null
+  genre?: string | null
+  description?: string | null
+  totalCopies?: number
+}
+
+export interface RejectBookRequestInput {
+  adminNotes: string
 }
