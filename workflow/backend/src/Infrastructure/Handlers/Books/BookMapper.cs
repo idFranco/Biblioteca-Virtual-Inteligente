@@ -12,6 +12,7 @@ internal static class BookMapper
         book.Isbn,
         book.Genre,
         book.Description,
+        book.OpenLibraryKey,
         book.TotalCopies,
         book.AvailableCopies,
         book.AvailableCopies > 0);

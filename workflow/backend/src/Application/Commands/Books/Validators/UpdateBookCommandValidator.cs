@@ -27,6 +27,9 @@ public sealed class UpdateBookCommandValidator : AbstractValidator<UpdateBookCom
         RuleFor(x => x.Description)
             .MaximumLength(2000).WithMessage("La descripción no puede superar los 2000 caracteres.");
 
+        RuleFor(x => x.OpenLibraryKey)
+            .MaximumLength(64).WithMessage("La clave de Open Library no puede superar los 64 caracteres.");
+
         RuleFor(x => x.TotalCopies)
             .GreaterThanOrEqualTo(0).WithMessage("El total de copias no puede ser negativo.");
 

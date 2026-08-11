@@ -7,6 +7,7 @@ public sealed record BookResponse(
     string? Isbn,
     string? Genre,
     string? Description,
+    string? OpenLibraryKey,
     int TotalCopies,
     int AvailableCopies,
     bool IsAvailable);
@@ -17,6 +18,7 @@ public sealed record CreateBookRequest(
     string? Isbn,
     string? Genre,
     string? Description,
+    string? OpenLibraryKey,
     int TotalCopies);
 
 public sealed record UpdateBookRequest(
@@ -25,6 +27,7 @@ public sealed record UpdateBookRequest(
     string? Isbn,
     string? Genre,
     string? Description,
+    string? OpenLibraryKey,
     int TotalCopies,
     int AvailableCopies);
 

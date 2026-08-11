@@ -63,6 +63,7 @@ public sealed class GetBooksQueryHandler : IQueryHandler<GetBooksQuery, PagedRes
                 b.Isbn,
                 b.Genre,
                 b.Description,
+                b.OpenLibraryKey,
                 b.TotalCopies,
                 b.AvailableCopies,
                 b.AvailableCopies > 0))

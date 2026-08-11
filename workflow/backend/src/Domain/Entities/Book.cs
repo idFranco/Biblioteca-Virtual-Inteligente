@@ -10,6 +10,7 @@ public sealed class Book
     public string? Isbn { get; set; }
     public string? Genre { get; set; }
     public string? Description { get; set; }
+    public string? OpenLibraryKey { get; set; }
     public int TotalCopies { get; set; }
     public int AvailableCopies { get; set; }
     public BookStatus Status { get; set; } = BookStatus.Available;

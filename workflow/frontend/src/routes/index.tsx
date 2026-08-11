@@ -8,6 +8,7 @@ import { CatalogPage } from '@/pages/CatalogPage'
 import { BooksAdminPage } from '@/pages/BooksAdminPage'
 import { MisAlquileresPage } from '@/pages/MisAlquileresPage'
 import { AlquileresAdminPage } from '@/pages/AlquileresAdminPage'
+import { GestionLibroPage } from '@/pages/GestionLibroPage'
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +52,14 @@ export const router = createBrowserRouter([
         element: (
           <PermissionGuard permissions={['rentals.view_all']}>
             <AlquileresAdminPage />
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: 'admin/gestion-libro',
+        element: (
+          <PermissionGuard permissions={['books.manage']}>
+            <GestionLibroPage />
           </PermissionGuard>
         ),
       },

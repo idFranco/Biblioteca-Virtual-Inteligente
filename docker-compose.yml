@@ -37,6 +37,8 @@ services:
     environment:
       - HOST=${CHATBOT_HOST:-0.0.0.0}
       - PORT=${CHATBOT_PORT:-8000}
+      - OPEN_LIBRARY_MCP_COMMAND=${OPEN_LIBRARY_MCP_COMMAND:-npx -y mcp-open-library}
+      - API_KEY_GROQ=${API_KEY_GROQ:?Set API_KEY_GROQ in the .env file}
     ports:
       - "8000:8000"
 

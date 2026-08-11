@@ -1,8 +1,60 @@
-from fastapi import FastAPI
+from __future__ import annotations
+
+import uuid
+
+from fastapi import FastAPI, Header, HTTPException
+from app.graph.build_graph import graph
+from app.graph.state import ChatState
+from app.schemas import ChatRequest, ChatResponse
 
 app = FastAPI(title="Biblioteca Virtual Chatbot")
 
 
+def normalize_state(raw: dict) -> ChatState:
+    """Convierte el dict devuelto por LangGraph en un ChatState tipado."""
+    defaults = ChatState(message=raw.get("message") or "")
+    for field in defaults.__dataclass_fields__:
+        if field in raw:
+            setattr(defaults, field, raw[field])
+    return defaults
+
+
+def _correlation_id(header: str | None) -> str:
+    return header or f"chat-{uuid.uuid4()}"
+
+
 @app.get("/health")
-def health():
+def health() -> dict[str, str]:
     return {"status": "healthy"}
+
+
+@app.post("/chat")
+async def chat(
+    request: ChatRequest,
+    x_correlation_id: str | None = Header(default=None, alias="X-Correlation-ID"),
+) -> ChatResponse:
+    """Procesa un mensaje a través del grafo LangGraph auditado."""
+    correlation_id = _correlation_id(x_correlation_id)
+    state = ChatState(
+        message=request.message,
+        user_id=request.userId,
+        correlation_id=correlation_id,
+    )
+
+    try:
+        raw = await graph.ainvoke(state)
+        result = normalize_state(raw)
+    except Exception:
+        raise HTTPException(status_code=503, detail="El asistente no está disponible en este momento.")
+
+    return ChatResponse(
+        message=result.response or "Lo siento, no pude generar una respuesta.",
+        action_offer=result.action_offer,
+        correlation_id=correlation_id,
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
