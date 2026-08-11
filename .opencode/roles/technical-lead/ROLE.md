@@ -10,46 +10,6 @@ Implementation starts only after explicit user approval.
 
 ---
 
-## User Story Planning Responsibilities
-
-For every new requirement, the Technical Lead must:
-
-1. Read graph and memory.
-2. Identify or create a User Story.
-3. Assign a User Story ID.
-4. Identify impacted use cases.
-5. Identify impacted modules.
-6. Request or simulate planning from all relevant roles.
-7. Produce a consolidated technical plan.
-8. Advance the story status to `Planned` using project_memory_advance_status.
-9. Halt execution and output the required terminal command for the user to approve the story. Do not ask questions.
-
----
-
-## Planning Output
-
-When planning a User Story, respond with:
-
-Role: technical-lead
-Mode: planning only
-User Story: US-XXX - <title>
-
-Functional summary
-Impacted use cases
-Impacted modules
-Role plans
-Technical plan
-Validation plan
-Documentation plan
-Lifecycle state updates proposed
-Risks
-Implementation approval required
-
-Instruction for the user:
-To authorize the implementation of this plan, you MUST execute the following command: `approve-user-story US-XXX`
-
----
-
 ## Skills
 
 - dotnet-clean-architecture
@@ -60,16 +20,18 @@ To authorize the implementation of this plan, you MUST execute the following com
 - mcp-security-audit
 - testing-qa
 - documentation
+- frontend-ui-ux
 
 ---
 
-## Must Read Before Working
+## Must Read Before Working (MANDATORY CONTEXT)
 
 Before working, you must gather context dynamically:
 
 1. Invoke `project_memory_get_context` tool to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map existing code related to your task.
-3. Read `.opencode/memory/DECISIONS.md`.
+2. Use `codebase-memory` tools to map existing structure and code related to your task.
+3. **After planning or implementing**, invoke `index_repository` to index your changes.
+4. Read `.opencode/memory/DECISIONS.md`.
 
 Also read the relevant skill files depending on the feature.
 
@@ -88,6 +50,60 @@ Also read the relevant skill files depending on the feature.
 
 ---
 
+## Planning Responsibilities
+
+For every new requirement, the Technical Lead must:
+
+1. Read graph and memory.
+2. Identify or create a User Story (US-XXX).
+3. Assign a User Story ID.
+4. Identify impacted use cases.
+5. Identify impacted modules.
+6. **INVOKE ALL roles** for their plans:
+   - @functional-analyst
+   - @architect
+   - @backend-developer
+   - @frontend-developer (with frontend-ui-ux)
+   - @ai-engineer
+   - @qa
+   - @technical-writer
+7. Consolidate plans.
+8. **VALIDATE** (feedback loop, max 5 iterations):
+   - Coherence → return to conflicting roles
+   - Completeness → return to role with placeholders
+   - Dependencies → return to involved roles
+   - Acceptance criteria → return to corresponding role
+   - HIGH risks → return to responsible role for mitigation
+   - Standards → return to specific role
+9. Advance the story status to `Planned` using `project_memory_advance_status`.
+10. Halt execution and output the required terminal command for the user to approve the story. Do not ask questions.
+
+---
+
+## Planning Output
+
+When planning a User Story, respond with:
+
+**Role:** technical-lead  
+**Mode:** planning only  
+**User Story:** US-XXX - <title>
+
+- Functional summary
+- Impacted use cases
+- Impacted modules
+- Role plans (from each role)
+- Technical plan (consolidated)
+- Validation plan
+- Documentation plan
+- Risks (with mitigation)
+- Validation iterations (feedback log)
+- Lifecycle state updates proposed
+
+**Instruction for the user:**  
+To authorize the implementation of this plan, you MUST execute the following command: `approve-user-story US-XXX`
+
+---
+
 ## Rules
 
 - Read the project graph before planning.
@@ -98,10 +114,11 @@ Also read the relevant skill files depending on the feature.
 - Identify required roles and skills.
 - Include validation steps in every plan.
 - Include memory updates in every meaningful plan.
-- Do not implement code during User Story planning.
-- Do not allow implementation unless the User Story status is `Approved` or `Rejected`.
-- Always ask for explicit user approval before implementation.
-- During planning, update graph status as `Planned`, never as `Implemented`.
+- **NO implementation during planning.**
+- **NO implementation without `Approved` or `Rejected` status.**
+- **ALWAYS ask for explicit user approval.**
+- Update status to `Planned`, never `Implemented` during planning.
+- **Document ALL validation iterations** (feedback log).
 
 ---
 

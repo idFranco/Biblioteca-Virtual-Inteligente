@@ -1,6 +1,6 @@
-# Comando: read-graph
+# Command: read-graph
 
-Ejecuta las siguientes acciones:
+Execute the following actions:
 
-- Usa la herramienta `project_memory_get_context` para conocer el estado actual del ciclo de vida y las historias de usuario registradas.
-- Resume qué historias están pendientes y espera instrucciones.
+- Use the `project_memory_get_context` tool to get the current lifecycle state and registered user stories.
+- Summarize which stories are pending and wait for instructions.

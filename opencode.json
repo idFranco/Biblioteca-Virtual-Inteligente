@@ -51,30 +51,24 @@
     "edit": true,
     "bash": true,
     "project_memory_*": true,
+    "codebase-memory_*": true,
     "biblioteca-mcp_*": true,
     "security-audit-mcp_*": true,
     "open-library_*": true,
     "github_*": true,
-    "codebase-memory_*": true,
     "index_repository": true
   },
   "mcp": {
     "project-lifecycle": {
       "type": "local",
-      "command": [
-        "node",
-        "project-memory-mcp/server.js"
-      ],
+      "command": ["node", "project-memory-mcp/server.js"],
       "enabled": true,
       "timeout": 10000
     },
     "biblioteca-mcp": {
       "type": "local",
-      "command": [
-        "python",
-        "workflow/mcp/biblioteca-mcp/server.py"
-      ],
-      "enabled": false, 
+      "command": ["python", "workflow/mcp/biblioteca-mcp/server.py"],
+      "enabled": false,
       "environment": {
         "DATABASE_PATH": "{env:DATABASE_PATH}"
       },
@@ -82,10 +76,7 @@
     },
     "security-audit-mcp": {
       "type": "local",
-      "command": [
-        "python",
-        "workflow/mcp/security-audit-mcp/server.py"
-      ],
+      "command": ["python", "workflow/mcp/security-audit-mcp/server.py"],
       "enabled": false,
       "environment": {
         "DATABASE_PATH": "{env:DATABASE_PATH}",
@@ -95,25 +86,17 @@
     },
     "open-library": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "mcp-open-library"
-      ],
+      "command": ["npx", "-y", "mcp-open-library"],
       "enabled": false,
       "timeout": 30000
     },
     "github": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
       "enabled": true,
       "environment": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}"
-        }
+      }
     }
   },
   "instructions": [
@@ -123,128 +106,139 @@
   ],
   "agent": {
     "functional-analyst": {
-      "description": "Analiza requerimientos, casos de uso y criterios de aceptación.",
+      "description": "Analyzes requirements, use cases, and acceptance criteria.",
       "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project_memory_get_context tool to synchronize with the current process lifecycle state.",
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": false
-      }
-    },
-    "architect": {
-      "description": "Diseña arquitectura, límites entre módulos, ADRs y decisiones técnicas.",
-      "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/architect/ROLE.md before answering. Use project_memory_get_context tool to check module state before providing technical directions.",
+      "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to understand the current project state.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": false,
-        "project_memory_*": true
+        "project_memory_*": true,
+        "codebase-memory_*": true
+      }
+    },
+    "architect": {
+      "description": "Designs architecture, module boundaries, ADRs, and technical decisions.",
+      "model": "{env:OPENCODE_MODEL}",
+      "prompt": "Read AGENTS.md and .opencode/roles/architect/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to analyze the impact of changes.",
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": false,
+        "project_memory_*": true,
+        "codebase-memory_*": true
       }
     },
     "technical-lead": {
-      "description": "Convierte requerimientos en planes técnicos ejecutables.",
+      "description": "Transforms requirements into executable technical plans. Coordinates all roles.",
       "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/technical-lead/ROLE.md before answering. You are responsible for executing project-lifecycle tools to advance user stories state.",
+      "prompt": "Read AGENTS.md and .opencode/roles/technical-lead/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Execute project-lifecycle tools to advance user story states.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": true,
         "project_memory_*": true,
-        "github_*": true,
         "codebase-memory_*": true,
+        "github_*": true,
         "index_repository": true
       }
     },
     "backend-developer": {
-      "description": "Implementa backend ASP.NET Core, Identity, EF Core, SQLite y lógica de negocio.",
+      "description": "Implements ASP.NET Core backend, Identity, EF Core, SQLite, and business logic.",
       "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/backend-developer/ROLE.md before answering. Use dotnet-clean-architecture and auth-permissions skills.",
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true
-      }
-    },
-    "frontend-developer": {
-      "description": "Implementa frontend React + TypeScript con rutas protegidas y UI por permisos.",
-      "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/frontend-developer/ROLE.md before answering. Use react-permissions skill.",
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true
-      }
-    },
-    "ai-engineer": {
-      "description": "Implementa FastAPI, LangChain, LangGraph y servidores MCP, incluyendo el MCP de auditoría de seguridad.",
-      "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/ai-engineer/ROLE.md before answering. Use langgraph-chatbot, mcp-tools and mcp-security-audit skills.",
+      "prompt": "Read AGENTS.md and .opencode/roles/backend-developer/ROLE.md before answering. Use dotnet-clean-architecture and auth-permissions skills. Use codebase-memory to understand existing models.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": true,
+        "project_memory_*": true,
+        "codebase-memory_*": true
+      }
+    },
+    "frontend-developer": {
+      "description": "Implements React + TypeScript frontend with protected routes, permission-based UI, and high-level UI/UX design.",
+      "model": "{env:OPENCODE_MODEL}",
+      "prompt": "Read AGENTS.md and .opencode/roles/frontend-developer/ROLE.md before answering. Use react-permissions skill. MUST APPLY the frontend-ui-ux skill: distinctive typography, cohesive palette, orchestrated animations, unexpected spatial composition, visual details. Never produce generic UI. Use codebase-memory to understand existing components.",
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "project_memory_*": true,
+        "codebase-memory_*": true
+      }
+    },
+    "ai-engineer": {
+      "description": "Implements FastAPI, LangChain, LangGraph, and MCP servers, including the security audit MCP.",
+      "model": "{env:OPENCODE_MODEL}",
+      "prompt": "Read AGENTS.md and .opencode/roles/ai-engineer/ROLE.md before answering. Use langgraph-chatbot, mcp-tools, and mcp-security-audit skills. Use codebase-memory to understand existing MCPs.",
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "project_memory_*": true,
+        "codebase-memory_*": true,
         "biblioteca-mcp_*": true,
         "security-audit-mcp_*": true,
         "open-library_*": true
       }
     },
     "qa": {
-      "description": "Diseña y ejecuta pruebas funcionales, integración y regresión.",
+      "description": "Designs and executes functional, integration, and regression tests.",
       "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/qa/ROLE.md before answering. Use testing-qa skill to validate increments.",
+      "prompt": "Read AGENTS.md and .opencode/roles/qa/ROLE.md before answering. Use testing-qa skill to validate increments. Use codebase-memory to understand what to test.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": true,
         "project_memory_*": true,
-        "github_*": true,
         "codebase-memory_*": true,
+        "github_*": true,
         "index_repository": true
       }
     },
     "technical-writer": {
-      "description": "Mantiene README, documentación de prompts, MCP y bitácora AI Engineering.",
+      "description": "Maintains README, prompt documentation, MCP docs, and AI Engineering logs.",
       "model": "{env:OPENCODE_MODEL}",
-      "prompt": "Read .opencode/roles/technical-writer/ROLE.md before answering. Use documentation skill.",
+      "prompt": "Read AGENTS.md and .opencode/roles/technical-writer/ROLE.md before answering. Use documentation skill.",
       "tools": {
         "write": true,
         "edit": true,
-        "bash": false
+        "bash": false,
+        "project_memory_*": true,
+        "codebase-memory_*": true
       }
     }
   },
   "command": {
     "read-graph": {
-      "description": "Leer el estado actual del proyecto a través del MCP.",
+      "description": "Read the current project state through MCP.",
       "agent": "architect",
-      "template": "Lee y ejecuta ESTRICTAMENTE las instrucciones del archivo '.opencode/commands/read-graph.md'."
+      "template": "Read and STRICTLY execute the instructions from the file '.opencode/commands/read-graph.md'."
     },
     "create-user-story": {
-      "description": "Crear una Historia de Usuario a partir de un requerimiento.",
+      "description": "Create a User Story from a requirement.",
       "agent": "technical-lead",
-      "template": "A partir del requerimiento: $ARGUMENTS, lee y ejecuta ESTRICTAMENTE las instrucciones del archivo '.opencode/commands/create-user-story.md'."
+      "template": "From the requirement: $ARGUMENTS, read and STRICTLY execute the instructions from the file '.opencode/commands/create-user-story.md'."
     },
     "plan-user-story": {
-      "description": "Elaborar el plan técnico y preparar el entorno de Git con la nueva rama.",
+      "description": "Elaborate the technical plan and prepare the Git environment with the new branch.",
       "agent": "technical-lead",
-      "template": "Para la historia $ARGUMENTS, lee y ejecuta ESTRICTAMENTE paso a paso el archivo '.opencode/commands/plan-user-story.md'."
+      "template": "For story $ARGUMENTS, read and STRICTLY execute step by step the file '.opencode/commands/plan-user-story.md'."
     },
     "approve-user-story": {
-      "description": "Aprobar explícitamente una Historia de Usuario planificada para su implementación.",
+      "description": "Explicitly approve a planned User Story for implementation.",
       "agent": "technical-lead",
-      "template": "Para la historia $ARGUMENTS, lee y ejecuta ESTRICTAMENTE paso a paso el archivo '.opencode/commands/approve-user-story.md'."
+      "template": "For story $ARGUMENTS, read and STRICTLY execute step by step the file '.opencode/commands/approve-user-story.md'."
     },
     "implement-user-story": {
-      "description": "Implementar una Historia de Usuario aprobada o rechazada, escribir código y hacer push exclusivamente vía MCP.",
+      "description": "Implement an approved or rejected User Story, write code, and push exclusively via MCP.",
       "agent": "technical-lead",
-      "template": "Para la historia $ARGUMENTS, lee y ejecuta ESTRICTAMENTE paso a paso el archivo '.opencode/commands/implement-user-story.md'."
+      "template": "For story $ARGUMENTS, read and STRICTLY execute step by step the file '.opencode/commands/implement-user-story.md'."
     },
     "qa-check": {
-      "description": "Revisar la calidad del incremento, actualizar TODA la documentación, hacer push vía MCP y generar el PR o Rechazar.",
+      "description": "Review the quality of the increment, update ALL documentation, push via MCP, and create the PR or Reject.",
       "agent": "qa",
-      "template": "Para la historia $ARGUMENTS, lee y ejecuta ESTRICTAMENTE paso a paso el archivo '.opencode/commands/qa-check.md'."
+      "template": "For story $ARGUMENTS, read and STRICTLY execute step by step the file '.opencode/commands/qa-check.md'."
     }
   },
   "compaction": {
