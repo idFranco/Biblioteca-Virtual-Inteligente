@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BibliotecaVirtual.WebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/book-requests")]
 [Authorize]
 public sealed class BookRequestsController : ControllerBase
 {
