@@ -88,7 +88,8 @@
       ],
       "enabled": false,
       "environment": {
-        "DATABASE_PATH": "{env:DATABASE_PATH}"
+        "DATABASE_PATH": "{env:DATABASE_PATH}",
+        "API_KEY_GROQ": "{env:API_KEY_GROQ}"
       },
       "timeout": 30000
     },

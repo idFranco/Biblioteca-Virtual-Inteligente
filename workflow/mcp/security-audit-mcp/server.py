@@ -8,9 +8,10 @@ from fastmcp import FastMCP
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "workflow" / "mcp"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common.settings import get_database_path
-from security_audit_mcp.detector import detect_injection, detect_sensitive, sanitize
+from groq_audit import detect_injection, detect_sensitive, sanitize
 
 mcp = FastMCP("Security-Audit-MCP")
 
@@ -20,6 +21,11 @@ _AUDIT_DB_PATH = Path(
     os.getenv("AUDIT_DATABASE_PATH", str(REPO_ROOT / "workflow" / "database" / "AuditLog.db"))
 ).resolve()
 _AUDIT_TABLE = "audit_events"
+
+
+@mcp.tool()
+def ping() -> str:
+    return "pong"
 
 
 def _init_audit_db() -> None:
@@ -55,56 +61,82 @@ def _register_audit_event(event_type: str, result: str, correlation_id: str | No
 
 
 @mcp.tool()
-def ping() -> str:
-    return "pong"
-
-
-@mcp.tool()
-def audit_user_input(text: str, correlation_id: str | None = None) -> dict:
+async def audit_user_input(text: str, correlation_id: str | None = None) -> dict:
     """Audita la entrada del usuario antes de procesarse en el grafo.
 
-    Devuelve {"safe": bool, "reasons": [...], "sensitive": [...]}. No almacena
-    texto completo ni secretos.
+    Clasifica inyección y datos sensibles mediante Groq. Si el LLM falla, usa
+    el fallback seguro (bloquear). Nunca almacena texto completo ni secretos.
     """
-    injection = detect_injection(text)
-    sensitive = detect_sensitive(text)
-    safe = not injection and not sensitive
-    result = json.dumps({"safe": safe, "reasons": injection[:3]})
+    try:
+        injection = await detect_injection(text)
+        sensitive = await detect_sensitive(text)
+        safe = not injection and not sensitive
+        reasons = injection[:3]
+    except Exception:
+        safe = False
+        reasons = ["audit_unavailable"]
+        sensitive = ["audit_unavailable"]
+
+    result = json.dumps({"safe": safe, "reasons": reasons})
     _register_audit_event("audit_user_input", result, correlation_id)
-    return {"safe": safe, "reasons": injection[:3], "sensitive": sensitive[:3]}
+    return {"safe": safe, "reasons": reasons, "sensitive": sensitive[:3]}
 
 
 @mcp.tool()
-def audit_model_output(text: str, correlation_id: str | None = None) -> dict:
+async def audit_model_output(text: str, correlation_id: str | None = None) -> dict:
     """Audita la salida del modelo antes de enviarla al frontend."""
-    injection = detect_injection(text)
-    sensitive = detect_sensitive(text)
-    safe = not injection and not sensitive
+    try:
+        injection = await detect_injection(text)
+        sensitive = await detect_sensitive(text)
+        safe = not injection and not sensitive
+        reasons = (injection + sensitive)[:3]
+    except Exception:
+        safe = False
+        reasons = ["audit_unavailable"]
+
     result = json.dumps({"safe": safe})
     _register_audit_event("audit_model_output", result, correlation_id)
-    return {"safe": safe, "reasons": (injection + sensitive)[:3]}
+    return {"safe": safe, "reasons": reasons}
 
 
 @mcp.tool()
-def detect_prompt_injection(text: str) -> dict:
-    """Detecta intentos de prompt injection en el texto."""
-    injection = detect_injection(text)
-    _register_audit_event("detect_prompt_injection", json.dumps({"flagged": bool(injection)}))
-    return {"flagged": bool(injection), "reasons": injection[:3]}
+async def detect_prompt_injection(text: str) -> dict:
+    """Detecta intentos de prompt injection en el texto vía Groq."""
+    try:
+        injection = await detect_injection(text)
+        flagged = bool(injection)
+        reasons = injection[:3]
+    except Exception:
+        flagged = True
+        reasons = ["audit_unavailable"]
+
+    _register_audit_event("detect_prompt_injection", json.dumps({"flagged": flagged}))
+    return {"flagged": flagged, "reasons": reasons}
 
 
 @mcp.tool()
-def detect_sensitive_data(text: str) -> dict:
-    """Detecta datos sensibles (emails, tokens, claves) en el texto."""
-    sensitive = detect_sensitive(text)
-    _register_audit_event("detect_sensitive_data", json.dumps({"flagged": bool(sensitive)}))
-    return {"flagged": bool(sensitive), "patterns": sensitive[:5]}
+async def detect_sensitive_data(text: str) -> dict:
+    """Detecta datos sensibles (emails, tokens, claves) en el texto vía Groq."""
+    try:
+        sensitive = await detect_sensitive(text)
+        flagged = bool(sensitive)
+        patterns = sensitive[:5]
+    except Exception:
+        flagged = True
+        patterns = ["audit_unavailable"]
+
+    _register_audit_event("detect_sensitive_data", json.dumps({"flagged": flagged}))
+    return {"flagged": flagged, "patterns": patterns}
 
 
 @mcp.tool()
-def sanitize_text(text: str) -> dict:
-    """Elimina contenido potencialmente peligroso y redacta PII del texto."""
-    sanitized, was_sanitized = sanitize(text)
+async def sanitize_text(text: str) -> dict:
+    """Redacta PII y elimina contenido potencialmente peligroso vía Groq."""
+    try:
+        sanitized, was_sanitized = await sanitize(text)
+    except Exception:
+        sanitized = "[REDACTED]"
+        was_sanitized = True
     return {"safe_text": sanitized, "was_sanitized": was_sanitized}
 
 

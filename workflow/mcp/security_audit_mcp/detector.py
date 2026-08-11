@@ -1,8 +1,13 @@
-"""Detección pura (sin FastMCP) de prompt injection y datos sensibles.
+"""DEPRECADO — Detección pura (sin FastMCP) de prompt injection y datos sensibles.
 
-Separa la lógica de auditoría del servidor MCP para poder probarla de forma
-aislada (tests pytest) sin arrancar el transporte. Cubre patrones en español e
-inglés y no almacena texto completo ni secretos.
+Este módulo queda deprecado a partir del rework de US-009 (2026-08-11): la
+auditoría de Security-Audit-MCP usa ahora clasificación LLM vía Groq
+(``workflow/mcp/security-audit-mcp/groq_audit.py``). Ningún código del
+repositorio lo importa; se conserva únicamente como referencia histórica y no
+debe reutilizarse.
+
+El contenido original (patrones ES/EN, sanitización) se mantiene intacto por si
+se requiere auditar el cambio; está programado para eliminación definitiva.
 """
 
 from __future__ import annotations
