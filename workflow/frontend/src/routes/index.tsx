@@ -9,6 +9,7 @@ import { BooksAdminPage } from '@/pages/BooksAdminPage'
 import { MisAlquileresPage } from '@/pages/MisAlquileresPage'
 import { AlquileresAdminPage } from '@/pages/AlquileresAdminPage'
 import { GestionLibroPage } from '@/pages/GestionLibroPage'
+import { HomePage } from '@/pages/HomePage'
 
 export const router = createBrowserRouter([
   {
@@ -65,11 +66,7 @@ export const router = createBrowserRouter([
       },
       {
         index: true,
-        element: (
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold">Bienvenido a la Biblioteca Virtual</h1>
-          </div>
-        ),
+        element: <HomePage />,
       },
     ],
   },

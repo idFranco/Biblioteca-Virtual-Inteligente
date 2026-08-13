@@ -1,13 +1,38 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/fraunces/wght-italic.css";
+@import "@fontsource-variable/lora";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Sala de lectura — identidad visual de librería tradicional.
+ * Paleta cálida y añeja: vino, espresso, pergamino, papel, latón, oliva,
+ * ocre, óxido, maderas y sepia. Tipografía serif: Fraunces (display) + Lora (cuerpo).
+ */
+
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-heading: 'Fraunces Variable', 'Lora Variable', Georgia, serif;
+    --font-serif: 'Fraunces Variable', 'Lora Variable', Georgia, serif;
+    --font-sans: 'Lora Variable', Georgia, serif;
+
+    /* Paleta expuesta como utilities: bg-wine, text-parchment, ring-brass… */
+    --color-wine: var(--wine);
+    --color-espresso: var(--espresso);
+    --color-parchment: var(--parchment);
+    --color-paper: var(--paper);
+    --color-brass: var(--brass);
+    --color-olive: var(--olive);
+    --color-ochre: var(--ochre);
+    --color-oxide: var(--oxide);
+    --color-wood-dark: var(--wood-dark);
+    --color-wood: var(--wood);
+    --color-tan: var(--tan);
+    --color-sepia: var(--sepia);
+
+    /* Tokens shadcn/ui */
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -24,6 +49,7 @@
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-destructive: var(--destructive);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
@@ -49,82 +75,254 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* Paleta de librería */
+    --wine: #7B2D2B;
+    --espresso: #33241A;
+    --parchment: #F5EDDA;
+    --paper: #FBF6E7;
+    --brass: #A67C3D;
+    --olive: #5A6B3B;
+    --ochre: #C08A2E;
+    --oxide: #A03927;
+    --wood-dark: #4A2E20;
+    --wood: #6F4E37;
+    --tan: #D8C6A3;
+    --sepia: #6B5B4A;
+
+    /* Textura de grano de papel (SVG noise data-URI) */
+    --noise-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+
+    --background: var(--paper);
+    --foreground: var(--espresso);
+    --card: var(--paper);
+    --card-foreground: var(--espresso);
+    --popover: var(--paper);
+    --popover-foreground: var(--espresso);
+    --primary: var(--wine);
+    --primary-foreground: var(--paper);
+    --secondary: color-mix(in oklch, var(--tan) 62%, var(--paper));
+    --secondary-foreground: var(--espresso);
+    --muted: var(--parchment);
+    --muted-foreground: var(--sepia);
+    --accent: color-mix(in oklch, var(--ochre) 14%, var(--paper));
+    --accent-foreground: var(--espresso);
+    --destructive: var(--oxide);
+    --destructive-foreground: var(--paper);
+    --border: var(--tan);
+    --input: var(--tan);
+    --ring: var(--brass);
+    --chart-1: var(--wine);
+    --chart-2: var(--brass);
+    --chart-3: var(--olive);
+    --chart-4: var(--ochre);
+    --chart-5: var(--oxide);
+    --radius: 0.375rem;
+    --sidebar: var(--parchment);
+    --sidebar-foreground: var(--espresso);
+    --sidebar-primary: var(--wine);
+    --sidebar-primary-foreground: var(--paper);
+    --sidebar-accent: color-mix(in oklch, var(--ochre) 12%, var(--parchment));
+    --sidebar-accent-foreground: var(--espresso);
+    --sidebar-border: var(--tan);
+    --sidebar-ring: var(--brass);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: var(--espresso);
+    --foreground: var(--parchment);
+    --card: var(--wood-dark);
+    --card-foreground: var(--parchment);
+    --popover: var(--wood-dark);
+    --popover-foreground: var(--parchment);
+    --primary: color-mix(in oklch, var(--brass) 82%, var(--paper));
+    --primary-foreground: var(--espresso);
+    --secondary: var(--wood);
+    --secondary-foreground: var(--parchment);
+    --muted: var(--wood);
+    --muted-foreground: color-mix(in oklch, var(--tan) 62%, var(--paper));
+    --accent: color-mix(in oklch, var(--wood-dark) 76%, var(--tan));
+    --accent-foreground: var(--parchment);
+    --destructive: var(--oxide);
+    --destructive-foreground: var(--paper);
+    --border: color-mix(in oklch, var(--wood) 72%, var(--wood-dark));
+    --input: color-mix(in oklch, var(--wood) 74%, var(--tan));
+    --ring: var(--brass);
+    --chart-1: color-mix(in oklch, var(--brass) 85%, var(--paper));
+    --chart-2: var(--olive);
+    --chart-3: color-mix(in oklch, var(--ochre) 80%, var(--paper));
+    --chart-4: var(--wine);
+    --chart-5: var(--oxide);
+    --sidebar: var(--wood-dark);
+    --sidebar-foreground: var(--parchment);
+    --sidebar-primary: color-mix(in oklch, var(--brass) 82%, var(--paper));
+    --sidebar-primary-foreground: var(--espresso);
+    --sidebar-accent: var(--wood);
+    --sidebar-accent-foreground: var(--parchment);
+    --sidebar-border: color-mix(in oklch, var(--wood) 72%, var(--wood-dark));
+    --sidebar-ring: var(--brass);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    html {
+        @apply font-sans;
+        scroll-behavior: smooth;
     }
-  html {
-    @apply font-sans;
+
+    body {
+        @apply bg-background text-foreground font-sans antialiased;
+        background-image:
+            radial-gradient(1100px 560px at 88% -8%, color-mix(in oklch, var(--ochre) 9%, transparent), transparent 62%),
+            radial-gradient(900px 520px at -12% 18%, color-mix(in oklch, var(--olive) 8%, transparent), transparent 58%),
+            var(--noise-paper);
+        background-attachment: fixed;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-heading;
+    }
+
+    ::selection {
+        background: color-mix(in oklch, var(--brass) 45%, transparent);
+        color: var(--espresso);
+    }
+
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--parchment);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: color-mix(in oklch, var(--wood) 70%, var(--brass));
+        border-radius: 9999px;
+    }
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: var(--espresso);
+}
+
+@layer components {
+    /* Fondo de madera oscura para header/footer, con vetas de tablones */
+    .wood-panel {
+        background-color: var(--wood-dark);
+        background-image:
+            repeating-linear-gradient(
+                90deg,
+                transparent 0 22px,
+                color-mix(in oklch, var(--espresso) 24%, transparent) 22px 24px
+            ),
+            linear-gradient(
+                180deg,
+                var(--wood-dark),
+                color-mix(in oklch, var(--wood-dark) 84%, var(--espresso))
+            );
+    }
+
+    /* Grano sutil sobre cualquier superficie (tarjetas, portadas, paneles) */
+    .texture-grain {
+        position: relative;
+    }
+
+    .texture-grain::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: var(--noise-paper);
+        background-size: 140px 140px;
+        opacity: 0.7;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    /* Regla ornamental: dos líneas de latón con rombo central */
+    .ornament-rule {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .ornament-rule::before,
+    .ornament-rule::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+    }
+
+    .ornament-rule::before {
+        background: linear-gradient(90deg, transparent, var(--brass));
+    }
+
+    .ornament-rule::after {
+        background: linear-gradient(90deg, var(--brass), transparent);
+    }
+
+    .ornament-diamond {
+        width: 0.45rem;
+        height: 0.45rem;
+        flex: none;
+        transform: rotate(45deg);
+        background: var(--brass);
+        box-shadow: 0 0 0 2px color-mix(in oklch, var(--brass) 28%, transparent);
+    }
+
+    /* Aparición escalonada (staggered reveal) */
+    .reveal {
+        animation: fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .reveal-delay-1 { animation-delay: 0.06s; }
+    .reveal-delay-2 { animation-delay: 0.14s; }
+    .reveal-delay-3 { animation-delay: 0.22s; }
+    .reveal-delay-4 { animation-delay: 0.3s; }
+    .reveal-delay-5 { animation-delay: 0.38s; }
+    .reveal-delay-6 { animation-delay: 0.46s; }
+
+    /* Transición suave entre rutas */
+    .page-fade {
+        animation: page-in 0.4s ease both;
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes page-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal-delay-1,
+    .reveal-delay-2,
+    .reveal-delay-3,
+    .reveal-delay-4,
+    .reveal-delay-5,
+    .reveal-delay-6,
+    .page-fade {
+        animation: none;
     }
 }

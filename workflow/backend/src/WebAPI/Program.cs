@@ -139,6 +139,9 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
     await SeedRolesAsync(scope.ServiceProvider);
     await SeedAdministratorAsync(scope.ServiceProvider, builder.Configuration);
+
+    var catalogSeeder = scope.ServiceProvider.GetRequiredService<ICatalogSeeder>();
+    await catalogSeeder.SeedAsync();
 }
 
 app.Run();

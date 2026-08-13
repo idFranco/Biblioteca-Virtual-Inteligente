@@ -28,42 +28,47 @@ export function LoginPage() {
 
   return (
     <div className="container mx-auto max-w-md px-4 py-16">
-      <h1 className="mb-6 text-3xl font-bold">Iniciar sesión</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium">Correo electrónico</label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-2"
-          />
+      <div className="texture-grain rounded-lg border border-tan/80 bg-card p-8 shadow-sm dark:border-wood">
+        <h1 className="mb-1 font-heading text-3xl font-semibold text-espresso dark:text-parchment">Iniciar sesión</h1>
+        <div aria-hidden="true" className="ornament-rule mt-3 mb-6">
+          <span className="ornament-diamond" />
         </div>
-        <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium">Contraseña</label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-2"
-          />
-        </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {loading ? 'Ingresando...' : 'Ingresar'}
-        </button>
-      </form>
-      <p className="mt-4 text-sm">
-        ¿No tienes cuenta? <Link to="/register" className="text-blue-600 underline">Regístrate</Link>
-      </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Correo electrónico</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
+            />
+          </div>
+          {error && <p className="text-sm text-oxide">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-wine px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-oxide disabled:opacity-50 dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
+          >
+            {loading ? 'Ingresando...' : 'Ingresar'}
+          </button>
+        </form>
+        <p className="mt-4 text-sm text-sepia dark:text-tan">
+          ¿No tienes cuenta? <Link to="/register" className="font-medium text-brass underline underline-offset-4 hover:text-ochre">Regístrate</Link>
+        </p>
+      </div>
     </div>
   )
 }

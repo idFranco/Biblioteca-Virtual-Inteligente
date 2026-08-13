@@ -44,16 +44,16 @@ export function CreateRentalDialog({ book, onClose, onCreated }: CreateRentalDia
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-espresso/50 p-4"
     >
-      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-lg border bg-white p-6 shadow-lg">
-        <h2 className="text-lg font-semibold">Alquilar "{book.title}"</h2>
-        <p className="mb-4 text-sm text-gray-600">{book.author}</p>
+      <form onSubmit={handleSubmit} className="texture-grain w-full max-w-md rounded-lg border border-tan/80 bg-paper p-6 shadow-xl dark:border-wood dark:bg-wood-dark">
+        <h2 className="font-heading text-lg font-semibold text-espresso dark:text-parchment">Alquilar "{book.title}"</h2>
+        <p className="mb-4 text-sm text-sepia dark:text-tan">{book.author}</p>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-oxide">{error}</p>}
 
         <div className="mb-4">
-          <label htmlFor="dueDate" className="mb-1 block text-sm font-medium">
+          <label htmlFor="dueDate" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">
             Fecha límite de devolución
           </label>
           <input
@@ -64,7 +64,7 @@ export function CreateRentalDialog({ book, onClose, onCreated }: CreateRentalDia
             max={toDateInputValue(maxDue)}
             value={dueDate}
             onChange={(event) => setDueDate(event.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           />
         </div>
 
@@ -72,14 +72,14 @@ export function CreateRentalDialog({ book, onClose, onCreated }: CreateRentalDia
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-gray-300 px-4 py-2 text-sm"
+            className="rounded-md border border-brass/50 bg-paper px-4 py-2 text-sm font-medium text-espresso transition-colors hover:bg-brass/15 dark:bg-wood-dark dark:text-parchment"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+            className="rounded-md bg-wine px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-oxide disabled:opacity-50 dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
           >
             {submitting ? 'Alquilando...' : 'Confirmar alquiler'}
           </button>

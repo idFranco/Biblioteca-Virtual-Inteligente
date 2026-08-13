@@ -318,3 +318,25 @@ Notas:
 - En el primer arranque el backend siembra roles/permisos y el usuario administrador definido por `ADMIN_EMAIL`/`ADMIN_PASSWORD`; el JWT se firma con `JWT_KEY`.
 - La base SQLite persiste en el volumen Docker `database_data` (`./workflow/database/` solo para desarrollo local, fuera de contenedores).
 - Para detener: `docker compose down` (añade `-v` si quieres eliminar también el volumen de datos).
+
+---
+
+## 8. Datos de ejemplo (seed)
+
+El catálogo se siembra con datos de ejemplo al arrancar el backend, a partir de la fuente única `workflow/backend/data/seed-books.json`:
+
+- **Inventario:** ~50 obras reales (mayormente clásicos de dominio público) con `Title`, `Author`, `Isbn` (ISBN-13), `Genre`, `Description`, `OpenLibraryKey`, `TotalCopies` y `AvailableCopies`.
+- **Distribución por géneros:** 9 géneros (Novela, Clásicos, Aventura, Ciencia Ficción, Fantasía, Historia, Ensayo, Terror, Poesía) para ejercitar el filtro y la búsqueda del catálogo.
+- **Variación de copias:** `TotalCopies` entre 1 y 5; al menos un libro con 0 copias disponibles para ejercitar el filtro "Solo disponibles" y el badge de disponibilidad.
+- **Regeneración idempotente:** el seed solo inserta si la tabla `Books` está vacía (mismo patrón que roles/administrador); no duplica al rearrancar. Para regenerar, borra el archivo `.db` correspondiente (se recrea esquema + seed). Controlable con `CatalogSeed:Enabled` / `CatalogSeed:FilePath`.
+
+**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. La verificación es una tarea de desarrollo/QA (script `workflow/scripts/verify_seed_open_library.py` vía el MCP `ol_verify_by_isbn`); la app en runtime no consulta Open Library (ADR-007/020).
+
+## 9. Identidad visual
+
+La SPA usa la identidad "Sala de lectura" (librería tradicional) definida exclusivamente en el frontend mediante tokens bajo `src/index.css` (light `:root` + `.dark`):
+
+- **Paleta cálida y añeja:** fondos crema/pergamino, marrones de madera/cuero (espresso, wine, wood), acentos ámbar/dorado (brass, ochre) y verde musgo (olive).
+- **Tipografía:** Fraunces Variable (display/serif) y Lora Variable (cuerpo).
+- **Portadas:** derivadas en cliente desde ISBN/OLID (`covers.openlibrary.org`) con fallback ornamental en caso de error.
+- **Alcance:** cambio de presentación únicamente; no altera rutas, guardias de permisos, lógica de negocio ni contratos de API (ADR-021).

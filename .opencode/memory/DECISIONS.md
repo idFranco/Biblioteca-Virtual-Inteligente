@@ -78,3 +78,19 @@ MCP servers must remain disabled until the corresponding User Story is Implement
 - biblioteca-mcp → enabled when US-Biblioteca-MCP is Validated
 - security-audit-mcp → enabled when US-Security-Audit is Validated
 - open-library → enabled when US-External-MCP is Validated
+
+## ADR-018 — BookRequest entity and request status
+
+Registers the design debt left from US-009 (book request workflow) that was never captured in this file: a `BookRequest` entity tracks a request to add copies of a book not present in the database, with a `BookRequestStatus` lifecycle (Pending / Approved / Rejected). Administrators manage these requests from "Gestión de Libro" to bring requested books into the catalog, widening availability with external sources. Recorded in the US-010 documentation round.
+
+## ADR-019 — Idempotent demo catalog seed
+
+The demo catalog is seeded from a single manifest JSON, `workflow/backend/data/seed-books.json`, which is the single source of truth consumed by both the C# seeder (`CatalogSeeder`) and the Python verification script. Seeding runs at startup after `EnsureCreated`, role seed, and admin seed, and only inserts when the `Books` table is empty (same guard pattern as `SeedRolesAsync`), so re-runs never duplicate. Invalid entries are skipped with a warning instead of aborting startup. Behavior is controlled by `CatalogSeed:Enabled` and `CatalogSeed:FilePath`. No schema migration is required (`EnsureCreated` regenerates schema + seed when the `.db` is deleted).
+
+## ADR-020 — Open Library verification as dev-time batch via MCP
+
+Verification that seed books exist in Open Library is a development/QA batch task, not a runtime feature. It is executed by the script `workflow/scripts/verify_seed_open_library.py`, which invokes the custom open-library MCP tool `ol_verify_by_isbn` over stdio (reusing the chatbot's `McpStdioClient`, consistent with ADR-006/007 and the data-flow frontier defined in US-010). The backend never adds an HTTP client to Open Library. Semantics of "available in Open Library": the work exists in OL and the returned title matches the seeded one (normalized, case- and accent-insensitive comparison); it does NOT imply rental availability, and no invented key is ever seeded.
+
+## ADR-021 — Frontend-only library visual identity
+
+The SPA adopts a warm, aged "Sala de lectura" (traditional library) identity as a presentation-only change, redefining the shadcn/ui tokens in `src/index.css` (light `:root` + `.dark`) with a palette of parchment/paper backgrounds, espresso/wine/wood warm browns, and brass/olive/ochre accents. Serif typography uses Fraunces Variable (display) and Lora Variable (body). Book covers are derived client-side from ISBN/OLID via `covers.openlibrary.org` with an ornamental fallback on error. No routes, permission guards, business logic, or API contracts change.
