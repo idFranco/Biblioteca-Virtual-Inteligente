@@ -1,0 +1,511 @@
+{
+  "verified_at": "2026-08-14T22:17:29.168471+00:00",
+  "summary": {
+    "total": 50,
+    "found": 50,
+    "not_found": 0,
+    "matched": 50
+  },
+  "books": [
+    {
+      "title": "Cien años de soledad",
+      "author": "Gabriel García Márquez",
+      "isbn": "9780307350275",
+      "found": true,
+      "open_library_key": "/books/OL10353390M",
+      "matched_title": "Cien años de soledad",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Don Quijote de la Mancha",
+      "author": "Miguel de Cervantes",
+      "isbn": "9788420412146",
+      "found": true,
+      "open_library_key": "/books/OL27203733M",
+      "matched_title": "Don Quijote de la Mancha",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Orgullo y prejuicio",
+      "author": "Jane Austen",
+      "isbn": "9788469833346",
+      "found": true,
+      "open_library_key": "/books/OL47163671M",
+      "matched_title": "Orgullo y prejuicio",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "1984",
+      "author": "George Orwell",
+      "isbn": "9798590144907",
+      "found": true,
+      "open_library_key": "/books/OL42471716M",
+      "matched_title": "1984",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Crimen y castigo",
+      "author": "Fiódor Dostoyevski",
+      "isbn": "9788420665658",
+      "found": true,
+      "open_library_key": "/books/OL47088808M",
+      "matched_title": "Crimen y castigo",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El señor de los anillos",
+      "author": "J.R.R. Tolkien",
+      "isbn": "9788445013977",
+      "found": true,
+      "open_library_key": "/books/OL47181064M",
+      "matched_title": "El Señor de los Anillos",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Matar a un ruiseñor",
+      "author": "Harper Lee",
+      "isbn": "9781681419770",
+      "found": true,
+      "open_library_key": "/books/OL47200994M",
+      "matched_title": "Matar a un ruisenor",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El gran Gatsby",
+      "author": "F. Scott Fitzgerald",
+      "isbn": "8418067411",
+      "found": true,
+      "open_library_key": "/books/OL47624674M",
+      "matched_title": "El Gran Gatsby",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Ulises",
+      "author": "James Joyce",
+      "isbn": "8497945425",
+      "found": true,
+      "open_library_key": "/books/OL47476135M",
+      "matched_title": "ULISES",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Guerra y paz",
+      "author": "León Tolstói",
+      "isbn": "8445904264",
+      "found": true,
+      "open_library_key": "/books/OL13268828M",
+      "matched_title": "Guerra y Paz",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Anna Karenina",
+      "author": "León Tolstói",
+      "isbn": "9780143035008",
+      "found": true,
+      "open_library_key": "/books/OL7361482M",
+      "matched_title": "Anna Karenina",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La Odisea",
+      "author": "Homero",
+      "isbn": "1505595169",
+      "found": true,
+      "open_library_key": "/books/OL44011007M",
+      "matched_title": "La Odisea",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La Ilíada",
+      "author": "Homero",
+      "isbn": "9709272810",
+      "found": true,
+      "open_library_key": "/books/OL42872377M",
+      "matched_title": "La Iliada",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Frankenstein",
+      "author": "Mary Shelley",
+      "isbn": "9780141439471",
+      "found": true,
+      "open_library_key": "/books/OL3701481M",
+      "matched_title": "Frankenstein",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Drácula",
+      "author": "Bram Stoker",
+      "isbn": "9780141439846",
+      "found": true,
+      "open_library_key": "/books/OL10416488M",
+      "matched_title": "Dracula",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "En busca del tiempo perdido",
+      "author": "Marcel Proust",
+      "isbn": "9798515047757",
+      "found": true,
+      "open_library_key": "/books/OL48814755M",
+      "matched_title": "En Busca Del Tiempo Perdido",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Moby Dick",
+      "author": "Herman Melville",
+      "isbn": "9781424501359",
+      "found": true,
+      "open_library_key": "/books/OL33971989M",
+      "matched_title": "Moby Dick",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Las aventuras de Alicia en el país de las maravillas",
+      "author": "Lewis Carroll",
+      "isbn": "9781974282135",
+      "found": true,
+      "open_library_key": "/books/OL56300751M",
+      "matched_title": "Las Aventuras de Alicia en el País de Las Maravillas",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El retrato de Dorian Gray",
+      "author": "Oscar Wilde",
+      "isbn": "9781512006209",
+      "found": true,
+      "open_library_key": "/books/OL26372705M",
+      "matched_title": "El retrato de Dorian Gray",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Cumbres borrascosas",
+      "author": "Emily Brontë",
+      "isbn": "9788423307623",
+      "found": true,
+      "open_library_key": "/books/OL60986785M",
+      "matched_title": "Cumbres Borrascosas",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Jane Eyre",
+      "author": "Charlotte Brontë",
+      "isbn": "9781609423339",
+      "found": true,
+      "open_library_key": "/books/OL27433104M",
+      "matched_title": "Jane Eyre",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Los miserables",
+      "author": "Víctor Hugo",
+      "isbn": "9781539313410",
+      "found": true,
+      "open_library_key": "/books/OL56369195M",
+      "matched_title": "Los Miserables",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El conde de Montecristo",
+      "author": "Alejandro Dumas",
+      "isbn": "9788466307383",
+      "found": true,
+      "open_library_key": "/books/OL9133978M",
+      "matched_title": "El conde de Montecristo",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Las uvas de la ira",
+      "author": "John Steinbeck",
+      "isbn": "8483831597",
+      "found": true,
+      "open_library_key": "/books/OL25619509M",
+      "matched_title": "Las uvas de la ira",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "De ratones y hombres",
+      "author": "John Steinbeck",
+      "isbn": "1535144386",
+      "found": true,
+      "open_library_key": "/books/OL54787411M",
+      "matched_title": "De Ratones y Hombres",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El viejo y el mar",
+      "author": "Ernest Hemingway",
+      "isbn": "1541324560",
+      "found": true,
+      "open_library_key": "/books/OL47663220M",
+      "matched_title": "El viejo y el Mar",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Fahrenheit 451",
+      "author": "Ray Bradbury",
+      "isbn": "9781451673319",
+      "found": true,
+      "open_library_key": "/books/OL26437043M",
+      "matched_title": "Fahrenheit 451",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Un mundo feliz",
+      "author": "Aldous Huxley",
+      "isbn": "9788411404266",
+      "found": true,
+      "open_library_key": "/books/OL47422528M",
+      "matched_title": "Un mundo feliz",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La metamorfosis",
+      "author": "Franz Kafka",
+      "isbn": "9788497942027",
+      "found": true,
+      "open_library_key": "/books/OL47476323M",
+      "matched_title": "La metamorfosis",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El proceso",
+      "author": "Franz Kafka",
+      "isbn": "9789500303088",
+      "found": true,
+      "open_library_key": "/books/OL12952092M",
+      "matched_title": "El Proceso",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La casa de los espíritus",
+      "author": "Isabel Allende",
+      "isbn": "9789500702911",
+      "found": true,
+      "open_library_key": "/books/OL12954911M",
+      "matched_title": "La Casa De Los Espíritus",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Rayuela",
+      "author": "Julio Cortázar",
+      "isbn": "9789505111879",
+      "found": true,
+      "open_library_key": "/books/OL9137613M",
+      "matched_title": "Rayuela",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Ficciones",
+      "author": "Jorge Luis Borges",
+      "isbn": "1857151666",
+      "found": true,
+      "open_library_key": "/books/OL22117287M",
+      "matched_title": "Ficciones",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La divina comedia",
+      "author": "Dante Alighieri",
+      "isbn": "9789506946708",
+      "found": true,
+      "open_library_key": "/books/OL9485517M",
+      "matched_title": "La Divina Comedia",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Hamlet",
+      "author": "William Shakespeare",
+      "isbn": "9706660488",
+      "found": true,
+      "open_library_key": "/books/OL35737312M",
+      "matched_title": "Hamlet",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Historia de la conquista de México",
+      "author": "William H. Prescott",
+      "isbn": "1020714999",
+      "found": true,
+      "open_library_key": "/books/OL50770184M",
+      "matched_title": "Historia de la Conquista de México",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Los doce césares",
+      "author": "Suetonio",
+      "isbn": "9781530471027",
+      "found": true,
+      "open_library_key": "/books/OL55562506M",
+      "matched_title": "Los Doce Césares",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Los hermanos Karamázov",
+      "author": "Fiódor Dostoyevski",
+      "isbn": "9789706668486",
+      "found": true,
+      "open_library_key": "/books/OL31897459M",
+      "matched_title": "Los hermanos Karamazov",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El corazón de las tinieblas",
+      "author": "Joseph Conrad",
+      "isbn": "9788494674402",
+      "found": true,
+      "open_library_key": "/books/OL35617903M",
+      "matched_title": "El corazón de las tinieblas",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La guerra de los mundos",
+      "author": "H.G. Wells",
+      "isbn": "9789706438409",
+      "found": true,
+      "open_library_key": "/books/OL9330260M",
+      "matched_title": "La guerra de los mundos",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El hombre invisible",
+      "author": "H.G. Wells",
+      "isbn": "9780613830669",
+      "found": true,
+      "open_library_key": "/books/OL10975654M",
+      "matched_title": "El Hombre Invisible",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Veinte mil leguas de viaje submarino",
+      "author": "Julio Verne",
+      "isbn": "8472541215",
+      "found": true,
+      "open_library_key": "/books/OL47652843M",
+      "matched_title": "VEINTE MIL LEGUAS DE VIAJE SUBMARINO",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La vuelta al mundo en ochenta días",
+      "author": "Julio Verne",
+      "isbn": "8430513590",
+      "found": true,
+      "open_library_key": "/books/OL32116055M",
+      "matched_title": "La vuelta al mundo en ochenta días",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Robinson Crusoe",
+      "author": "Daniel Defoe",
+      "isbn": "9780141439822",
+      "found": true,
+      "open_library_key": "/books/OL3777980M",
+      "matched_title": "Robinson Crusoe",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La isla del tesoro",
+      "author": "Robert Louis Stevenson",
+      "isbn": "9788467048483",
+      "found": true,
+      "open_library_key": "/books/OL47105896M",
+      "matched_title": "La Isla del Tesoro",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Peter Pan",
+      "author": "J.M. Barrie",
+      "isbn": "9781484102824",
+      "found": true,
+      "open_library_key": "/books/OL48213074M",
+      "matched_title": "Peter Pan",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "El principito",
+      "author": "Antoine de Saint-Exupéry",
+      "isbn": "9788418797453",
+      "found": true,
+      "open_library_key": "/books/OL47134281M",
+      "matched_title": "El Principito",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Siddhartha",
+      "author": "Hermann Hesse",
+      "isbn": "9781788887946",
+      "found": true,
+      "open_library_key": "/books/OL28924995M",
+      "matched_title": "Siddhartha",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "La náusea",
+      "author": "Jean-Paul Sartre",
+      "isbn": "9786074153101",
+      "found": true,
+      "open_library_key": "/books/OL40269760M",
+      "matched_title": "La Náusea",
+      "strategy": "isbn",
+      "matched": true
+    },
+    {
+      "title": "Walden",
+      "author": "Henry David Thoreau",
+      "isbn": "1695116852",
+      "found": true,
+      "open_library_key": "/books/OL41434662M",
+      "matched_title": "Walden",
+      "strategy": "isbn",
+      "matched": true
+    }
+  ]
+}

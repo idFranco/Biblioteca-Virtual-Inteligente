@@ -3,12 +3,12 @@
     {
       "title": "Cien años de soledad",
       "author": "Gabriel García Márquez",
-      "isbn": "9788497592208",
+      "isbn": "9780307350275",
       "genre": "Novela",
       "description": "La saga de la familia Buendía en el mítico pueblo de Macondo, obra maestra del realismo mágico.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL25938381M"
+      "openLibraryKey": "OL10353390M"
     },
     {
       "title": "Don Quijote de la Mancha",
@@ -23,82 +23,82 @@
     {
       "title": "Orgullo y prejuicio",
       "author": "Jane Austen",
-      "isbn": "9780141439518",
+      "isbn": "9788469833346",
       "genre": "Novela",
       "description": "Elizabeth Bennet y el señor Darcy en una historia de amor, prejuicios y sociedad en la Inglaterra georgiana.",
       "totalCopies": 2,
       "availableCopies": 1,
-      "openLibraryKey": "OL37076991M"
+      "openLibraryKey": "OL47163671M"
     },
     {
       "title": "1984",
       "author": "George Orwell",
-      "isbn": "9780451524935",
+      "isbn": "9798590144907",
       "genre": "Ciencia Ficción",
       "description": "Distopía sobre un totalitarismo omnipresente y la vigilancia del Gran Hermano.",
       "totalCopies": 4,
       "availableCopies": 4,
-      "openLibraryKey": "OL34854896M"
+      "openLibraryKey": "OL42471716M"
     },
     {
       "title": "Crimen y castigo",
       "author": "Fiódor Dostoyevski",
-      "isbn": "9780143058144",
+      "isbn": "9788420665658",
       "genre": "Clásicos",
       "description": "Raskólnikov y las consecuencias morales de un crimen en las calles de San Petersburgo.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL7361882M"
+      "openLibraryKey": "OL47088808M"
     },
     {
       "title": "El señor de los anillos",
       "author": "J.R.R. Tolkien",
-      "isbn": "9780544003415",
+      "isbn": "9788445013977",
       "genre": "Fantasía",
       "description": "La épica aventura de Frodo y la Comunidad del Anillo para destruir el Anillo Único.",
       "totalCopies": 5,
       "availableCopies": 3,
-      "openLibraryKey": "OL47328165M"
+      "openLibraryKey": "OL47181064M"
     },
     {
       "title": "Matar a un ruiseñor",
       "author": "Harper Lee",
-      "isbn": "9780060935467",
+      "isbn": "9781681419770",
       "genre": "Novela",
       "description": "La justicia y el racismo en el sur de Estados Unidos contados a través de los ojos del abogado Atticus Finch.",
       "totalCopies": 2,
       "availableCopies": 0,
-      "openLibraryKey": "OL37027463M"
+      "openLibraryKey": "OL47200994M"
     },
     {
       "title": "El gran Gatsby",
       "author": "F. Scott Fitzgerald",
-      "isbn": "9780743273565",
+      "isbn": "8418067411",
       "genre": "Novela",
       "description": "El sueño americano y la alta sociedad de los años veinte a través de Jay Gatsby.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL46773254M"
+      "openLibraryKey": "OL47624674M"
     },
     {
       "title": "Ulises",
       "author": "James Joyce",
-      "isbn": "9781539631446",
+      "isbn": "8497945425",
       "genre": "Clásicos",
       "description": "Un día en la vida de Leopold Bloom en Dublín, uno de los hitos de la literatura moderna.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL37752279M"
+      "openLibraryKey": "OL47476135M"
     },
     {
       "title": "Guerra y paz",
       "author": "León Tolstói",
-      "isbn": "9780140447934",
+      "isbn": "8445904264",
       "genre": "Novela",
       "description": "La invasión napoleónica de Rusia y las vidas entrelazadas de varias familias aristocráticas.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL7355422M"
+      "openLibraryKey": "OL13268828M"
     },
     {
       "title": "Anna Karenina",
@@ -113,22 +113,22 @@
     {
       "title": "La Odisea",
       "author": "Homero",
-      "isbn": "9780140268867",
+      "isbn": "1505595169",
       "genre": "Clásicos",
       "description": "El largo viaje de regreso de Odiseo a Ítaca tras la guerra de Troya.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL32897268M"
+      "openLibraryKey": "OL44011007M"
     },
     {
       "title": "La Ilíada",
       "author": "Homero",
-      "isbn": "9780140275360",
+      "isbn": "9709272810",
       "genre": "Clásicos",
       "description": "El conflicto épico de la guerra de Troya y la cólera de Aquiles.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL23245724M"
+      "openLibraryKey": "OL42872377M"
     },
     {
       "title": "Frankenstein",
@@ -163,102 +163,102 @@
     {
       "title": "Moby Dick",
       "author": "Herman Melville",
-      "isbn": "9780142000083",
+      "isbn": "9781424501359",
       "genre": "Aventura",
       "description": "La obsesión del capitán Ahab por cazar a la gran ballena blanca.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL3971720M"
+      "openLibraryKey": "OL33971989M"
     },
     {
       "title": "Las aventuras de Alicia en el país de las maravillas",
       "author": "Lewis Carroll",
-      "isbn": "9780141439761",
+      "isbn": "9781974282135",
       "genre": "Fantasía",
       "description": "Alicia cae por la madriguera del conejo hacia un mundo de lógica absurda.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL38583065M"
+      "openLibraryKey": "OL56300751M"
     },
     {
       "title": "El retrato de Dorian Gray",
       "author": "Oscar Wilde",
-      "isbn": "9780141439570",
+      "isbn": "9781512006209",
       "genre": "Clásicos",
       "description": "Dorian Gray vende su alma para que un retrato envejezca por él.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL3701357M"
+      "openLibraryKey": "OL26372705M"
     },
     {
       "title": "Cumbres borrascosas",
       "author": "Emily Brontë",
-      "isbn": "9780141439556",
+      "isbn": "9788423307623",
       "genre": "Clásicos",
       "description": "La pasión destructiva entre Heathcliff y Catherine en los páramos de Yorkshire.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL3700133M"
+      "openLibraryKey": "OL60986785M"
     },
     {
       "title": "Jane Eyre",
       "author": "Charlotte Brontë",
-      "isbn": "9780141441146",
+      "isbn": "9781609423339",
       "genre": "Clásicos",
       "description": "La historia de una institutriz independiente en la mansión de Thornfield.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL22731948M"
+      "openLibraryKey": "OL27433104M"
     },
     {
       "title": "Los miserables",
       "author": "Víctor Hugo",
-      "isbn": "9780451419439",
+      "isbn": "9781539313410",
       "genre": "Novela",
       "description": "La redención de Jean Valjean y la lucha por la justicia en el París del siglo XIX.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL27211583M"
+      "openLibraryKey": "OL56369195M"
     },
     {
       "title": "El conde de Montecristo",
       "author": "Alejandro Dumas",
-      "isbn": "9780140449266",
+      "isbn": "9788466307383",
       "genre": "Aventura",
       "description": "La venganza de Edmond Dantès tras años de injusto encarcelamiento.",
       "totalCopies": 4,
       "availableCopies": 4,
-      "openLibraryKey": "OL3703020M"
+      "openLibraryKey": "OL9133978M"
     },
     {
       "title": "Las uvas de la ira",
       "author": "John Steinbeck",
-      "isbn": "9780143039433",
+      "isbn": "8483831597",
       "genre": "Novela",
       "description": "La odisea de la familia Joad por la Depresión hacia una tierra prometida.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL3432139M"
+      "openLibraryKey": "OL25619509M"
     },
     {
       "title": "De ratones y hombres",
       "author": "John Steinbeck",
-      "isbn": "9780140177398",
+      "isbn": "1535144386",
       "genre": "Novela",
       "description": "George y Lennie y el sueño de una vida mejor en la California rural.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL9304093M"
+      "openLibraryKey": "OL54787411M"
     },
     {
       "title": "El viejo y el mar",
       "author": "Ernest Hemingway",
-      "isbn": "9780684801223",
+      "isbn": "1541324560",
       "genre": "Novela",
       "description": "La lucha de un viejo pescador cubano contra un inmenso pez en el mar.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL16825665M"
+      "openLibraryKey": "OL47663220M"
     },
     {
       "title": "Fahrenheit 451",
@@ -273,12 +273,12 @@
     {
       "title": "Un mundo feliz",
       "author": "Aldous Huxley",
-      "isbn": "9780060850524",
+      "isbn": "9788411404266",
       "genre": "Ciencia Ficción",
       "description": "Una utopía distópica donde la felicidad programada reemplaza la libertad.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL40234251M"
+      "openLibraryKey": "OL47422528M"
     },
     {
       "title": "La metamorfosis",
@@ -293,22 +293,22 @@
     {
       "title": "El proceso",
       "author": "Franz Kafka",
-      "isbn": "9789877251517",
+      "isbn": "9789500303088",
       "genre": "Clásicos",
       "description": "Josef K. es arrestado sin conocer el delito del que se le acusa.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL35627473M"
+      "openLibraryKey": "OL12952092M"
     },
     {
       "title": "La casa de los espíritus",
       "author": "Isabel Allende",
-      "isbn": "9780553383805",
+      "isbn": "9789500702911",
       "genre": "Novela",
       "description": "La saga de la familia Trueba a lo largo de generaciones en un Chile convulso.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL26335176M"
+      "openLibraryKey": "OL12954911M"
     },
     {
       "title": "Rayuela",
@@ -323,52 +323,52 @@
     {
       "title": "Ficciones",
       "author": "Jorge Luis Borges",
-      "isbn": "9780307950215",
+      "isbn": "1857151666",
       "genre": "Ensayo",
       "description": "Relatos laberínticos sobre bibliotecas infinitas, espejos y laberintos.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL35674307M"
+      "openLibraryKey": "OL22117287M"
     },
     {
       "title": "La divina comedia",
       "author": "Dante Alighieri",
-      "isbn": "9780140448955",
+      "isbn": "9789506946708",
       "genre": "Poesía",
       "description": "El viaje de Dante por el Infierno, el Purgatorio y el Paraíso.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL22723725M"
+      "openLibraryKey": "OL9485517M"
     },
     {
-      "title": "La vida de Galileo",
-      "author": "Bertolt Brecht",
-      "isbn": "9788420637099",
-      "genre": "Historia",
-      "description": "Drama sobre la vida del científico Galileo Galilei y su conflicto con la Iglesia.",
+      "title": "Hamlet",
+      "author": "William Shakespeare",
+      "isbn": "9706660488",
+      "genre": "Teatro",
+      "description": "El príncipe de Dinamarca busca vengar el asesinato de su padre.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL13191912M"
+      "openLibraryKey": "OL35737312M"
     },
     {
-      "title": "Historia de la conquista del Perú",
+      "title": "Historia de la conquista de México",
       "author": "William H. Prescott",
-      "isbn": "9781016303187",
+      "isbn": "1020714999",
       "genre": "Historia",
-      "description": "La crónica de la conquista española del imperio inca.",
+      "description": "La crónica de la conquista española del imperio azteca.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL46301263M"
+      "openLibraryKey": "OL50770184M"
     },
     {
       "title": "Los doce césares",
       "author": "Suetonio",
-      "isbn": "9780140449211",
+      "isbn": "9781530471027",
       "genre": "Historia",
       "description": "Las biografías de los primeros emperadores de la antigua Roma.",
       "totalCopies": 1,
       "availableCopies": 1,
-      "openLibraryKey": "OL3701476M"
+      "openLibraryKey": "OL55562506M"
     },
     {
       "title": "Los hermanos Karamázov",
@@ -393,42 +393,42 @@
     {
       "title": "La guerra de los mundos",
       "author": "H.G. Wells",
-      "isbn": "9780451530653",
+      "isbn": "9789706438409",
       "genre": "Ciencia Ficción",
       "description": "La invasión de la Tierra por marcianos desde una perspectiva victoriana.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL10274280M"
+      "openLibraryKey": "OL9330260M"
     },
     {
-      "title": "La máquina del tiempo",
+      "title": "El hombre invisible",
       "author": "H.G. Wells",
-      "isbn": "9780451530707",
+      "isbn": "9780613830669",
       "genre": "Ciencia Ficción",
-      "description": "Un inventor viaja al futuro lejano de la humanidad.",
+      "description": "Un científico descubre la fórmula de la invisibilidad y enloquece.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL10274284M"
+      "openLibraryKey": "OL10975654M"
     },
     {
       "title": "Veinte mil leguas de viaje submarino",
       "author": "Julio Verne",
-      "isbn": "9780140367218",
+      "isbn": "8472541215",
       "genre": "Aventura",
       "description": "Las aventuras a bordo del Nautilus del capitán Nemo.",
       "totalCopies": 3,
       "availableCopies": 3,
-      "openLibraryKey": "OL22821873M"
+      "openLibraryKey": "OL47652843M"
     },
     {
       "title": "La vuelta al mundo en ochenta días",
       "author": "Julio Verne",
-      "isbn": "9780140449068",
+      "isbn": "8430513590",
       "genre": "Aventura",
       "description": "Phileas Fogg apuesta que puede dar la vuelta al mundo en ochenta días.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL3383804M"
+      "openLibraryKey": "OL32116055M"
     },
     {
       "title": "Robinson Crusoe",
@@ -463,22 +463,22 @@
     {
       "title": "El principito",
       "author": "Antoine de Saint-Exupéry",
-      "isbn": "9780156012195",
+      "isbn": "9788418797453",
       "genre": "Fantasía",
       "description": "La fábula filosófica de un pequeño príncipe que viaja de planeta en planeta.",
       "totalCopies": 4,
       "availableCopies": 4,
-      "openLibraryKey": "OL25435833M"
+      "openLibraryKey": "OL47134281M"
     },
     {
       "title": "Siddhartha",
       "author": "Hermann Hesse",
-      "isbn": "9780553210842",
+      "isbn": "9781788887946",
       "genre": "Novela",
       "description": "El camino espiritual de Siddhartha en busca de la iluminación.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL22786633M"
+      "openLibraryKey": "OL28924995M"
     },
     {
       "title": "La náusea",
@@ -493,12 +493,12 @@
     {
       "title": "Walden",
       "author": "Henry David Thoreau",
-      "isbn": "9780140390445",
+      "isbn": "1695116852",
       "genre": "Ensayo",
       "description": "La vida sencilla y autosuficiente a orillas de un lago de Massachusetts.",
       "totalCopies": 2,
       "availableCopies": 2,
-      "openLibraryKey": "OL18352482M"
+      "openLibraryKey": "OL41434662M"
     }
   ]
 }
