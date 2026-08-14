@@ -34,3 +34,21 @@
 - Builds verificados (backend 0/0, frontend OK, pytest 13/13), datos de seed validados contra BD QA y Open Library.
 - Ramas sincronizadas; story avanzada a `Implemented` vía MCP.
 - Pendiente: fase `qa-check US-010` (PR vía GitHub MCP `create_pull_request`, actualización de `## QA Result`, docs y bitácora finales, story → `Validated`).
+
+## Iteración 2 — Rework por rechazo de QA (qa-check US-010)
+
+- QA rechazó US-010 por fallo del criterio de la Parte A: `openlibrary_verification.json` registraba **50 found / 0 not_found pero solo 14 `matched`** (28%); el dataset sembraba keys que resuelven a obras distintas ("Ficciones"→*The Woman in Black*, "Siddhartha"→*The Moonstone*, etc.), violando ADR-020 ("jamás se siembra una key sin coincidencia").
+- Corrección: **30 libros** del dataset `seed-books.json` actualizados a ediciones OL confirmadas con título coincidente (ISBN + `OpenLibraryKey`), y **3 obras sustituidas** por otras confirmadas en OL:
+  - "La vida de Galileo" → "Hamlet" (William Shakespeare, `9706660488`/`OL35737312M`, género **Teatro**).
+  - "Historia de la conquista del Perú" → "Historia de la conquista de México" (W.H. Prescott, `1020714999`/`OL50770184M`).
+  - "La máquina del tiempo" → "El hombre invisible" (H.G. Wells, `9780613830669`/`OL10975654M`).
+- Verificación re-ejecutada vía MCP (`ol_verify_by_isbn`): `openlibrary_verification.json` = **50 found / 0 not_found / 50 matched (100%)**; OLIDs 50/50 resuelven en Open Library.
+- Re-validación en BD QA aislada: 50 libros, **10 géneros**, 0 duplicados, stock coherente, 1 sin copias, seed idempotente, búsqueda/filtrado OK (Hamlet, Ficciones, Teatro), build backend 0/0, pytest chatbot 26/26 + open-library-mcp 13/13.
+- Story `Rejected → In Progress` vía MCP; pendiente re-ejecutar `qa-check US-010`.
+
+## Risk Register (actualización iteración 2)
+
+| Risk | Nivel | Estado | Mitigación aplicada |
+|---|---|---|---|
+| Keys/ISBN del seed que resuelven a obra distinta en OL | Alto | **Resolved** | Dataset corregido con ediciones OL de título coincidente; verificación 50/50 `matched`; 3 obras sustituidas. |
+| Homónimos / coincidencia de título incorrecta en OL | Alto | **Resolved** | Coincidencia normalizada confirmada para el 100% del seed. |
