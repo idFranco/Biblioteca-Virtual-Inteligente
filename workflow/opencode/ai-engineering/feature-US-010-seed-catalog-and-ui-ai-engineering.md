@@ -52,3 +52,28 @@
 |---|---|---|---|
 | Keys/ISBN del seed que resuelven a obra distinta en OL | Alto | **Resolved** | Dataset corregido con ediciones OL de título coincidente; verificación 50/50 `matched`; 3 obras sustituidas. |
 | Homónimos / coincidencia de título incorrecta en OL | Alto | **Resolved** | Coincidencia normalizada confirmada para el 100% del seed. |
+
+## Iteración 3 — QA final PASS (qa-check US-010, 2026-08-15)
+
+- Re-ejecución completa de `qa-check US-010` sobre la rama `feature/US-010-seed-catalog-and-ui`.
+- **Capa A (local):** build backend OK con SDK 10.0.400 (`/tmp/opencode/dotnet10`, 0 warnings/0 errors); `npm run build` OK (221ms, assets Fraunces/Lora emitidos); `npm run lint` OK (único warning preexistente `button.tsx:58`); pytest chatbot **26/26** + open-library-mcp **13/13**.
+- **Capa B (integración, BD QA aislada `/tmp/opencode/qa-us010.db`, backend `localhost:5002`):**
+  - Datos del seed: 50 libros, 10 géneros, 0 duplicados por título/ISBN, `TotalCopies` 1–5, stock coherente, 1 libro sin copias ("Matar a un ruiseñor"), `OpenLibraryKey` 50/50 (100%).
+  - Idempotencia: segundo arranque → "La tabla de libros ya contiene datos; seed omitido", 50 libros sin duplicados.
+  - UC-5: `search=Don Quijote` → obra encontrada; `genre=Poesía` → "La divina comedia"; `availableOnly=true` → 49 libros, 0 sin copias.
+  - Verificación OL: `openlibrary_verification.json` = **summary {total: 50, found: 50, not_found: 0, matched: 50}**; comprobación independiente curl confirmó títulos (De Ratones y Hombres, Los Doce Césares, Peter Pan, Orgullo y prejuicio, Moby Dick vía ISBN).
+  - Regresión: auth register/login JWT OK; POST `/api/books` sin `books.create` → **403**; sin token → **401**; CRUD catálogo admin (create→update→delete **204**); alquiler "1984" stock 4→3 y devolución 3→4 con `returnedAt`; solicitud US-009 crear→listar→approve→**Approved**; `/health` → **200**.
+  - Identidad visual: paleta cálida en `index.css` (wine/espresso/parchment/brass/olive/ochre), tipografía Fraunces+Lora, 0 ocurrencias de `blue-600`/`gray-*`/`red-600`/`green-100`/`bg-white` en `src/`, Header/Footer `wood-panel` + `brass`/`parchment`.
+- **Los 21 criterios (QA-01..QA-21) PASS, incluidos los imprescindibles QA-01..04, QA-07, QA-16..20.**
+- Story `In Progress → Implemented` ya cumplida; con este QA se crea el PR vía GitHub MCP (PR Gate) y la story avanza a `Validated`.
+
+## Risk Register (actualización iteración 3)
+
+| Risk | Nivel | Estado | Mitigación aplicada |
+|---|---|---|---|
+| SDK local 9 no compila `net10.0` | Medio | **Resolved** | SDK 10.0.400 instalado en `/tmp/opencode/dotnet10`; build 0 warnings/0 errors. |
+| Rate limiting/timeouts de Open Library en verificación masiva | Medio | **Open** | Script serializado (sleep ≥1s) con backoff; verificación 50/50 confirmada; reintentos aplicados durante spot-checks. |
+| Seed no idempotente (duplicados al rearrancar) | Medio | **Resolved** | Guard por tabla `Books` vacía; doble arranque verificado → 50 libros sin duplicados. |
+| Regresión funcional (rutas, guards, permisos, API) | Medio | **Resolved** | Regresión completa QA-16..19 PASS (auth 401/403, CRUD, alquiler/devolución, solicitudes, `/health`). |
+| Portadas de Open Library caídas/404 | Bajo | **Open** | `onError` → `CoverOrnament`; height fija; no bloquea el layout. |
+| WAL de SQLite → `database is locked` | Bajo | **Resolved** | Consultas `sqlite3` con backend detenido durante validación de datos. |
