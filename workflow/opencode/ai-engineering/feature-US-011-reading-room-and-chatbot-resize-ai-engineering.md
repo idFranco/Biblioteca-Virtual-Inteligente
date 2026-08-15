@@ -39,3 +39,18 @@
 - Builds verificados (backend 0/0, frontend OK), smoke test del endpoint de lectura OK.
 - Ramas sincronizadas; story avanzada a `Implemented` vía MCP.
 - Pendiente: fase `qa-check US-011` (validación formal, PR vía GitHub MCP `create_pull_request`, actualización de `## QA Result`, docs finales y story → `Validated`).
+
+## Iteración 2 — QA formal (`qa-check US-011`)
+
+- Repo indexado (`index_repository`), branch verificado: `feature/US-011-reading-room-and-chatbot-resize` (HEAD `4c20ec9`).
+- Builds: backend `docker build --no-cache` (SDK .NET 10) → 0 errores/0 warnings; frontend `npm run build` + `npm run lint` OK (solo warning preexistente `button.tsx`).
+- Smoke test runtime en BD aislada (`~/qa-tmp/qa-us011-2.db`, contenedor `biblio-backend-qa-test`, puerto 5002):
+  - Registro `qaread2@test.local` → 200; login Usuario/Admin → 200 (JWT).
+  - Lectura con alquiler `Active` → **200** (payload con `description`, `rentedAt`, `dueDate`).
+  - Lectura sin alquiler → **404**; sin token → **401**.
+  - Admin sobre alquiler ajeno → **404** (autorización por propiedad del alquiler).
+  - Devolución (Admin, `POST /api/rentals/{id}/return`) → 200; lectura tras devolución → **404** (regresión `ReturnedAt != null`).
+- Criterios de aceptación verificados contra el Gherkin (4 bloques: alquiler, sala de lectura, chatbot, portadas) con mapeo a código (`PermissionGuard`, `GlobalExceptionHandler`, `BookCover`, `ChatWidget`).
+- Documentación actualizada: `US-011.md` → `## QA Result: PASS`; esta bitácora (Iteración 2).
+- PR creado vía GitHub MCP `create_pull_request`; mergeable con `main`.
+- Story → `Validated` vía MCP tras el PR Gate.
