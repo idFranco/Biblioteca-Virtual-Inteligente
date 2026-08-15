@@ -86,13 +86,14 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex w-80 flex-col rounded-lg border bg-white shadow-xl">
-      <div className="rounded-t-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+    <div className="fixed bottom-4 right-4 z-50 flex w-80 flex-col overflow-hidden rounded-lg border border-tan/80 bg-card shadow-[0_10px_34px_-12px_rgba(51,36,26,0.5)] dark:border-wood">
+      <div className="wood-panel flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-parchment">
+        <span aria-hidden="true" className="block size-1.5 rotate-45 bg-brass" />
         Asistente de la Biblioteca
       </div>
       <div className="flex h-96 flex-col gap-2 overflow-y-auto p-3">
         {messages.length === 0 && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-sepia dark:text-tan">
             Pregunta por un libro y te ayudaré. Si no está en el catálogo, podrás solicitar una copia.
           </p>
         )}
@@ -101,25 +102,25 @@ export function ChatWidget() {
             <div
               className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
                 message.role === 'user'
-                  ? 'ml-auto bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'ml-auto bg-wine text-paper dark:bg-primary dark:text-primary-foreground'
+                  : 'bg-parchment/70 text-espresso dark:bg-wood dark:text-parchment'
               }`}
             >
               {message.content}
             </div>
             {message.role === 'assistant' && message.actionOffer && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-sm font-medium text-blue-900">
+              <div className="rounded-lg border border-brass/40 bg-parchment/60 p-3 dark:border-wood dark:bg-wood-dark">
+                <p className="text-sm font-medium text-espresso dark:text-parchment">
                   Este libro no está en el catálogo.
                 </p>
-                <p className="mt-1 text-xs text-blue-700">
+                <p className="mt-1 text-xs text-sepia dark:text-tan">
                   Solicita una copia y te avisaremos cuando esté disponible pronto.
                 </p>
                 <button
                   type="button"
                   disabled={bookingId !== null}
                   onClick={() => void handleBookRequest(message)}
-                  className="mt-2 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="mt-2 rounded-md bg-wine px-3 py-1.5 text-xs font-medium text-paper transition-colors hover:bg-oxide disabled:opacity-50 dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
                 >
                   {bookingId === 'submitting'
                     ? 'Enviando...'
@@ -127,26 +128,26 @@ export function ChatWidget() {
                       ? 'Solicitud registrada'
                       : 'Solicitar copia (disponible pronto)'}
                 </button>
-                {bookingError && <p className="mt-2 text-xs text-red-600">{bookingError}</p>}
+                {bookingError && <p className="mt-2 text-xs text-oxide">{bookingError}</p>}
               </div>
             )}
           </div>
         ))}
-        {sending && <p className="text-xs text-gray-500">Escribiendo...</p>}
+        {sending && <p className="text-xs text-sepia dark:text-tan">Escribiendo...</p>}
       </div>
-      <form onSubmit={handleSend} className="flex gap-2 border-t p-2">
+      <form onSubmit={handleSend} className="flex gap-2 border-t border-tan/70 bg-paper p-2 dark:border-wood dark:bg-wood-dark">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Escribe tu mensaje..."
-          className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
         />
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50"
+          className="rounded bg-wine px-3 py-2 text-sm text-paper transition-colors hover:bg-oxide disabled:opacity-50 dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
         >
           Enviar
         </button>

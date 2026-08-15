@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { rentalsService } from '@/services/rentals'
 import { useAuthStore } from '@/stores/authStore'
 import type { Rental, RentalStatus } from '@/types'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Pagination } from '@/components/ui/Pagination'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 
 function formatDate(value: string | null): string {
   if (!value) return '—'
@@ -14,10 +17,10 @@ const statusLabels: Record<RentalStatus, string> = {
   Overdue: 'Vencido',
 }
 
-const statusStyles: Record<RentalStatus, string> = {
-  Active: 'bg-blue-100 text-blue-800',
-  Returned: 'bg-green-100 text-green-800',
-  Overdue: 'bg-red-100 text-red-800',
+const statusVariants: Record<RentalStatus, 'active' | 'returned' | 'overdue'> = {
+  Active: 'active',
+  Returned: 'returned',
+  Overdue: 'overdue',
 }
 
 export function AlquileresAdminPage() {
@@ -65,10 +68,13 @@ export function AlquileresAdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Gestión de alquileres</h1>
+      <PageHeader
+        title="Gestión de alquileres"
+        subtitle="Supervisa los préstamos activos y registra las devoluciones de la biblioteca."
+      />
 
       <div className="mb-6">
-        <label htmlFor="statusFilter" className="mr-2 text-sm font-medium">Estado:</label>
+        <label htmlFor="statusFilter" className="mr-2 text-sm font-medium text-espresso dark:text-parchment">Estado:</label>
         <select
           id="statusFilter"
           value={statusFilter}
@@ -76,7 +82,7 @@ export function AlquileresAdminPage() {
             setStatusFilter(event.target.value as RentalStatus | '')
             setPage(1)
           }}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className="rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
         >
           <option value="">Todos</option>
           <option value="Active">Activos</option>
@@ -85,44 +91,40 @@ export function AlquileresAdminPage() {
         </select>
       </div>
 
-      {error && <p className="mb-4 text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-oxide">{error}</p>}
 
       {loading ? (
-        <p>Cargando alquileres...</p>
+        <p className="text-sm text-sepia">Cargando alquileres...</p>
       ) : rentals.length === 0 ? (
-        <p className="text-gray-600">No hay alquileres registrados.</p>
+        <p className="text-sm text-sepia dark:text-tan">No hay alquileres registrados.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border border-tan/80 bg-card dark:border-wood">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-parchment/60 dark:bg-wood-dark/60">
               <tr>
-                <th className="px-4 py-2 text-left">Libro</th>
-                <th className="px-4 py-2 text-left">Usuario</th>
-                <th className="px-4 py-2 text-left">Fecha de alquiler</th>
-                <th className="px-4 py-2 text-left">Fecha límite</th>
-                <th className="px-4 py-2 text-left">Fecha de devolución</th>
-                <th className="px-4 py-2 text-center">Estado</th>
-                {canReturn && <th className="px-4 py-2 text-right">Acciones</th>}
+                <th className="px-4 py-2 text-left font-medium text-sepia">Libro</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Usuario</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Fecha de alquiler</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Fecha límite</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Fecha de devolución</th>
+                <th className="px-4 py-2 text-center font-medium text-sepia">Estado</th>
+                {canReturn && <th className="px-4 py-2 text-right font-medium text-sepia">Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {rentals.map((rental) => {
                 const isOverdue = rental.status === 'Active' && rental.isOverdue
                 return (
-                  <tr key={rental.id} className="border-t">
+                  <tr key={rental.id} className="border-t border-tan/70 text-espresso dark:border-wood dark:text-parchment">
                     <td className="px-4 py-2 font-medium">{rental.bookTitle}</td>
                     <td className="px-4 py-2">{rental.userEmail}</td>
                     <td className="px-4 py-2">{formatDate(rental.rentedAt)}</td>
                     <td className="px-4 py-2">{formatDate(rental.dueDate)}</td>
                     <td className="px-4 py-2">{formatDate(rental.returnedAt)}</td>
                     <td className="px-4 py-2 text-center">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                          isOverdue ? 'bg-red-100 text-red-800' : statusStyles[rental.status]
-                        }`}
-                      >
+                      <StatusBadge variant={isOverdue ? 'overdue' : statusVariants[rental.status]}>
                         {isOverdue ? 'Vencido' : statusLabels[rental.status]}
-                      </span>
+                      </StatusBadge>
                     </td>
                     {canReturn && (
                       <td className="px-4 py-2 text-right">
@@ -130,7 +132,7 @@ export function AlquileresAdminPage() {
                           <button
                             type="button"
                             onClick={() => void handleReturn(rental)}
-                            className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                            className="rounded-md bg-olive px-2 py-1 text-xs font-medium text-paper transition-colors hover:brightness-110"
                           >
                             Registrar devolución
                           </button>
@@ -145,27 +147,7 @@ export function AlquileresAdminPage() {
         </div>
       )}
 
-      {!loading && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="text-sm">Página {page} de {totalPages}</span>
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   )
 }

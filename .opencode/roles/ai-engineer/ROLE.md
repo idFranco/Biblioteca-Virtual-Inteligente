@@ -16,16 +16,17 @@ This role ensures that the chatbot works as a graph-based assistant with persist
 
 ---
 
-## Must Read Before Working
+## Must Read Before Working (MANDATORY CONTEXT)
 
 Before working, you must gather context dynamically:
 
 1. Invoke `project_memory_get_context` tool to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map existing code related to your task.
-3. Read `.opencode/memory/DECISIONS.md`.
-4. `.opencode/skills/langgraph-chatbot/SKILL.md`
-5. `.opencode/skills/mcp-tools/SKILL.md`
-6. `.opencode/skills/mcp-security-audit/SKILL.md`
+2. Use `codebase-memory` tools to map existing MCPs and chatbot.
+3. **After implementing**, invoke `index_repository` to index your changes.
+4. Read `.opencode/memory/DECISIONS.md`.
+5. Read `.opencode/skills/langgraph-chatbot/SKILL.md`.
+6. Read `.opencode/skills/mcp-tools/SKILL.md`.
+7. Read `.opencode/skills/mcp-security-audit/SKILL.md`.
 
 ---
 
@@ -60,31 +61,68 @@ Implementation is allowed only after explicit user approval.
 
 ---
 
-## Rules
+## Technical Rules
 
-- Chatbot must use LangGraph.
-- Chatbot input must be audited before executing the main graph.
-- Chatbot output must be audited before returning a response.
-- If Security-Audit-MCP fails, use the safer fallback.
-- Unsafe user input must not reach Biblioteca-MCP.
-- Unsafe model output must be sanitized or blocked.
-- Do not implement the assistant as a single linear prompt.
-- Always audit user input through Security-Audit-MCP before the graph processes it.
-- Always audit generated output through Security-Audit-MCP before it is returned.
+- **LangGraph required:** Chatbot must use LangGraph. Not a single linear prompt.
+- **Audit:** `audit_input_node` (first) and `audit_output_node` (last).
+- **Input audit:** If unsafe → `block_response_node`.
+- **Output audit:** If unsafe → `sanitize_response_node`.
+- **Reading states:** `sin_actividad`, `en_curso`, `por_vencer`, `vencido`, `recien_devuelto`.
+- **Persistence:** Biblioteca-MCP for persistent memory.
+- **Enrichment:** Open Library MCP for external data.
+- **Fallbacks:** If MCP fails, respond gracefully.
+- **Security-Audit-MCP:** Complements backend security.
 - Always load user reading state before recommendation.
 - Always verify availability before recommending a rentable book.
-- Use Biblioteca-MCP for internal state and persistent memory.
-- Use Open Library MCP only for external bibliographic enrichment.
-- Handle MCP failures gracefully.
 - Do not expose tool errors directly to users.
 - Do not hallucinate stock, rentals or due dates.
 - Frontend must not call MCP directly.
 - Do not persist raw secrets, tokens or passwords in audit logs.
+- **MCP LOGGING RULE:** All Python MCP servers must implement a "Secure Logger". Errors and general logs must be explicitly redirected to `sys.stderr` and a physical `error.log` file. Never use `print()` or emit logs to `sys.stdout`, as it will instantly corrupt the JSON-RPC MCP communication.
 - Do not implement code during User Story planning.
 - Do not allow implementation unless the User Story status is `Approved` or `Rejected`.
 - Always ask for explicit user approval before implementation.
 - During planning, update graph status as `Planned`, never as `Implemented`.
-- MCP LOGGING RULE: All Python MCP servers must implement a "Secure Logger". Errors and general logs must be explicitly redirected to `sys.stderr` and a physical `error.log` file. Never use `print()` or emit logs to `sys.stdout`, as it will instantly corrupt the JSON-RPC MCP communication.
+
+---
+
+## LangGraph Nodes
+
+audit_input_node → load_user_state → route_by_state →
+├── due_reminder_node
+├── overdue_node
+├── feedback_node → save_feedback_node
+├── classify_intent_node → preferences_node
+├── internal_catalog_node
+├── external_enrichment_node
+└── availability_node → response_node → audit_output_node → sanitize_response_node/block_response_node
+
+---
+
+## Checklist
+
+- [ ] Graph state (Pydantic)
+- [ ] Nodes (including `audit_input_node` and `audit_output_node`)
+- [ ] Conditional routing (including unsafe paths)
+- [ ] LLM provider connection (via env)
+- [ ] Biblioteca-MCP connection
+- [ ] Security-Audit-MCP connection
+- [ ] Open Library MCP connection
+- [ ] Test each state (`sin_actividad`, `en_curso`, `por_vencer`, `vencido`, `recien_devuelto`)
+- [ ] Test blocking and sanitization
+- [ ] Document prompts
+
+---
+
+## Forbidden
+
+- Read/modify `__pycache__/`, `.venv/`, `.pytest_cache/`
+- Implement chatbot without LangGraph
+- Bypass Security-Audit-MCP
+- Persist secrets in audit logs
+- Hardcode API keys
+- Implement without approved plan
+- Emit logs to stdout (use stderr) in MCP servers
 
 ---
 

@@ -11,11 +11,13 @@ using BibliotecaVirtual.Application.Contracts.Auth;
 using BibliotecaVirtual.Application.Contracts.Books;
 using BibliotecaVirtual.Application.Contracts.BookRequests;
 using BibliotecaVirtual.Application.Contracts.Rentals;
+using BibliotecaVirtual.Application.Contracts.Seed;
 using BibliotecaVirtual.Application.Contracts.Users;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Application.Queries.Books;
 using BibliotecaVirtual.Application.Queries.BookRequests;
 using BibliotecaVirtual.Application.Queries.Rentals;
+using BibliotecaVirtual.Infrastructure.Data.Seed;
 using BibliotecaVirtual.Infrastructure.Handlers.Auth;
 using BibliotecaVirtual.Infrastructure.Handlers.BookRequests;
 using BibliotecaVirtual.Infrastructure.Handlers.Books;
@@ -80,6 +82,9 @@ public static class DependencyInjection
         services.AddScoped<IValidator<CreateBookRequestCommand>, CreateBookRequestCommandValidator>();
         services.AddScoped<IValidator<ApproveBookRequestCommand>, ApproveBookRequestCommandValidator>();
         services.AddScoped<IValidator<RejectBookRequestCommand>, RejectBookRequestCommandValidator>();
+
+        services.AddScoped<IValidator<SeedBookDto>, SeedBookValidator>();
+        services.AddScoped<ICatalogSeeder, CatalogSeeder>();
 
         return services;
     }

@@ -1,7 +1,7 @@
 # SOP: create-user-story
 
-**Modo planificación.** A partir del requerimiento proporcionado en `$ARGUMENTS`, ejecuta ESTRICTAMENTE las siguientes acciones en orden:
+**Planning mode.** From the requirement provided in `$ARGUMENTS`, execute the following actions STRICTLY in order:
 
-1. **CREACIÓN:** Invoca la herramienta `project_memory_create_story` pasándole un `story_id` incremental (ej: US-001, US-002), título y descripción en formato Como/Quiero/Para.
-2. **DETENTE:** Tienes ESTRICTAMENTE PROHIBIDO hacer preguntas al usuario, adivinar intenciones, avanzar de fase automáticamente o ejecutar herramientas adicionales.
-3. **CIERRE Y GUÍA DINÁMICA:** Informa al usuario que la historia fue registrada exitosamente en estado 'Draft' y cierra tu respuesta emitiendo EXACTAMENTE este bloque sin modificaciones (reemplazando `US-XXX` por el ID real recién generado): "The story US-XXX has been created in Draft status. To authorize the planning phase, you MUST execute the following command in your terminal: plan-user-story US-XXX"
+1. **CREATION:** Invoke the `project_memory_create_story` tool, passing an incremental `story_id` (e.g., US-001, US-002), title, and description in As a / I want / So that format.
+2. **STOP:** You are STRICTLY PROHIBITED from asking the user questions, guessing intentions, automatically advancing phases, or executing additional tools.
+3. **CLOSURE AND DYNAMIC GUIDE:** Inform the user that the story was successfully registered in 'Draft' status and close your response by emitting EXACTLY this block without modifications (replacing `US-XXX` with the actual newly generated ID): "The story US-XXX has been created in Draft status. To authorize the planning phase, you MUST execute the following command in your terminal: plan-user-story US-XXX"

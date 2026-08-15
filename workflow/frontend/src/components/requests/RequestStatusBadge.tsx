@@ -1,4 +1,5 @@
 import type { BookRequestStatus } from '@/types'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 
 const LABELS: Record<BookRequestStatus, string> = {
   Pending: 'Pendiente',
@@ -6,16 +7,12 @@ const LABELS: Record<BookRequestStatus, string> = {
   Rejected: 'Rechazada',
 }
 
-const STYLES: Record<BookRequestStatus, string> = {
-  Pending: 'bg-yellow-100 text-yellow-800',
-  Approved: 'bg-green-100 text-green-800',
-  Rejected: 'bg-red-100 text-red-800',
+const VARIANTS: Record<BookRequestStatus, 'pending' | 'approved' | 'rejected'> = {
+  Pending: 'pending',
+  Approved: 'approved',
+  Rejected: 'rejected',
 }
 
 export function RequestStatusBadge({ status }: { status: BookRequestStatus }) {
-  return (
-    <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STYLES[status]}`}>
-      {LABELS[status]}
-    </span>
-  )
+  return <StatusBadge variant={VARIANTS[status]}>{LABELS[status]}</StatusBadge>
 }

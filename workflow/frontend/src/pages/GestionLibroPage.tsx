@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } fr
 import { bookRequestsService } from '@/services/bookRequests'
 import { RequestStatusBadge } from '@/components/requests/RequestStatusBadge'
 import type { BookRequest, BookRequestStatus } from '@/types'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Pagination } from '@/components/ui/Pagination'
 
 interface ApproveForm {
   title: string
@@ -136,28 +138,31 @@ export function GestionLibroPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Gestión de libro</h1>
+      <PageHeader
+        title="Gestión de libro"
+        subtitle="Revisa las solicitudes de copias, dales de alta en el catálogo o recházalas."
+      />
 
-      {error && <p className="mb-4 text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-oxide">{error}</p>}
 
-      <div className="mb-6 grid gap-4 rounded-lg border p-4 md:grid-cols-3">
+      <div className="texture-grain mb-6 grid gap-4 rounded-lg border border-tan/80 bg-card p-4 shadow-sm md:grid-cols-3 dark:border-wood">
         <div>
-          <label htmlFor="search" className="mb-1 block text-sm font-medium">Buscar por título, autor o ISBN</label>
+          <label htmlFor="search" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Buscar por título, autor o ISBN</label>
           <input
             id="search"
             type="text"
             value={search}
             onChange={handleSearchChange}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           />
         </div>
         <div>
-          <label htmlFor="status" className="mb-1 block text-sm font-medium">Estado</label>
+          <label htmlFor="status" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Estado</label>
           <select
             id="status"
             value={statusFilter}
             onChange={handleStatusChange}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           >
             <option value="">Todos</option>
             <option value="Pending">Pendiente</option>
@@ -168,29 +173,29 @@ export function GestionLibroPage() {
       </div>
 
       {loading ? (
-        <p>Cargando solicitudes...</p>
+        <p className="text-sm text-sepia">Cargando solicitudes...</p>
       ) : requests.length === 0 ? (
-        <p className="text-gray-600">No hay solicitudes que coincidan con los filtros.</p>
+        <p className="text-sm text-sepia dark:text-tan">No hay solicitudes que coincidan con los filtros.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border border-tan/80 bg-card dark:border-wood">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-parchment/60 dark:bg-wood-dark/60">
               <tr>
-                <th className="px-4 py-2 text-left">Título</th>
-                <th className="px-4 py-2 text-left">Autor</th>
-                <th className="px-4 py-2 text-left">Solicitante</th>
-                <th className="px-4 py-2 text-left">Fecha</th>
-                <th className="px-4 py-2 text-center">Estado</th>
-                <th className="px-4 py-2 text-right">Acciones</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Título</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Autor</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Solicitante</th>
+                <th className="px-4 py-2 text-left font-medium text-sepia">Fecha</th>
+                <th className="px-4 py-2 text-center font-medium text-sepia">Estado</th>
+                <th className="px-4 py-2 text-right font-medium text-sepia">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {requests.map((request) => (
-                <tr key={request.id} className="border-t">
+                <tr key={request.id} className="border-t border-tan/70 text-espresso dark:border-wood dark:text-parchment">
                   <td className="px-4 py-2">
                     {request.title}
                     {request.openLibraryKey && (
-                      <p className="text-xs text-gray-500">Open Library: {request.openLibraryKey}</p>
+                      <p className="text-xs text-sepia dark:text-tan">Open Library: {request.openLibraryKey}</p>
                     )}
                   </td>
                   <td className="px-4 py-2">{request.author}</td>
@@ -199,7 +204,7 @@ export function GestionLibroPage() {
                   <td className="px-4 py-2 text-center">
                     <RequestStatusBadge status={request.status} />
                     {request.status === 'Rejected' && request.adminNotes && (
-                      <p className="mt-1 text-xs text-gray-500">Motivo: {request.adminNotes}</p>
+                      <p className="mt-1 text-xs text-sepia dark:text-tan">Motivo: {request.adminNotes}</p>
                     )}
                   </td>
                   <td className="px-4 py-2 text-right">
@@ -208,21 +213,21 @@ export function GestionLibroPage() {
                         <button
                           type="button"
                           onClick={() => openApprove(request)}
-                          className="mr-2 rounded bg-green-600 px-2 py-1 text-xs text-white"
+                          className="mr-2 rounded-md bg-olive px-2 py-1 text-xs font-medium text-paper transition-colors hover:brightness-110"
                         >
                           Aprobar
                         </button>
                         <button
                           type="button"
                           onClick={() => openReject(request)}
-                          className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                          className="rounded-md bg-oxide px-2 py-1 text-xs font-medium text-paper transition-colors hover:brightness-110"
                         >
                           Rechazar
                         </button>
                       </>
                     )}
                     {request.status === 'Approved' && request.promotedBookId && (
-                      <span className="text-xs text-gray-500">Libro creado</span>
+                      <span className="text-xs text-olive">Libro creado</span>
                     )}
                   </td>
                 </tr>
@@ -232,90 +237,70 @@ export function GestionLibroPage() {
         </div>
       )}
 
-      {!loading && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="text-sm">Página {page} de {totalPages}</span>
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
 
       {approving && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <form onSubmit={handleApprove} className="w-full max-w-lg rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-lg font-semibold">Dar de alta libro solicitado</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-espresso/50 p-4">
+          <form onSubmit={handleApprove} className="texture-grain w-full max-w-lg rounded-lg border border-tan/80 bg-paper p-6 shadow-xl dark:border-wood dark:bg-wood-dark">
+            <h2 className="mb-4 font-heading text-lg font-semibold text-espresso dark:text-parchment">Dar de alta libro solicitado</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="approve-title" className="mb-1 block text-sm font-medium">Título</label>
+                <label htmlFor="approve-title" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Título</label>
                 <input
                   id="approve-title"
                   required
                   value={approveForm.title}
                   onChange={(e) => setApproveForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
               <div>
-                <label htmlFor="approve-author" className="mb-1 block text-sm font-medium">Autor</label>
+                <label htmlFor="approve-author" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Autor</label>
                 <input
                   id="approve-author"
                   required
                   value={approveForm.author}
                   onChange={(e) => setApproveForm((f) => ({ ...f, author: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
               <div>
-                <label htmlFor="approve-isbn" className="mb-1 block text-sm font-medium">ISBN</label>
+                <label htmlFor="approve-isbn" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">ISBN</label>
                 <input
                   id="approve-isbn"
                   value={approveForm.isbn}
                   onChange={(e) => setApproveForm((f) => ({ ...f, isbn: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
               <div>
-                <label htmlFor="approve-genre" className="mb-1 block text-sm font-medium">Género</label>
+                <label htmlFor="approve-genre" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Género</label>
                 <input
                   id="approve-genre"
                   value={approveForm.genre}
                   onChange={(e) => setApproveForm((f) => ({ ...f, genre: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
               <div className="md:col-span-2">
-                <label htmlFor="approve-description" className="mb-1 block text-sm font-medium">Descripción</label>
+                <label htmlFor="approve-description" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Descripción</label>
                 <textarea
                   id="approve-description"
                   rows={3}
                   value={approveForm.description}
                   onChange={(e) => setApproveForm((f) => ({ ...f, description: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
               <div>
-                <label htmlFor="approve-copies" className="mb-1 block text-sm font-medium">Total de copias</label>
+                <label htmlFor="approve-copies" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Total de copias</label>
                 <input
                   id="approve-copies"
                   type="number"
                   min={1}
                   value={approveForm.totalCopies}
                   onChange={(e) => setApproveForm((f) => ({ ...f, totalCopies: Number(e.target.value) }))}
-                  className="w-full rounded border border-gray-300 px-3 py-2"
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
                 />
               </div>
             </div>
@@ -323,14 +308,14 @@ export function GestionLibroPage() {
               <button
                 type="button"
                 onClick={closeApprove}
-                className="rounded border border-gray-300 px-4 py-2 text-sm"
+                className="rounded-md border border-brass/50 bg-paper px-4 py-2 text-sm font-medium text-espresso transition-colors hover:bg-brass/15 dark:bg-wood-dark dark:text-parchment"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={savingApprove}
-                className="rounded bg-green-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-md bg-olive px-4 py-2 text-sm font-medium text-paper transition-colors hover:brightness-110 disabled:opacity-50"
               >
                 {savingApprove ? 'Guardando...' : 'Dar de alta y aprobar'}
               </button>
@@ -340,33 +325,33 @@ export function GestionLibroPage() {
       )}
 
       {rejecting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <form onSubmit={handleReject} className="w-full max-w-md rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-lg font-semibold">Rechazar solicitud</h2>
-            <p className="mb-4 text-sm text-gray-600">
-              Libro: <span className="font-medium">{rejecting.title}</span> de {rejecting.author}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-espresso/50 p-4">
+          <form onSubmit={handleReject} className="texture-grain w-full max-w-md rounded-lg border border-tan/80 bg-paper p-6 shadow-xl dark:border-wood dark:bg-wood-dark">
+            <h2 className="mb-4 font-heading text-lg font-semibold text-espresso dark:text-parchment">Rechazar solicitud</h2>
+            <p className="mb-4 text-sm text-sepia dark:text-tan">
+              Libro: <span className="font-medium text-espresso dark:text-parchment">{rejecting.title}</span> de {rejecting.author}
             </p>
-            <label htmlFor="reject-notes" className="mb-1 block text-sm font-medium">Motivo (obligatorio)</label>
+            <label htmlFor="reject-notes" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Motivo (obligatorio)</label>
             <textarea
               id="reject-notes"
               rows={3}
               required
               value={rejectNotes}
               onChange={(e) => setRejectNotes(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2"
+              className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
             />
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeReject}
-                className="rounded border border-gray-300 px-4 py-2 text-sm"
+                className="rounded-md border border-brass/50 bg-paper px-4 py-2 text-sm font-medium text-espresso transition-colors hover:bg-brass/15 dark:bg-wood-dark dark:text-parchment"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={savingReject}
-                className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-md bg-oxide px-4 py-2 text-sm font-medium text-paper transition-colors hover:brightness-110 disabled:opacity-50"
               >
                 {savingReject ? 'Guardando...' : 'Rechazar'}
               </button>

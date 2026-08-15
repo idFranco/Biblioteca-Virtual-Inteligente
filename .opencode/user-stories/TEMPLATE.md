@@ -73,6 +73,38 @@ Pending.
 
 ---
 
+## Risks
+
+| Risk | Level | Responsible Role | Mitigation Strategy | Status |
+|---|---|---|---|---|
+|  |  |  |  |  |
+
+---
+
+## Validation Checklist
+
+| Validation | Interations | Status | Note |
+|---|---|---|---|
+| Coherence between plans |  |  |  |
+| Dependencies identified |  |  |  |
+| Criteria completeness |  |  |  |
+| No placeholders |  |  |  |
+| Standards met |  |  |  |
+| Risks mitigated |  |  |  |
+
+---
+
+## Validation Iterations
+| # | Role | Issue Detected | Correction Request | Correction Received | Status |
+|---|---|---|---|---|---|
+| 1 |  |  |  |  |  |
+| 2 |  |  |  |  |  |
+| 3 |  |  |  |  |  |
+| 4 |  |  |  |  |  |
+| 5 |  |  |  |  |  |
+
+---
+
 ## Validation Plan
 Pending.
 

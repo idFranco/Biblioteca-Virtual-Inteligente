@@ -15,15 +15,16 @@ The backend is the source of truth for authentication, authorization and busines
 
 ---
 
-## Must Read Before Working
+## Must Read Before Working (MANDATORY CONTEXT)
 
 Before working, you must gather context dynamically:
 
 1. Invoke `project_memory_get_context` tool to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map existing code related to your task.
-3. Read `.opencode/memory/DECISIONS.md`.
-4. `.opencode/skills/dotnet-clean-architecture/SKILL.md`
-5. `.opencode/skills/auth-permissions/SKILL.md`
+2. Use `codebase-memory` tools to map existing models and services.
+3. **After implementing**, invoke `index_repository` to index your changes.
+4. Read `.opencode/memory/DECISIONS.md`.
+5. Read `.opencode/skills/dotnet-clean-architecture/SKILL.md`.
+6. Read `.opencode/skills/auth-permissions/SKILL.md`.
 
 ---
 
@@ -54,23 +55,75 @@ Implementation is allowed only after explicit user approval.
 
 ---
 
-## Rules
+## Technical Rules
 
-- Backend enforces all permissions.
-- Controllers stay thin.
-- Business logic belongs in Application/Domain services.
-- No secrets in logs.
-- No JWT tokens in logs.
-- No password hashes in responses.
-- No business logic only in frontend.
-- Use migrations for database changes.
-- Use DTOs for API input and output.
-- Validate ownership for user-specific resources.
-- Do not call MCP directly from frontend.
-- Do not implement code during User Story planning.
-- Do not allow implementation unless the User Story status is `Approved` or `Rejected`.
-- Always ask for explicit user approval before implementation.
-- During planning, update graph status as `Planned`, never as `Implemented`.
+- **Clean Architecture:** Controllers empty (dispatch to Mediator only). Do not put business logic in controllers.
+- **CQRS:** Commands (state changes) and Queries (data retrieval) separated.
+- **Mediator:** In-house implementation (PROHIBITED: MediatR NuGet).
+- **Validation:** FluentValidation in pipeline.
+- **Controllers:** Thin. Receive DTOs, return results.
+- **Business logic:** In Application/Domain services, NOT in controllers.
+- **Async:** Always async/await with CancellationToken.
+- **DTOs:** For API input/output.
+- **EF Core:** Infrastructure layer only.
+- **Migrations:** Generate and apply when models change.
+- **Security:** Backend is source of truth for authorization.
+- **No secrets in logs, no JWT tokens in logs, no password hashes in responses.**
+- **Validate ownership for user-specific resources.**
+- **Do not implement business rules only in frontend.**
+- **Do not call MCP directly from frontend.**
+- **Do not implement code during User Story planning.**
+- **Do not allow implementation unless the User Story status is `Approved` or `Rejected`.**
+- **Always ask for explicit user approval before implementation.**
+- **During planning, update graph status as `Planned`, never as `Implemented`.**
+
+---
+
+## Structure (Required)
+
+workflow/backend/src/
+├── Domain/ # Entities, Value Objects, Enums
+├── Application/ # Commands, Queries, Handlers, DTOs, Validators
+├── Infrastructure/ # EF Core, Repositories, Identity
+└── WebAPI/ # Controllers, Middleware, Program.cs
+
+---
+
+## Permissions
+
+- books.{read, create, update, delete}
+- rentals.{create, return, view_own, view_all}
+- users.manage
+- roles.manage
+- notifications.read
+- chat.use
+
+---
+
+## Checklist
+
+- [ ] Domain Entities
+- [ ] DTOs
+- [ ] Commands/Queries
+- [ ] Handlers
+- [ ] Validators (FluentValidation)
+- [ ] EF Core configuration
+- [ ] Migration
+- [ ] Endpoint (Controller)
+- [ ] Authorization policy
+- [ ] Test manually or with tests
+- [ ] Update memory
+
+---
+
+## Forbidden
+
+- Read/modify `bin/` or `obj/`
+- Read `.env` (use configuration)
+- Expose secrets or stack traces in HTTP responses
+- Bypass backend authorization
+- Hardcode secrets
+- Implement without approved plan
 
 ---
 

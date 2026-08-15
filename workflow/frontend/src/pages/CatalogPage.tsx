@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { booksService } from '@/services/books'
 import type { Book, BookFilters } from '@/types'
+import { BookCard } from '@/components/books/BookCard'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Pagination } from '@/components/ui/Pagination'
 
 export function CatalogPage() {
   const [books, setBooks] = useState<Book[]>([])
@@ -51,101 +54,71 @@ export function CatalogPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Catálogo de libros</h1>
+      <PageHeader
+        title="Catálogo de libros"
+        subtitle="Explora la colección de la biblioteca, filtra por autor, género y disponibilidad."
+      />
 
-      <div className="mb-6 grid gap-4 rounded-lg border p-4 md:grid-cols-4">
+      <div className="texture-grain mb-6 grid gap-4 rounded-lg border border-tan/80 bg-card p-4 shadow-sm md:grid-cols-4 dark:border-wood">
         <div>
-          <label htmlFor="search" className="mb-1 block text-sm font-medium">Buscar</label>
+          <label htmlFor="search" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Buscar</label>
           <input
             id="search"
             type="text"
             placeholder="Título o autor"
             value={filters.search ?? ''}
             onChange={handleSearch}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso placeholder:text-sepia/60 focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           />
         </div>
         <div>
-          <label htmlFor="author" className="mb-1 block text-sm font-medium">Autor</label>
+          <label htmlFor="author" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Autor</label>
           <input
             id="author"
             type="text"
             value={filters.author ?? ''}
             onChange={handleAuthor}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso placeholder:text-sepia/60 focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           />
         </div>
         <div>
-          <label htmlFor="genre" className="mb-1 block text-sm font-medium">Género</label>
+          <label htmlFor="genre" className="mb-1 block text-sm font-medium text-espresso dark:text-parchment">Género</label>
           <input
             id="genre"
             type="text"
             value={filters.genre ?? ''}
             onChange={handleGenre}
-            className="w-full rounded border border-gray-300 px-3 py-2"
+            className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-espresso placeholder:text-sepia/60 focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
           />
         </div>
-        <div className="flex items-end">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={filters.availableOnly === true} onChange={handleAvailable} />
+        <div className="flex items-end pb-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-espresso dark:text-parchment">
+            <input
+              type="checkbox"
+              checked={filters.availableOnly === true}
+              onChange={handleAvailable}
+              className="size-4 accent-olive"
+            />
             Solo disponibles
           </label>
         </div>
       </div>
 
-      {error && <p className="mb-4 text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-oxide">{error}</p>}
 
       {loading ? (
-        <p>Cargando catálogo...</p>
+        <p className="text-sm text-sepia">Cargando catálogo...</p>
       ) : books.length === 0 ? (
-        <p className="text-gray-600">No se encontraron libros con los filtros aplicados.</p>
+        <p className="text-sm text-sepia dark:text-tan">No se encontraron libros con los filtros aplicados.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <div key={book.id} className="flex flex-col justify-between rounded-lg border p-4">
-              <div>
-                <h3 className="text-lg font-semibold">{book.title}</h3>
-                <p className="text-sm text-gray-600">{book.author}</p>
-                {book.genre && <p className="mt-1 text-sm text-gray-500">{book.genre}</p>}
-              </div>
-              <div className="mt-3">
-                <span
-                  className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                    book.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {book.isAvailable ? 'Disponible' : 'No disponible'}
-                </span>
-                <p className="mt-2 text-xs text-gray-500">
-                  {book.availableCopies} / {book.totalCopies} copias disponibles
-                </p>
-              </div>
-            </div>
+            <BookCard key={book.id} book={book} />
           ))}
         </div>
       )}
 
-      {!loading && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="text-sm">Página {page} de {totalPages}</span>
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   )
 }

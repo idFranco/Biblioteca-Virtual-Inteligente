@@ -1,15 +1,47 @@
 # SOP: implement-user-story
 
-Ejecuta ESTRICTAMENTE los siguientes pasos en orden:
+Execute STRICTLY:
 
-1. Verifica el contexto llamando a `project_memory_get_context`. Si la historia `$ARGUMENTS` no está en estado 'Approved' ni en estado 'Rejected', DETENTE. Emite exactamente: *"Action rejected: US-$ARGUMENTS is in status <status>. To authorize implementation, you MUST execute: approve-user-story $ARGUMENTS"*.
-2. **VERIFICACIÓN DE RAMA OBLIGATORIA:** Ejecuta `git branch --show-current`. Si el resultado es 'main' o no coincide con el patrón `feature/US-XXX-*`, `bugfix/US-XXX-*` o `hotfix/US-XXX-*`, DETENTE. No escribas ningún archivo. Emite exactamente: *"Implementation cannot proceed. The current branch is <branch>, which is not a valid feature branch. Execute the Branch Creation SOP from git-rules.md before continuing."* y ejecuta el Branch Creation SOP desde el paso 1.
-3. Solo después de confirmar la rama válida: cambia el estado a 'In Progress' con `project_memory_advance_status`.
-4. **MANDATORIO:** Invoca la herramienta MCP `index_repository` con el path `.` para tener el mapa técnico actualizado.
-5. Implementa el código del incremento solicitado.
-6. Al finalizar la codificación, invoca de nuevo `index_repository` con el path `.` para guardar los cambios en tu memoria.
-7. **EXTRACCIÓN DE RAMA:** Ejecuta `git branch --show-current` para obtener el nombre exacto de tu rama local.
-8. **PUSH VÍA MCP:** Utiliza la herramienta del MCP de GitHub `push_files` para hacer commit y push de todos los archivos creados o modificados directamente a la rama detectada en el paso anterior.
-9. **SINCRONIZACIÓN FORZADA:** Para solucionar la desincronización de tu árbol local causada por el MCP, ejecuta `git fetch origin` y luego `git reset --hard origin/<nombre-de-la-rama>` (reemplazando con el nombre exacto).
-10. Finalmente, mueve la historia a 'Implemented' con el MCP de ciclo de vida. Emite exactamente: "The Implementation phase for US-$ARGUMENTS is complete. To validate, you MUST execute: qa-check $ARGUMENTS"
-11. **PUSH FINAL VÍA MCP:** El paso anterior modificó localmente el archivo `.md` de la historia (status → Implemented). Ejecuta `git status --porcelain` para detectar TODOS los archivos modificados o sin seguimiento, e invoca OBLIGATORIAMENTE `push_files` con esa lista completa antes de emitir el mensaje de cierre.
+1. `project_memory_get_context`. If status not `Approved` or `Rejected` → STOP. Emit: *"Action rejected: US-$ARGUMENTS is in status <status>. Execute: approve-user-story $ARGUMENTS"*.
+
+2. **BRANCH VERIFICATION:** `git branch --show-current`. If `main` or not `feature/US-XXX-*`, `bugfix/US-XXX-*`, `hotfix/US-XXX-*` → STOP. Execute Branch Creation SOP.
+
+3. Change status to 'In Progress' with `project_memory_advance_status`.
+
+4. `index_repository` with path `.`.
+
+5. **IMPLEMENT BY ROLES (MANDATORY):**
+   a. @backend-developer — Backend logic: entities, DTOs, services, endpoints, migrations, FluentValidation, permissions. Follow Clean Architecture + CQRS.
+   b. @frontend-developer — Frontend (APPLY frontend-ui-ux): pages, components, routes, guards. Apply aesthetic guidelines. Document aesthetic direction.
+   c. @ai-engineer — Chatbot, LangGraph, MCP servers.
+   d. @technical-writer — Documentation in parallel.
+
+   **Coordination:** If dependency exists, execute sequentially (backend → frontend).
+
+6. **BUILD VERIFICATION:** `dotnet build` and `npm run build`. If errors → STOP and fix.
+
+7. `index_repository` with path `.`.
+
+8. **BRANCH:** `git branch --show-current`
+
+9. **UPDATE STORY FILE:** Replace `## Implementation Notes` with summary per role.
+
+10. **PUSH:** `git status --porcelain` → `push_files` with full list. Commit message: `feat(US-XXX): description`.
+
+11. **SYNCHRONIZE:** `git fetch origin` && `git reset --hard origin/<branch-name>`
+
+12. Move story to 'Implemented' with `project_memory_advance_status`.
+
+13. **FINAL PUSH:** `git status --porcelain` → `push_files` with full list.
+
+14. **FINAL SYNC:** `git fetch origin` && `git reset --hard origin/<branch-name>`
+
+15. **CLOSE** and emit exactly:
+Implementation for US-$ARGUMENTS complete.
+Roles executed:
+- Backend Developer: [summary]
+- Frontend Developer (frontend-ui-ux): [summary + aesthetic decisions]
+- AI Engineer: [summary]
+- Technical Writer: [documentation updated]
+
+To validate: qa-check $ARGUMENTS
