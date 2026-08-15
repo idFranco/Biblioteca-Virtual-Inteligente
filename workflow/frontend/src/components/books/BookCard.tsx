@@ -1,8 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { Book } from '@/types'
 import { cn } from '@/lib/utils'
-import { getCoverUrl } from '@/lib/covers'
-import { CoverOrnament } from './CoverOrnament'
+import { BookCover } from './BookCover'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
 interface BookCardProps {
@@ -13,10 +12,6 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, className, action }: BookCardProps) {
-  const [coverFailed, setCoverFailed] = useState(false)
-  const coverUrl = getCoverUrl(book, 'M')
-  const showFallback = coverUrl === null || coverFailed
-
   return (
     <article
       className={cn(
@@ -24,19 +19,14 @@ export function BookCard({ book, className, action }: BookCardProps) {
         className,
       )}
     >
-      <div className="relative h-40 w-28 shrink-0 overflow-hidden rounded-r-sm rounded-l-xs border border-wood/40 shadow-md">
-        {showFallback ? (
-          <CoverOrnament title={book.title} author={book.author} />
-        ) : (
-          <img
-            src={coverUrl}
-            alt={`Portada de ${book.title}`}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            onError={() => setCoverFailed(true)}
-            className="h-full w-full object-cover"
-          />
-        )}
+      <div className="h-40 w-28 shrink-0">
+        <BookCover
+          title={book.title}
+          author={book.author}
+          isbn={book.isbn}
+          openLibraryKey={book.openLibraryKey}
+          size="M"
+        />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">

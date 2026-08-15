@@ -1,13 +1,77 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
+import { Maximize2, Minimize2 } from 'lucide-react'
 import { chatService, type ChatMessage, type ChatResponse } from '@/services/chat'
 import { bookRequestsService } from '@/services/bookRequests'
+import {
+  useChatWidgetStore,
+  CHAT_WIDGET_DEFAULTS,
+} from '@/stores/chatWidgetStore'
+
+const MIN_WIDTH = 280
+const MIN_HEIGHT = 320
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
 
 export function ChatWidget() {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const size = useChatWidgetStore((state) => state.size)
+  const widthPx = useChatWidgetStore((state) => state.widthPx)
+  const heightPx = useChatWidgetStore((state) => state.heightPx)
+  const toggleSize = useChatWidgetStore((state) => state.toggleSize)
+  const setWidth = useChatWidgetStore((state) => state.setWidth)
+  const setHeight = useChatWidgetStore((state) => state.setHeight)
+
+  const [conversation, setConversation] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [bookingError, setBookingError] = useState<string | null>(null)
+
+  const widgetRef = useRef<HTMLDivElement | null>(null)
+  const resizing = useRef<'width' | 'height' | null>(null)
+
+  const defaults = CHAT_WIDGET_DEFAULTS[size]
+  const widgetWidth = clamp(widthPx ?? defaults.width, MIN_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - 16))
+  const widgetHeight = clamp(heightPx ?? defaults.height, MIN_HEIGHT, Math.max(MIN_HEIGHT, window.innerHeight - 16))
+
+  function startResize(axis: 'width' | 'height', event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault()
+    resizing.current = axis
+    const startPos = axis === 'width' ? event.clientX : event.clientY
+    const startSize = axis === 'width' ? widgetRef.current?.getBoundingClientRect().width ?? defaults.width : widgetRef.current?.getBoundingClientRect().height ?? defaults.height
+
+    const handleMove = (moveEvent: globalThis.PointerEvent) => {
+      const current = axis === 'width' ? moveEvent.clientX : moveEvent.clientY
+      const delta = startPos - current
+      const next = Math.round(startSize + delta)
+      if (axis === 'width') {
+        setWidth(clamp(next, MIN_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - 16)))
+      } else {
+        setHeight(clamp(next, MIN_HEIGHT, Math.max(MIN_HEIGHT, window.innerHeight - 16)))
+      }
+    }
+
+    const handleUp = () => {
+      resizing.current = null
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+    }
+
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+  }
+
+  function handleResizeKey(axis: 'width' | 'height', event: KeyboardEvent<HTMLDivElement>) {
+    const step = event.shiftKey ? 32 : 8
+    if (axis === 'width') {
+      if (event.key === 'ArrowLeft') setWidth(clamp(widgetWidth + step, MIN_WIDTH, window.innerWidth - 16))
+      if (event.key === 'ArrowRight') setWidth(clamp(widgetWidth - step, MIN_WIDTH, window.innerWidth - 16))
+    } else {
+      if (event.key === 'ArrowUp') setHeight(clamp(widgetHeight + step, MIN_HEIGHT, window.innerHeight - 16))
+      if (event.key === 'ArrowDown') setHeight(clamp(widgetHeight - step, MIN_HEIGHT, window.innerHeight - 16))
+    }
+  }
 
   async function handleSend(event: FormEvent) {
     event.preventDefault()
@@ -19,7 +83,7 @@ export function ChatWidget() {
       role: 'user',
       content,
     }
-    setMessages((prev) => [...prev, userMessage])
+    setConversation((prev) => [...prev, userMessage])
     setInput('')
     setSending(true)
     setBookingError(null)
@@ -32,9 +96,9 @@ export function ChatWidget() {
         content: response.message,
         actionOffer: responsesToOffer(response),
       }
-      setMessages((prev) => [...prev, assistantMessage])
+      setConversation((prev) => [...prev, assistantMessage])
     } catch {
-      setMessages((prev) => [
+      setConversation((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
@@ -86,18 +150,42 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex w-80 flex-col overflow-hidden rounded-lg border border-tan/80 bg-card shadow-[0_10px_34px_-12px_rgba(51,36,26,0.5)] dark:border-wood">
+    <div
+      ref={widgetRef}
+      style={{ width: widgetWidth, height: widgetHeight }}
+      className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-1rem)] max-h-[calc(100vh-1rem)] flex-col overflow-hidden rounded-lg border border-tan/80 bg-card shadow-[0_10px_34px_-12px_rgba(51,36,26,0.5)] dark:border-wood"
+    >
+      {/* Asa izquierda: redimensiona el ancho */}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionar el ancho del asistente"
+        tabIndex={0}
+        onPointerDown={(event) => startResize('width', event)}
+        onKeyDown={(event) => handleResizeKey('width', event)}
+        className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize touch-none bg-transparent transition-colors hover:bg-brass/50 focus:bg-brass/70 focus:outline-none"
+      />
+
       <div className="wood-panel flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-parchment">
         <span aria-hidden="true" className="block size-1.5 rotate-45 bg-brass" />
-        Asistente de la Biblioteca
+        <span className="min-w-0 flex-1 truncate">Asistente de la Biblioteca</span>
+        <button
+          type="button"
+          onClick={toggleSize}
+          aria-label={size === 'large' ? 'Reducir la ventana del asistente' : 'Ampliar la ventana del asistente'}
+          className="rounded p-1 text-parchment/80 transition-colors hover:bg-brass/20 hover:text-brass"
+        >
+          {size === 'large' ? <Minimize2 className="size-4" aria-hidden="true" /> : <Maximize2 className="size-4" aria-hidden="true" />}
+        </button>
       </div>
-      <div className="flex h-96 flex-col gap-2 overflow-y-auto p-3">
-        {messages.length === 0 && (
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
+        {conversation.length === 0 && (
           <p className="text-sm text-sepia dark:text-tan">
             Pregunta por un libro y te ayudaré. Si no está en el catálogo, podrás solicitar una copia.
           </p>
         )}
-        {messages.map((message) => (
+        {conversation.map((message) => (
           <div key={message.id} className="space-y-2">
             <div
               className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
@@ -135,6 +223,7 @@ export function ChatWidget() {
         ))}
         {sending && <p className="text-xs text-sepia dark:text-tan">Escribiendo...</p>}
       </div>
+
       <form onSubmit={handleSend} className="flex gap-2 border-t border-tan/70 bg-paper p-2 dark:border-wood dark:bg-wood-dark">
         <input
           type="text"
@@ -142,6 +231,7 @@ export function ChatWidget() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Escribe tu mensaje..."
+          aria-label="Mensaje para el asistente"
           className="flex-1 rounded border border-input bg-background px-3 py-2 text-sm text-espresso focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/40 dark:text-parchment"
         />
         <button
@@ -152,6 +242,17 @@ export function ChatWidget() {
           Enviar
         </button>
       </form>
+
+      {/* Asa inferior: redimensiona la altura */}
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Redimensionar la altura del asistente"
+        tabIndex={0}
+        onPointerDown={(event) => startResize('height', event)}
+        onKeyDown={(event) => handleResizeKey('height', event)}
+        className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize touch-none bg-transparent transition-colors hover:bg-brass/50 focus:bg-brass/70 focus:outline-none"
+      />
     </div>
   )
 }

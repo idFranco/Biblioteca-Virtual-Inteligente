@@ -4,6 +4,7 @@ using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Application.Queries.Books;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BibliotecaVirtual.WebAPI.Controllers;
 
@@ -18,6 +19,10 @@ public sealed class BooksController : ControllerBase
     {
         _dispatcher = dispatcher;
     }
+
+    private Guid UserId =>
+        Guid.Parse(User.FindFirstValue("userId")
+            ?? throw new UnauthorizedAccessException("El token no contiene el identificador del usuario."));
 
     [HttpGet]
     [Authorize(Policy = "books.read")]
@@ -39,6 +44,15 @@ public sealed class BooksController : ControllerBase
     public Task<BookResponse> GetBookById(Guid bookId, CancellationToken cancellationToken)
     {
         return _dispatcher.DispatchAsync<BookResponse>(new GetBookByIdQuery(bookId), cancellationToken);
+    }
+
+    [HttpGet("{bookId:guid}/reading")]
+    [Authorize(Policy = "books.read")]
+    public Task<BookForReadingResponse> GetBookForReading(Guid bookId, CancellationToken cancellationToken)
+    {
+        return _dispatcher.DispatchAsync<BookForReadingResponse>(
+            new GetBookForReadingQuery(bookId, UserId),
+            cancellationToken);
     }
 
     [HttpPost]

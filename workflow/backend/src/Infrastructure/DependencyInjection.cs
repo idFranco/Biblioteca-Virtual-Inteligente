@@ -56,6 +56,7 @@ public static class DependencyInjection
 
         services.AddScoped<IQueryHandler<GetBooksQuery, PagedResult<BookResponse>>, GetBooksQueryHandler>();
         services.AddScoped<IQueryHandler<GetBookByIdQuery, BookResponse>, GetBookByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<GetBookForReadingQuery, BookForReadingResponse>, GetBookForReadingQueryHandler>();
 
         services.AddScoped<IQueryHandler<GetMyRentalsQuery, PagedResult<RentalResponse>>, GetMyRentalsQueryHandler>();
         services.AddScoped<IQueryHandler<GetRentalsQuery, PagedResult<RentalResponse>>, GetRentalsQueryHandler>();

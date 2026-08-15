@@ -12,6 +12,20 @@ public sealed record BookResponse(
     int AvailableCopies,
     bool IsAvailable);
 
+public sealed record BookForReadingResponse(
+    Guid Id,
+    string Title,
+    string Author,
+    string? Isbn,
+    string? Genre,
+    string? Description,
+    string? OpenLibraryKey,
+    int TotalCopies,
+    int AvailableCopies,
+    bool IsAvailable,
+    DateTime RentedAt,
+    DateTime DueDate);
+
 public sealed record CreateBookRequest(
     string Title,
     string Author,

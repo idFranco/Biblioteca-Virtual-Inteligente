@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './api'
-import type { Book, PagedBooks, BookFilters, CreateBookInput, UpdateBookInput } from '@/types'
+import type { Book, BookForReading, PagedBooks, BookFilters, CreateBookInput, UpdateBookInput } from '@/types'
 
 export const booksService = {
   async getBooks(filters: BookFilters, page: number, pageSize: number): Promise<PagedBooks> {
@@ -13,6 +13,10 @@ export const booksService = {
 
   async getBook(bookId: string): Promise<Book> {
     return apiGet<Book>(`/api/books/${bookId}`)
+  },
+
+  async getBookForReading(bookId: string): Promise<BookForReading> {
+    return apiGet<BookForReading>(`/api/books/${bookId}/reading`)
   },
 
   async createBook(input: CreateBookInput): Promise<Book> {

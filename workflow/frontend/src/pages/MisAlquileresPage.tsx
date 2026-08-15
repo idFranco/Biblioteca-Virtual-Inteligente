@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { rentalsService } from '@/services/rentals'
 import type { Rental, RentalStatus } from '@/types'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -90,6 +91,7 @@ export function MisAlquileresPage() {
                 <th className="px-4 py-2 text-left font-medium text-sepia">Fecha límite</th>
                 <th className="px-4 py-2 text-left font-medium text-sepia">Fecha de devolución</th>
                 <th className="px-4 py-2 text-center font-medium text-sepia">Estado</th>
+                <th className="px-4 py-2 text-center font-medium text-sepia">Sala de lectura</th>
               </tr>
             </thead>
             <tbody>
@@ -105,6 +107,18 @@ export function MisAlquileresPage() {
                       <StatusBadge variant={isOverdue ? 'overdue' : statusVariants[rental.status]}>
                         {isOverdue ? 'Vencido' : statusLabels[rental.status]}
                       </StatusBadge>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {rental.status === 'Active' || rental.status === 'Overdue' ? (
+                        <Link
+                          to={`/sala-lectura/${rental.bookId}`}
+                          className="inline-block rounded-md border border-brass/50 bg-paper px-3 py-1.5 text-xs font-medium text-espresso transition-colors hover:bg-brass/15 dark:bg-wood-dark dark:text-parchment"
+                        >
+                          Leer
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-sepia/60 dark:text-tan/50">—</span>
+                      )}
                     </td>
                   </tr>
                 )
