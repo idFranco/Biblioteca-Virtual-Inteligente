@@ -36,3 +36,14 @@
 - Documentación: `US-012.md` → `## QA Result: PASS`; esta bitácora (Iteración 2).
 - PR creado vía GitHub MCP `create_pull_request`; mergeable con `main`.
 - Story → `Validated` vía MCP tras el PR Gate.
+
+## Iteración 3 — Documentación final (Technical Writer)
+
+- Completadas las entregas del Documentation Plan que quedaron pendientes antes del PR (secuencia corregida a posteriori por solicitud del usuario):
+  - `README.md` (raíz): sección 11 «Recomendación personalizada, feedback y LLM en el chatbot (US-012)» (flujo del grafo, LLM con PII masking y fallback, tabla de las 5 herramientas MCP nuevas, frontend, esquema backend). Tabla de variables de entorno actualizada (`LLM_API_KEY`/`LLM_MODEL` ahora cableadas; retiradas `LLM_API_URL`/`LLM_TEMPERATURE`/`LLM_TIMEOUT_SECONDS` inexistentes).
+  - `.opencode/memory/DECISIONS.md`: **ADR-022** (feedback-write-via-MCP, escritura acotada a `registrar_feedback`; nota del nombre de tabla `Feedbacks`) y **ADR-023** (LLM externo como nodo del grafo con fallback y PII masking).
+  - `.opencode/instructions/mcp-rules.md`: contratos de entrada/salida de las 5 herramientas nuevas de Biblioteca-MCP.
+  - `.env.example`: bloque LLM descomentado y documentado (`LLM_API_KEY` vacía, `LLM_MODEL=gpt-4o-mini`), sin valores reales.
+  - `workflow/chatbot/README.md` (nuevo): diagrama y tabla de nodos del grafo LangGraph (incluidos `audit_input`/`audit_output`), cliente LLM, prompts y clientes MCP.
+- Verificación de consistencia: `index_repository` OK; los nombres de las 5 herramientas (`server.py`) y los 7 nodos (`app/graph/nodes/`) documentados existen en la implementación real.
+- Pendiente tras el push: PR #13 se actualiza automáticamente con los cambios de documentación (no requiere re-apertura).
