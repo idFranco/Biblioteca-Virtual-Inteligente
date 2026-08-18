@@ -24,6 +24,11 @@ export interface Book {
   isAvailable: boolean
 }
 
+export interface BookForReading extends Book {
+  rentedAt: string
+  dueDate: string
+}
+
 export interface PagedBooks {
   page: number
   pageSize: number

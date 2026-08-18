@@ -8,7 +8,7 @@ Trabajo Práctico Integrador — Sistema Web Fullstack con AI Engineering, MCP y
 
 Como diferencial, integra un **chatbot inteligente** desarrollado con **LangChain + LangGraph**, apoyándose en el protocolo **MCP (Model Context Protocol)** para aislar la lógica de negocio y auditar la seguridad.
 
-### Alcance Funcional (10 Casos de Uso Core)
+### Alcance Funcional (11 Casos de Uso Core)
 1. Registro de cuenta (Público)
 2. Inicio de sesión (JWT)
 3. Gestión de roles y permisos (Admin)
@@ -19,6 +19,7 @@ Como diferencial, integra un **chatbot inteligente** desarrollado con **LangChai
 8. Generación automática de notificaciones de vencimiento próximo
 9. Registro de devoluciones y liberación de stock
 10. Chatbot inteligente con memoria persistente y grafo conversacional
+11. Sala de lectura con acceso autorizado al libro alquilado, chatbot redimensionable y portadas robustas
 
 ---
 
@@ -338,5 +339,11 @@ La SPA usa la identidad "Sala de lectura" (librería tradicional) definida exclu
 
 - **Paleta cálida y añeja:** fondos crema/pergamino, marrones de madera/cuero (espresso, wine, wood), acentos ámbar/dorado (brass, ochre) y verde musgo (olive).
 - **Tipografía:** Fraunces Variable (display/serif) y Lora Variable (cuerpo).
-- **Portadas:** derivadas en cliente desde ISBN/OLID (`covers.openlibrary.org`) con fallback ornamental en caso de error.
+- **Portadas:** derivadas en cliente desde ISBN/OLID (`covers.openlibrary.org`) con fallback ornamental en caso de error o de imagen en blanco (el servidor de portadas devuelve un placeholder en blanco, no un 404; se detecta por tamaño natural de la imagen en el componente `BookCover`).
 - **Alcance:** cambio de presentación únicamente; no altera rutas, guardias de permisos, lógica de negocio ni contratos de API (ADR-021).
+
+## 10. Sala de lectura y UX (US-011)
+
+- **Sala de lectura (`/sala-lectura/:bookId`):** un usuario con un alquiler NO devuelto (`Active` o `Overdue`) puede leer el libro desde la acción "Leer" en "Mis alquileres". La autorización se valida en el backend: `GET /api/books/{bookId}/reading` (JWT + policy `books.read`) devuelve el libro y su descripción únicamente si el solicitante tiene un alquiler no devuelto del libro; en caso contrario responde 404. El contenido de lectura es la descripción persistida del libro.
+- **Chatbot redimensionable:** la ventana del asistente se puede agrandar/achicar con el botón de expandir/colapsar y con las asas de redimensionado (borde izquierdo para ancho, borde inferior para alto), con teclado accesible. El tamaño elegido se persiste entre navegaciones (Zustand + `localStorage`).
+- **Portadas robustas:** componente reutilizable `BookCover` con skeleton de carga, detección de portada en blanco y fallback ornamental (`CoverOrnament`).
