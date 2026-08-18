@@ -178,11 +178,8 @@ Completa al menos los valores obligatorios marcados abajo. El `.env` está exclu
 | `SQLITE_DATA_SOURCE` | No | vacío (usa el connection string por defecto) | Backend (connection string SQLite) |
 | `CHATBOT_HOST` | No | `0.0.0.0` | Chatbot (uvicorn) |
 | `CHATBOT_PORT` | No | `8000` | Chatbot (uvicorn) |
-| `LLM_API_KEY` | No (futura) | — | Chatbot (LLM provider, sin cablear todavía) |
-| `LLM_API_URL` | No (futura) | — | Chatbot (LLM provider) |
-| `LLM_MODEL` | No (futura) | — | Chatbot (LLM provider) |
-| `LLM_TEMPERATURE` | No (futura) | `0.7` | Chatbot (LLM provider) |
-| `LLM_TIMEOUT_SECONDS` | No (futura) | `60` | Chatbot (LLM provider) |
+| `LLM_API_KEY` | No (si se define se activa el LLM) | — | Chatbot (cliente LLM LangChain/OpenAI-compatible) |
+| `LLM_MODEL` | No | `gpt-4o-mini` | Chatbot (modelo del cliente LLM) |
 | `CHATBOT_CORS_ORIGINS` | No (futura) | `http://localhost:5173` | Chatbot (CORS) |
 
 > **Importante (Docker):** si ya existen contenedores o imágenes previas del stack, **debes recrearlos** para aplicar la nueva configuración de variables: `docker compose down` seguido de `docker compose up --build`. Construir de nuevo la imagen sobrescribe la existente (mismo tag `:stable`) en lugar de crear imágenes nuevas con tags distintos.
@@ -347,3 +344,45 @@ La SPA usa la identidad "Sala de lectura" (librería tradicional) definida exclu
 - **Sala de lectura (`/sala-lectura/:bookId`):** un usuario con un alquiler NO devuelto (`Active` o `Overdue`) puede leer el libro desde la acción "Leer" en "Mis alquileres". La autorización se valida en el backend: `GET /api/books/{bookId}/reading` (JWT + policy `books.read`) devuelve el libro y su descripción únicamente si el solicitante tiene un alquiler no devuelto del libro; en caso contrario responde 404. El contenido de lectura es la descripción persistida del libro.
 - **Chatbot redimensionable:** la ventana del asistente se puede agrandar/achicar con el botón de expandir/colapsar y con las asas de redimensionado (borde izquierdo para ancho, borde inferior para alto), con teclado accesible. El tamaño elegido se persiste entre navegaciones (Zustand + `localStorage`).
 - **Portadas robustas:** componente reutilizable `BookCover` con skeleton de carga, detección de portada en blanco y fallback ornamental (`CoverOrnament`).
+
+---
+
+## 11. Recomendación personalizada, feedback y LLM en el chatbot (US-012)
+
+El chatbot (FastAPI + LangGraph + LangChain) amplía su grafo con **recomendaciones personalizadas de libros**, **feedback del usuario** y **generación de respuesta con LLM externo**, manteniendo la auditoría obligatoria de entrada/salida por `Security-Audit-MCP`.
+
+### 11.1 Flujo de recomendación en el grafo
+
+- `audit_input` (primera auditoría) → `load_user_state` → `classify_intent` enruta por `route_by_state`.
+- Intención `recommendation`: `preferences` (carga preferencias + perfil de historial) → `internal_catalog` (catálogo interno por género/historial vía Biblioteca-MCP) → `external_enrichment` (Open Library MCP) → `availability` (solo libros con copias disponibles) → `response` → `llm_response` (redacción con LLM o fallback heurístico) → `audit_output`.
+- Intenciones `due_reminder`/`overdue`: recordatorios de vencimiento según el estado de lectura.
+- Intención `feedback`: `feedback` → `save_feedback` (persiste vía `registrar_feedback` de Biblioteca-MCP) → `response`.
+
+### 11.2 LLM externo con PII masking y fallback
+
+- Cliente aislado en `workflow/chatbot/app/llm/client.py` (LangChain `ChatOpenAI`, compatible OpenAI).
+- La clave se lee de `LLM_API_KEY` (nunca hardcodeada); el modelo de `LLM_MODEL` (default `gpt-4o-mini`).
+- **PII masking obligatorio** (`app/utils/pii_masker.py`) antes de enviar el contexto al proveedor externo.
+- **Fallback heurístico:** si no hay clave, falta el paquete o el proveedor falla (timeout 20s), el grafo usa la respuesta heurística de `response_node`; el chatbot nunca colapsa.
+- Prompt de recomendación en `workflow/chatbot/app/prompts/recommendation_prompt.txt` (no inventar títulos/autores/disponibilidad; no mencionar datos personales).
+
+### 11.3 Nuevas herramientas de Biblioteca-MCP (US-012)
+
+| Herramienta | Tipo | Descripción |
+|---|---|---|
+| `consultar_alquileres_usuario(user_id)` | lectura | Historial de alquileres del usuario (JOIN con catálogo) |
+| `consultar_libro_en_curso(user_id)` | lectura | Alquiler activo actual del usuario |
+| `obtener_preferencias(user_id)` | lectura | Preferencias de género guardadas |
+| `listar_recomendaciones_por_genero(user_id, limit)` | lectura | Libros disponibles de los géneros del historial/preferencias, con `reason` |
+| `registrar_feedback(user_id, book_id, rating, comment)` | **escritura acotada** | Persiste el feedback del usuario en la tabla `Feedbacks` |
+
+`Biblioteca-MCP` gana capacidad de escritura **exclusivamente** para `registrar_feedback` (el resto sigue de solo lectura, ADR-022). El frontend nunca llama MCP directamente (ADR-007): los botones «Me gustó»/«No me gustó» de las tarjetas de recomendación envían un mensaje de seguimiento al chatbot.
+
+### 11.4 Frontend
+
+- `src/services/chat.ts`: tipos `BookRecommendation` y campo `recommendations` en `ChatResponse`.
+- `src/components/chat/ChatWidget.tsx`: tarjetas de recomendación (portada `BookCover` + fallback ornamental, badge de disponibilidad, razón) y botones de feedback.
+
+### 11.5 Backend (esquema)
+
+- Entidades `Feedback` y `UserPreference` en `Domain/Entities` con sus `DbSet` en `BibliotecaDbContext`; las tablas `Feedbacks` y `UserPreferences` las crea `EnsureCreated` (backend es el dueño del esquema; el chatbot escribe vía MCP).

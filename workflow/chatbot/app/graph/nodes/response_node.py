@@ -3,9 +3,37 @@ from __future__ import annotations
 from app.graph.state import ChatState
 
 
+def _recommendation_text(state: ChatState) -> str:
+    """Compone la respuesta heurística con las recomendaciones disponibles."""
+    if not state.recommendations:
+        return (
+            "Aún no tengo suficientes datos para recomendarte. "
+            "Alquila algún libro o cuéntame tus géneros favoritos y volveré a intentarlo."
+        )
+
+    lines = []
+    for index, item in enumerate(state.recommendations, start=1):
+        title = item.get("title", "un libro")
+        author = item.get("author")
+        genre = item.get("genre")
+        reason = item.get("reason")
+        detail = f"«{title}»" + (f" de {author}" if author else "")
+        if genre:
+            detail += f" ({genre})"
+        if reason:
+            detail += f" — {reason}"
+        lines.append(f"{index}. {detail}")
+
+    return "Basándome en tu historial, te recomiendo:\n" + "\n".join(lines)
+
+
 async def response_node(state: ChatState) -> ChatState:
     """Genera la respuesta final para el usuario."""
     if state.response:
+        return state
+
+    if state.intent == "recommendation":
+        state.response = _recommendation_text(state)
         return state
 
     if state.intent == "status":
@@ -16,11 +44,8 @@ async def response_node(state: ChatState) -> ChatState:
         )
         return state
 
-    if state.intent == "recommendation":
-        state.response = (
-            "Puedo recomendarte libros según tu historial. "
-            "Escribe el título o autor que te interesa y lo busco para ti."
-        )
+    if state.intent == "feedback":
+        state.response = "Gracias por tu valoración."
         return state
 
     if state.catalog_matches:

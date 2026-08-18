@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { Maximize2, Minimize2 } from 'lucide-react'
-import { chatService, type ChatMessage, type ChatResponse } from '@/services/chat'
+import { Maximize2, Minimize2, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { chatService, type BookRecommendation, type ChatMessage, type ChatResponse } from '@/services/chat'
 import { bookRequestsService } from '@/services/bookRequests'
+import { BookCover } from '@/components/books/BookCover'
 import {
   useChatWidgetStore,
   CHAT_WIDGET_DEFAULTS,
@@ -95,6 +96,7 @@ export function ChatWidget() {
         role: 'assistant',
         content: response.message,
         actionOffer: responsesToOffer(response),
+        recommendations: response.recommendations ?? null,
       }
       setConversation((prev) => [...prev, assistantMessage])
     } catch {
@@ -121,6 +123,39 @@ export function ChatWidget() {
       return response.action_offer
     }
     return null
+  }
+
+  async function handleFeedback(recommendation: BookRecommendation, liked: boolean) {
+    if (sending) return
+    const title = recommendation.title
+    const text = liked ? `Me gustó el libro «${title}»` : `No me gustó el libro «${title}»`
+    const userMessage: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text }
+    setConversation((prev) => [...prev, userMessage])
+    setSending(true)
+    try {
+      const response: ChatResponse = await chatService.sendMessage(text)
+      setConversation((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: response.message,
+          actionOffer: responsesToOffer(response),
+          recommendations: response.recommendations ?? null,
+        },
+      ])
+    } catch {
+      setConversation((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: 'Lo siento, no pude guardar tu valoración en este momento.',
+        },
+      ])
+    } finally {
+      setSending(false)
+    }
   }
 
   async function handleBookRequest(message: ChatMessage) {
@@ -196,6 +231,69 @@ export function ChatWidget() {
             >
               {message.content}
             </div>
+            {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (
+              <div className="space-y-2">
+                {message.recommendations.map((recommendation) => (
+                  <div
+                    key={`${recommendation.id ?? recommendation.title}-${recommendation.title}`}
+                    className="flex gap-3 rounded-lg border border-brass/40 bg-parchment/60 p-3 dark:border-wood dark:bg-wood-dark"
+                  >
+                    <div className="h-24 w-16 shrink-0">
+                      <BookCover
+                        title={recommendation.title}
+                        author={recommendation.author}
+                        isbn={recommendation.isbn}
+                        openLibraryKey={recommendation.openLibraryKey}
+                      />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <p className="text-sm font-medium text-espresso dark:text-parchment">
+                        {recommendation.title}
+                      </p>
+                      {recommendation.author && (
+                        <p className="mt-0.5 text-xs text-sepia dark:text-tan">{recommendation.author}</p>
+                      )}
+                      {recommendation.reason && (
+                        <p className="mt-1 text-xs italic text-sepia dark:text-tan">{recommendation.reason}</p>
+                      )}
+                      <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            recommendation.available
+                              ? 'bg-olive/15 text-olive dark:bg-olive/25 dark:text-parchment'
+                              : 'bg-oxide/15 text-oxide dark:bg-oxide/25 dark:text-parchment'
+                          }`}
+                        >
+                          {recommendation.available ? 'Disponible' : 'Sin copias'}
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            aria-label={`Me gustó ${recommendation.title}`}
+                            title="Me gustó"
+                            disabled={sending}
+                            onClick={() => void handleFeedback(recommendation, true)}
+                            className="rounded p-1 text-espresso/70 transition-colors hover:bg-olive/15 hover:text-olive disabled:opacity-40 dark:text-parchment/70 dark:hover:text-parchment"
+                          >
+                            <ThumbsUp className="size-3.5" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`No me gustó ${recommendation.title}`}
+                            title="No me gustó"
+                            disabled={sending}
+                            onClick={() => void handleFeedback(recommendation, false)}
+                            className="rounded p-1 text-espresso/70 transition-colors hover:bg-oxide/15 hover:text-oxide disabled:opacity-40 dark:text-parchment/70 dark:hover:text-parchment"
+                          >
+                            <ThumbsDown className="size-3.5" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {message.role === 'assistant' && message.actionOffer && (
               <div className="rounded-lg border border-brass/40 bg-parchment/60 p-3 dark:border-wood dark:bg-wood-dark">
                 <p className="text-sm font-medium text-espresso dark:text-parchment">

@@ -64,3 +64,109 @@ async def get_estado_lectura(user_id: str) -> str | None:
         return str(result) if result else None
     except Exception:
         return None
+
+
+async def consultar_alquileres_usuario(user_id: str) -> list[dict]:
+    """Devuelve el historial de alquileres del usuario.
+
+    Raises:
+        RuntimeError: si el servidor MCP no está disponible.
+    """
+    if not user_id:
+        return []
+    try:
+        result = await run_mcp_tool(
+            _command(),
+            "consultar_alquileres_usuario",
+            {"user_id": user_id},
+            name="biblioteca-mcp",
+        )
+        return _as_list(result)
+    except Exception as exc:
+        raise RuntimeError(f"Biblioteca-MCP no disponible: {exc}") from exc
+
+
+async def consultar_libro_en_curso(user_id: str) -> dict | None:
+    """Devuelve el libro que el usuario tiene en curso, o None.
+
+    Raises:
+        RuntimeError: si el servidor MCP no está disponible.
+    """
+    if not user_id:
+        return None
+    try:
+        result = await run_mcp_tool(
+            _command(),
+            "consultar_libro_en_curso",
+            {"user_id": user_id},
+            name="biblioteca-mcp",
+        )
+        if isinstance(result, dict):
+            return result
+        return None
+    except Exception:
+        return None
+
+
+async def obtener_preferencias(user_id: str) -> list[dict]:
+    """Devuelve las preferencias de género del usuario.
+
+    Raises:
+        RuntimeError: si el servidor MCP no está disponible.
+    """
+    if not user_id:
+        return []
+    try:
+        result = await run_mcp_tool(
+            _command(),
+            "obtener_preferencias",
+            {"user_id": user_id},
+            name="biblioteca-mcp",
+        )
+        return _as_list(result)
+    except Exception as exc:
+        raise RuntimeError(f"Biblioteca-MCP no disponible: {exc}") from exc
+
+
+async def listar_recomendaciones_por_genero(user_id: str, limit: int = 5) -> list[dict]:
+    """Recomienda libros disponibles según el historial y preferencias del usuario.
+
+    Raises:
+        RuntimeError: si el servidor MCP no está disponible.
+    """
+    if not user_id:
+        return []
+    try:
+        result = await run_mcp_tool(
+            _command(),
+            "listar_recomendaciones_por_genero",
+            {"user_id": user_id, "limit": limit},
+            name="biblioteca-mcp",
+        )
+        return _as_list(result)
+    except Exception as exc:
+        raise RuntimeError(f"Biblioteca-MCP no disponible: {exc}") from exc
+
+
+async def registrar_feedback(
+    user_id: str, book_id: str, rating: int, comment: str | None = None
+) -> dict:
+    """Registra el feedback del usuario sobre un libro.
+
+    Raises:
+        RuntimeError: si el servidor MCP no está disponible.
+    """
+    result = await run_mcp_tool(
+        _command(),
+        "registrar_feedback",
+        {
+            "user_id": user_id,
+            "book_id": book_id,
+            "rating": rating,
+            "comment": comment,
+        },
+        name="biblioteca-mcp",
+    )
+    if isinstance(result, dict):
+        return result
+    return {"success": False, "reason": "Biblioteca-MCP devolvió un resultado inválido."}

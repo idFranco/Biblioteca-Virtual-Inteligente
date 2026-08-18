@@ -18,7 +18,21 @@ class BookRequestMetadata(BaseModel):
     openLibraryKey: str | None = None
 
 
+class BookRecommendation(BaseModel):
+    id: str | None = None
+    title: str
+    author: str | None = None
+    genre: str | None = None
+    isbn: str | None = None
+    openLibraryKey: str | None = None
+    coverUrl: str | None = None
+    availableCopies: int = 0
+    available: bool = False
+    reason: str | None = None
+
+
 class ChatResponse(BaseModel):
     message: str
     action_offer: BookRequestMetadata | None = None
+    recommendations: list[BookRecommendation] = Field(default_factory=list)
     correlation_id: str | None = None

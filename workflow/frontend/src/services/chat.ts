@@ -15,16 +15,31 @@ export interface ChatActionOffer {
   metadata: BookRequestOfferMetadata
 }
 
+export interface BookRecommendation {
+  id?: string | null
+  title: string
+  author?: string | null
+  genre?: string | null
+  isbn?: string | null
+  openLibraryKey?: string | null
+  coverUrl?: string | null
+  availableCopies: number
+  available: boolean
+  reason?: string | null
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   actionOffer?: ChatActionOffer | null
+  recommendations?: BookRecommendation[] | null
 }
 
 export interface ChatResponse {
   message: string
   action_offer?: ChatActionOffer | null
+  recommendations?: BookRecommendation[] | null
 }
 
 function createCorrelationId(): string {
