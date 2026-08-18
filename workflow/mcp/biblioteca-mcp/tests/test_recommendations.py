@@ -56,7 +56,7 @@ def db_path(tmp_path: Path) -> Path:
             Genre TEXT NOT NULL,
             CreatedAt TEXT
         );
-        CREATE TABLE Feedback (
+        CREATE TABLE Feedbacks (
             Id TEXT PRIMARY KEY,
             UserId TEXT NOT NULL,
             BookId TEXT NOT NULL,
@@ -161,7 +161,7 @@ def test_registrar_feedback(server):
     assert result["id"]
 
     rows = sqlite3.connect(str(server.DB_PATH)).execute(
-        "SELECT Rating, Comment FROM Feedback WHERE UserId = 'user-1' AND BookId = 'b1'"
+        "SELECT Rating, Comment FROM Feedbacks WHERE UserId = 'user-1' AND BookId = 'b1'"
     ).fetchall()
     assert rows == [(5, "Excelente")]
 
@@ -170,7 +170,7 @@ def test_registrar_feedback_clamps_rating(server):
     result = server.registrar_feedback("user-1", "b1", 99)
     assert result["success"] is True
     rating = sqlite3.connect(str(server.DB_PATH)).execute(
-        "SELECT Rating FROM Feedback WHERE UserId = 'user-1' AND BookId = 'b1'"
+        "SELECT Rating FROM Feedbacks WHERE UserId = 'user-1' AND BookId = 'b1'"
     ).fetchone()[0]
     assert rating == 5
 

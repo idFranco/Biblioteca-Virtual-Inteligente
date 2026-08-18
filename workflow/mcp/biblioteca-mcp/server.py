@@ -321,7 +321,7 @@ def registrar_feedback(user_id: str, book_id: str, rating: int, comment: str | N
             "SELECT lower(hex(randomblob(16)))", []
         )[0][0]
         _db().execute(
-            "INSERT INTO Feedback (Id, UserId, BookId, Rating, Comment, CreatedAt) "
+            "INSERT INTO Feedbacks (Id, UserId, BookId, Rating, Comment, CreatedAt) "
             "VALUES (?, ?, ?, ?, ?, datetime('now'))",
             [feedback_id, user_id, book_id, normalized_rating, comment],
         )
