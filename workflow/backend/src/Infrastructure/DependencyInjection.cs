@@ -3,6 +3,8 @@ using BibliotecaVirtual.Application.Commands.BookRequests;
 using BibliotecaVirtual.Application.Commands.BookRequests.Validators;
 using BibliotecaVirtual.Application.Commands.Books;
 using BibliotecaVirtual.Application.Commands.Books.Validators;
+using BibliotecaVirtual.Application.Commands.Notifications;
+using BibliotecaVirtual.Application.Commands.Notifications.Validators;
 using BibliotecaVirtual.Application.Commands.Rentals;
 using BibliotecaVirtual.Application.Commands.Rentals.Validators;
 using BibliotecaVirtual.Application.Commands.Users;
@@ -10,17 +12,20 @@ using BibliotecaVirtual.Application.Commands.Users.Validators;
 using BibliotecaVirtual.Application.Contracts.Auth;
 using BibliotecaVirtual.Application.Contracts.Books;
 using BibliotecaVirtual.Application.Contracts.BookRequests;
+using BibliotecaVirtual.Application.Contracts.Notifications;
 using BibliotecaVirtual.Application.Contracts.Rentals;
 using BibliotecaVirtual.Application.Contracts.Seed;
 using BibliotecaVirtual.Application.Contracts.Users;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Application.Queries.Books;
 using BibliotecaVirtual.Application.Queries.BookRequests;
+using BibliotecaVirtual.Application.Queries.Notifications;
 using BibliotecaVirtual.Application.Queries.Rentals;
 using BibliotecaVirtual.Infrastructure.Data.Seed;
 using BibliotecaVirtual.Infrastructure.Handlers.Auth;
 using BibliotecaVirtual.Infrastructure.Handlers.BookRequests;
 using BibliotecaVirtual.Infrastructure.Handlers.Books;
+using BibliotecaVirtual.Infrastructure.Handlers.Notifications;
 using BibliotecaVirtual.Infrastructure.Handlers.Rentals;
 using BibliotecaVirtual.Infrastructure.Handlers.Users;
 using BibliotecaVirtual.Infrastructure.Services;
@@ -66,6 +71,10 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetBookRequestsQuery, PagedResult<BookRequestResponse>>, GetBookRequestsQueryHandler>();
         services.AddScoped<IQueryHandler<GetBookRequestByIdQuery, BookRequestResponse>, GetBookRequestByIdQueryHandler>();
 
+        services.AddScoped<ICommandHandler<GenerateDueDateNotificationsCommand, GenerateDueDateNotificationsResult>, GenerateDueDateNotificationsCommandHandler>();
+        services.AddScoped<ICommandHandler<MarkNotificationReadCommand, bool>, MarkNotificationReadCommandHandler>();
+        services.AddScoped<IQueryHandler<GetMyNotificationsQuery, PagedResult<NotificationResponse>>, GetMyNotificationsQueryHandler>();
+
         services.AddScoped<IValidator<RegisterCommand>, RegisterCommandValidator>();
         services.AddScoped<IValidator<LoginCommand>, LoginCommandValidator>();
         services.AddScoped<IValidator<RefreshCommand>, RefreshCommandValidator>();
@@ -83,6 +92,10 @@ public static class DependencyInjection
         services.AddScoped<IValidator<CreateBookRequestCommand>, CreateBookRequestCommandValidator>();
         services.AddScoped<IValidator<ApproveBookRequestCommand>, ApproveBookRequestCommandValidator>();
         services.AddScoped<IValidator<RejectBookRequestCommand>, RejectBookRequestCommandValidator>();
+
+        services.AddScoped<IValidator<MarkNotificationReadCommand>, MarkNotificationReadCommandValidator>();
+
+        services.AddHostedService<RentalDueNotificationService>();
 
         services.AddScoped<IValidator<SeedBookDto>, SeedBookValidator>();
         services.AddScoped<ICatalogSeeder, CatalogSeeder>();
