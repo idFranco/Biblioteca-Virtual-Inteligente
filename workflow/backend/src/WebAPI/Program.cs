@@ -92,6 +92,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("roles.manage", policy =>
         policy.RequireClaim("permission", "roles.manage"));
+
+    options.AddPolicy("notifications.read", policy =>
+        policy.RequireClaim("permission", "notifications.read"));
 });
 
 builder.Services.AddCors(options =>
@@ -156,14 +159,14 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
             "books.read", "books.create", "books.update", "books.delete",
             "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all",
             "books.request", "books.manage",
-            "roles.manage"],
+            "roles.manage", "notifications.read"],
         ["Bibliotecario"] = [
             "books.read", "books.create", "books.update", "books.delete",
             "rentals.return", "rentals.view_all",
-            "books.request", "books.manage"],
+            "books.request", "books.manage", "notifications.read"],
         ["Usuario"] = [
             "books.read", "rentals.create", "rentals.view_own",
-            "books.request"]
+            "books.request", "notifications.read"]
     };
 
     foreach (var (roleName, permissions) in rolePermissions)

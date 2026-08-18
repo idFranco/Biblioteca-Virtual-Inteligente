@@ -62,7 +62,7 @@ Cada nueva funcionalidad o requerimiento sigue de manera obligatoria esta secuen
 ```mermaid
 gantt
     title Ciclo de Vida Inmutable de una Historia de Usuario (Gate-to-Gate)
-    dateFormat  X
+    dateFormat X
     axisFormat %s
     
     section 1. REQUERIMIENTO
@@ -90,9 +90,9 @@ El desarrollo está completamente automatizado y gobernado por el servidor de ci
 | Fase | Comando Ejecutado | Rol Líder | Estado en MCP | Compuerta de Seguridad / Restricciones Estrictas |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Entrada** | `create-user-story "Como... Quiero... Para..."` | Technical Lead | `Draft` | El sistema valida la sintaxis y genera un ID único incremental (ej. `US-001`). |
-| **2. Plan** | `plan-user-story "US-XXX"` | Technical Lead | `Planned` | **Prohibido modificar código.** Coordina el diseño entre analistas y arquitectos. Exige definir de forma interactiva la rama Git (`tipo/US-XXX-descripcion`). |
+| **2. Plan** | `plan-user-story "US-XXX"` | Technical Lead | `Planned` | **Prohibido modificar código.** Exige definir de forma interactiva la rama Git (`tipo/US-XXX-descripcion`). |
 | **3. Aprobación** | `approve-user-story "US-XXX"` | Technical Lead | `Approved` | Avanza explícitamente la historia autorizando el comienzo de la programación. |
-| **4. Build** | `implement-user-story "US-XXX"` | Technical Lead | `In Progress` $\rightarrow$ `Implemented` | Bloqueado si el estado no es `Approved` o `Rejected`. El agente escribe el incremento de código exacto y realiza un *push* directo y automatizado a la rama de la funcionalidad en GitHub. |
+| **4. Build** | `implement-user-story "US-XXX"` | Technical Lead | `In Progress` `→` `Implemented` | Bloqueado si el estado no es `Approved` o `Rejected`. El agente escribe el incremento de código exacto y realiza un *push* directo y automatizado a la rama de la funcionalidad en GitHub. |
 | **5. QA** | `qa-check "US-XXX"` | QA | `Validated` o  `Rejected` | Ejecuta `index_repository` para analizar los cambios. Valida criterios de aceptación y documenta en el `.md`. Si pasa con éxito, abre un **Pull Request** automático hacia la rama main. Si falla, devuelve a `Rejected` y se detiene. |
 
 **Nota de Cumplimiento** Cualquier intento de saltarse una fase, modificar código fuera de la fase *Build*, o utilizar nombres de ramas sin el formato reglamentario provocará el rechazo automático del comando por parte de los agentes.
@@ -201,7 +201,7 @@ sudo npm install -g codebase-memory-mcp
 npm install -g codebase-memory-mcp
 ```
 
-Nota: El archivo opencode.json de este proyecto asume que el comando `codebase-memory-mcp` está disponible globalmente en tu variable de entorno PATH.
+Nota: El archivo opencode.json de este proyecto asume que el comando `codebase-memory-mcp` está disponible globalmente en tu PATH.
 
 #### Versión con UI
 
@@ -386,3 +386,28 @@ El chatbot (FastAPI + LangGraph + LangChain) amplía su grafo con **recomendacio
 ### 11.5 Backend (esquema)
 
 - Entidades `Feedback` y `UserPreference` en `Domain/Entities` con sus `DbSet` en `BibliotecaDbContext`; las tablas `Feedbacks` y `UserPreferences` las crea `EnsureCreated` (backend es el dueño del esquema; el chatbot escribe vía MCP).
+
+---
+
+## 12. Notificaciones automáticas de vencimiento de alquileres (US-013)
+
+El backend ejecuta un proceso periódico (`BackgroundService` en .NET) que detecta los alquileres **activos** cuyo `DueDate` cae en la ventana `0 < DueDate - Ahora <= 2 días` y genera una fila en la tabla `Notifications` por cada uno, sin intervención manual.
+
+### 12.1 Servicio de fondo (`RentalDueNotificationService`)
+
+- Es un `BackgroundService` que por cada ciclo crea un scope (`IServiceScopeFactory`) y despacha `GenerateDueDateNotificationsCommand` por el `IDispatcher` propio (CQRS, ADR-009). No contiene lógica de negocio.
+- **Idempotente:** existe un índice único sobre `RentalId`, por lo que una ejecución posterior nunca duplica una notificación ya creada para el mismo alquiler.
+- **Intervalo configurable:** `Notifications:CheckIntervalSeconds` en `appsettings.json` (por defecto `3600` s, mínimo `30` s), sobreescribible con la variable de entorno `NOTIFICATIONS_CHECK_INTERVAL_SECONDS` (docker-compose).
+- Solo generan notificación los alquileres `Active` dentro de la ventana; quedan excluidos los devueltos, los vencidos (`DueDate <= Ahora`) y los que aún tienen más de 2 días de margen.
+- Mensaje en español, por ejemplo: *«Tu alquiler de "El proceso" vence el 19/08/2026. Devuélvelo a tiempo.»*
+
+### 12.2 Endpoints
+
+| Método | Ruta | Permiso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/notifications` | `notifications.read` | Notificaciones del usuario autenticado (paginadas, ordenadas por `CreatedAt` desc). Filtro opcional `unreadOnly=true`. |
+| `PATCH` | `/api/notifications/{notificationId}/read` | `notifications.read` | Marca una notificación como leída. Devuelve `404` si no existe o no pertenece al usuario. |
+
+El permiso `notifications.read` se siembra en los roles `Admin`, `Bibliotecario` y `Usuario`. La notificación es una fila en BD (sin envío real email/websocket/push); la UI de campana/panel queda para una historia futura.
+
+> **Esquema:** el proyecto usa `EnsureCreated`. Si la BD ya existía antes de US-013, elimina una sola vez el archivo `.db` para que se regenere con la tabla `Notifications` (el seed es idempotente, ADR-019/024).

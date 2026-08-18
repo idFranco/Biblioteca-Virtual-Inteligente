@@ -17,6 +17,7 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -101,6 +102,22 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.UserId, e.Genre }).IsUnique();
+        });
+
+        builder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(500);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Rental)
+                  .WithMany()
+                  .HasForeignKey(e => e.RentalId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.RentalId).IsUnique();
+            entity.HasIndex(e => e.UserId);
         });
     }
 }
