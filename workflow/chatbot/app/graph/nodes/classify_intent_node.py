@@ -9,7 +9,11 @@ _STATUS_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 _RECOMMENDATION_PATTERNS = re.compile(
-    r"recomi[eé]ndame|qu[eé] me recomiendas|qu[eé] leer|sugiere",
+    r"recomi[eé]ndame|qu[eé] me recomiendas|qu[eé] leer|sugiere|recomendaci[oó]n",
+    re.IGNORECASE,
+)
+_FEEDBACK_PATTERNS = re.compile(
+    r"me gust[oó]|me encant[oó]|no me gust[oó]|no me encant[oó]|recomendad[oa]|excelente|muy buen|mal[oa] recomendaci[oó]n",
     re.IGNORECASE,
 )
 
@@ -32,6 +36,8 @@ async def classify_intent_node(state: ChatState) -> ChatState:
         state.intent = "status"
     elif _RECOMMENDATION_PATTERNS.search(message):
         state.intent = "recommendation"
+    elif _FEEDBACK_PATTERNS.search(message):
+        state.intent = "feedback"
     elif _looks_like_book_query(message) or len(message.strip()) > 0:
         state.intent = "book_query"
     else:

@@ -5,7 +5,21 @@ from app.mcp_clients import biblioteca_client
 
 
 async def internal_catalog_node(state: ChatState) -> ChatState:
-    """Busca el libro en el catálogo interno de la biblioteca via Biblioteca-MCP."""
+    """Consulta el catálogo interno vía Biblioteca-MCP.
+
+    - book_query: busca libros por título/autor (catalog_matches).
+    - recommendation: obtiene recomendaciones por género/historial (recommendations).
+    """
+    if state.intent == "recommendation" and state.user_id:
+        try:
+            recommendations = await biblioteca_client.listar_recomendaciones_por_genero(
+                state.user_id, limit=5
+            )
+            state.recommendations = recommendations[:5]
+        except Exception:
+            state.recommendations = []
+        return state
+
     if state.intent != "book_query":
         return state
 

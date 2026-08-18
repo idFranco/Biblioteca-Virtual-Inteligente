@@ -27,12 +27,20 @@ def _offer_from_enrichment(state: ChatState) -> BookRequestMetadata | None:
 
 
 async def availability_node(state: ChatState) -> ChatState:
-    """Compone la oferta de solicitud de copia para un libro ausente del catálogo.
+    """Verifica disponibilidad de los resultados antes de responder.
 
-    La oferta se genera cuando el libro no existe internamente. El enriquecimiento
-    fallido (Bug 2) se mantiene como oferta con los datos mínimos disponibles o, si
-    no hay datos, no se muestra la acción para no crear solicitudes incompletas.
+    - recommendation: descarta libros sin copias disponibles y marca los que sí.
+    - book_query: compone la oferta de solicitud de copia para un libro ausente.
     """
+    if state.intent == "recommendation" and state.recommendations:
+        available = [
+            item
+            for item in state.recommendations
+            if int(item.get("available_copies") or 0) > 0
+        ]
+        state.recommendations = available[:5]
+        return state
+
     if state.intent != "book_query" or state.catalog_matches:
         return state
 

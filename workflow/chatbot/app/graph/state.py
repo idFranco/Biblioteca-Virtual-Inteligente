@@ -17,10 +17,15 @@ class ChatState:
     query: str | None = None
     reading_state: str | None = None
     catalog_matches: list[dict[str, Any]] = field(default_factory=list)
+    preferences: list[dict[str, Any]] = field(default_factory=list)
+    recommendations: list[dict[str, Any]] = field(default_factory=list)
     enrichment: dict[str, Any] | None = None
     enrichment_error: bool = False
     action_offer: BookRequestMetadata | None = None
+    due_reminder_flag: bool = False
+    feedback_payload: dict[str, Any] | None = None
     blocked: bool = False
     sanitized: bool = False
+    llm_used: bool = False
     response: str | None = None
     llm_messages: list[dict[str, str]] = field(default_factory=list)

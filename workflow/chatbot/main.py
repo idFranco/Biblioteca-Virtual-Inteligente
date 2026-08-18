@@ -5,7 +5,7 @@ import uuid
 from fastapi import FastAPI, Header, HTTPException
 from app.graph.build_graph import graph
 from app.graph.state import ChatState
-from app.schemas import ChatRequest, ChatResponse
+from app.schemas import BookRecommendation, ChatRequest, ChatResponse
 
 app = FastAPI(title="Biblioteca Virtual Chatbot")
 
@@ -17,6 +17,27 @@ def normalize_state(raw: dict) -> ChatState:
         if field in raw:
             setattr(defaults, field, raw[field])
     return defaults
+
+
+def _recommendations(result: ChatState) -> list[BookRecommendation]:
+    """Convierte las recomendaciones del estado en el schema de respuesta."""
+    recommendations = []
+    for item in result.recommendations or []:
+        available_copies = int(item.get("available_copies") or 0)
+        recommendations.append(
+            BookRecommendation(
+                id=item.get("id"),
+                title=item.get("title") or "Sin título",
+                author=item.get("author"),
+                genre=item.get("genre"),
+                isbn=item.get("isbn"),
+                openLibraryKey=item.get("open_library_key") or item.get("key"),
+                availableCopies=available_copies,
+                available=available_copies > 0,
+                reason=item.get("reason"),
+            )
+        )
+    return recommendations
 
 
 def _correlation_id(header: str | None) -> str:
@@ -50,6 +71,7 @@ async def chat(
     return ChatResponse(
         message=result.response or "Lo siento, no pude generar una respuesta.",
         action_offer=result.action_offer,
+        recommendations=_recommendations(result),
         correlation_id=correlation_id,
     )
 

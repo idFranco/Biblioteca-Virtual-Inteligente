@@ -31,6 +31,11 @@ def _isolate_mcp_clients(monkeypatch):
 
     monkeypatch.setattr(biblioteca_client, "buscar_libros", _no_biblioteca)
     monkeypatch.setattr(biblioteca_client, "get_estado_lectura", _no_biblioteca)
+    monkeypatch.setattr(biblioteca_client, "consultar_alquileres_usuario", _no_biblioteca)
+    monkeypatch.setattr(biblioteca_client, "consultar_libro_en_curso", _no_biblioteca)
+    monkeypatch.setattr(biblioteca_client, "obtener_preferencias", _no_biblioteca)
+    monkeypatch.setattr(biblioteca_client, "listar_recomendaciones_por_genero", _no_biblioteca)
+    monkeypatch.setattr(biblioteca_client, "registrar_feedback", _no_biblioteca)
     monkeypatch.setattr(security_client, "audit_input", _no_security)
     monkeypatch.setattr(security_client, "audit_output", _no_security)
     monkeypatch.setattr(security_client, "sanitize_text", _no_security)

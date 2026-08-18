@@ -15,6 +15,8 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<Rental> Rentals => Set<Rental>();
     public DbSet<BookRequest> BookRequests => Set<BookRequest>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -72,6 +74,33 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
                   .WithMany()
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Rating).IsRequired();
+            entity.Property(e => e.Comment).HasMaxLength(2000);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Book)
+                  .WithMany()
+                  .HasForeignKey(e => e.BookId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.BookId });
+        });
+
+        builder.Entity<UserPreference>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Genre).IsRequired().HasMaxLength(100);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.Genre }).IsUnique();
         });
     }
 }
