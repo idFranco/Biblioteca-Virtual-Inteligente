@@ -89,7 +89,7 @@ The demo catalog is seeded from a single manifest JSON, `workflow/backend/data/s
 
 ## ADR-020 — Open Library verification as dev-time batch via MCP
 
-Verification that seed books exist in Open Library is a development/QA batch task, not a runtime feature. It is executed by the script `workflow/scripts/verify_seed_open_library.py`, which invokes the custom open-library MCP tool `ol_verify_by_isbn` over stdio (reusing the chatbot's `McpStdioClient`, consistent with ADR-006/007 and the data-flow frontier defined in US-010). The backend never adds an HTTP client to Open Library. Semantics of "available in Open Library": the work exists in OL and the returned title matches the seeded one (normalized, case- and accent-insensitive comparison); it does NOT imply rental availability, and no invented key is ever seeded.
+Verification that seed books exist in Open Library is a development/QA batch task, not a runtime feature. It is executed by the script `workflow/mcp/open-library-mcp/verify_seed_open_library.py`, which invokes the custom open-library MCP tool `ol_verify_by_isbn` over stdio (reusing the chatbot's `McpStdioClient`, consistent with ADR-006/007 and the data-flow frontier defined in US-010). The backend never adds an HTTP client to Open Library. Semantics of "available in Open Library": the work exists in OL and the returned title matches the seeded one (normalized, case- and accent-insensitive comparison); it does NOT imply rental availability, and no invented key is ever seeded.
 
 ## ADR-021 — Frontend-only library visual identity
 

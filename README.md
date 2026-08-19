@@ -204,7 +204,7 @@ Para desarrollo local sin Docker (backend, frontend, chatbot por separado), cons
 
 El catálogo se siembra con ~50 obras reales desde la fuente única `workflow/backend/data/seed-books.json` al arrancar el backend (solo si la tabla `Books` está vacía, idempotente — ADR-019). Distribución por 9 géneros y variación de copias (incluye algún libro con 0 copias para ejercitar el filtro "Solo disponibles").
 
-**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. Es una tarea de desarrollo/QA (`workflow/scripts/verify_seed_open_library.py`); la app en runtime no consulta Open Library (ADR-007/020).
+**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. Es una tarea de desarrollo/QA (`workflow/mcp/open-library-mcp/verify_seed_open_library.py`); la app en runtime no consulta Open Library (ADR-007/020).
 
 ---
 
