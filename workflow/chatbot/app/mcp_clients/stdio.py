@@ -26,6 +26,21 @@ def _inherit_environment() -> dict[str, str]:
     return {key: value for key, value in os.environ.items() if not value.startswith("()")}
 
 
+def require_env(name: str) -> str:
+    """Devuelve el valor de una variable de entorno requerida (fail-fast).
+
+    Raises:
+        RuntimeError: si la variable no está definida o está vacía.
+    """
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise RuntimeError(
+            f"Falta la variable de entorno requerida '{name}' "
+            f"para configurar el servidor MCP del chatbot."
+        )
+    return value
+
+
 class McpStdioClient:
     """Cliente para un servidor MCP lanzado como subproceso por stdio."""
 

@@ -9,10 +9,6 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any, Sequence
 
-DEFAULT_DATABASE_PATH = (
-    Path(__file__).resolve().parents[3] / "workflow" / "database" / "BibliotecaVirtual.db"
-)
-
 
 class DbAccess:
     def __init__(self, database_path: Path) -> None:

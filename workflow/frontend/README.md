@@ -1,49 +1,60 @@
-# React + TypeScript + Vite
+# Frontend — React 18 + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SPA de la Biblioteca Virtual Inteligente en `workflow/frontend/`, construida con **React 18**, **TypeScript** estricto, **Vite**, **Tailwind CSS** (identidad "Sala de lectura"), **shadcn/ui**, **Zustand** y **React Router v6** (ADR-010).
 
-## Configuración de entorno
+## Estructura
 
-La URL base de la API se define con la variable de entorno `VITE_API_BASE_URL`. Se lee, con fallback a `http://localhost:5000`, desde el módulo `src/config/env.ts`, usado por los clientes API (`src/services/api.ts`, `src/services/auth.ts`).
-
-- **Desarrollo local:** define la variable en un archivo `.env.local` (ignorado por Git) antes de `npm run dev`, p. ej. `VITE_API_BASE_URL=http://localhost:5000`.
-- **Docker:** el valor se inyecta en build time vía `ARG VITE_API_BASE_URL` / `ENV VITE_API_BASE_URL` en el `Dockerfile`; `docker-compose.yml` lo pasa a través de `build.args.VITE_API_BASE_URL`.
-
-## Tema / Identidad visual
-
-La SPA usa la identidad **"Sala de lectura"** (librería tradicional), definida exclusivamente en el frontend mediante tokens de tema en `src/index.css` (`@theme` / `:root` / `.dark`), conservando la arquitectura de CSS variables de shadcn/ui.
-
-- **Paleta (light y dark):** fondos crema/pergamino (`parchment`, `paper`), marrones cálidos de madera/cuero (`espresso`, `wine`, `wood`), acentos ámbar/dorado (`brass`, `ochre`) y verde musgo (`olive`, `oxide`), con tonos `tan`/`sepia` para metadatos.
-- **Tipografía:** Fraunces Variable (display/serif) para títulos y encabezados; Lora Variable (serif) para cuerpo, instaladas vía `@fontsource-variable/fraunces` y `@fontsource-variable/lora`.
-- **Portadas de libros:** derivadas en cliente desde ISBN o OLID (`src/lib/covers.ts`) usando `covers.openlibrary.org` (`b/isbn/{isbn}-M.jpg` → `b/olid/{olid}-M.jpg`), con `referrerPolicy="no-referrer"` y fallback ornamental (`CoverOrnament`) ante error; altura fija para no romper el layout.
-- **Componentes temáticos:** `StatusBadge` (badges de disponibilidad/alquiler/solicitud), `Pagination`, `PageHeader`, `BookCard`, `CoverOrnament`.
-- **Alcance:** cambio de presentación únicamente — no altera rutas, guardias de permisos, `services/`, `stores/authStore.ts` ni contratos de API (ADR-021).
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+workflow/frontend/
+├── src/
+│   ├── routes/             # Router + guardas (ProtectedRoute, PermissionGuard)
+│   ├── pages/              # Catálogo, libros, alquileres, solicitudes, sala de lectura, auth
+│   ├── components/         # UI (chat, books, rentals, layout, ui, requests)
+│   ├── services/           # Clientes API (auth, books, rentals, bookRequests, chat)
+│   ├── stores/             # Zustand (authStore, chatWidgetStore)
+│   ├── config/env.ts       # Variables de entorno requeridas (fail-fast)
+│   ├── lib/                # Utilidades (cn, covers)
+│   └── types/              # Tipos compartidos
+├── Dockerfile              # Build multi-stage (node → nginx)
+└── nginx.conf              # SPA fallback + puerto 5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Configuración por variables de entorno (fail-fast)
+
+Las URLs base se leen de variables de entorno **sin valor por defecto** (`src/config/env.ts`). Si falta una, el build aborta con un mensaje claro (ADR-025).
+
+| Variable | Requerida | Descripción |
+|---|---|---|
+| `VITE_API_BASE_URL` | Sí | URL base de la API backend (p. ej. `http://localhost:5000`) |
+| `VITE_CHATBOT_API_BASE_URL` | Sí | URL base del chatbot FastAPI (p. ej. `http://localhost:8000`) |
+
+- **Desarrollo local:** define ambas en un `.env.local` (ignorado por Git) antes de `npm run dev`.
+- **Docker:** se inyectan en build time vía `ARG VITE_API_BASE_URL` / `ARG VITE_CHATBOT_API_BASE_URL` (sin defaults) en el `Dockerfile`; `docker-compose.yml` las pasa por `build.args`.
+
+## Roles y permisos en la UI
+
+- **Catálogo (`/catalog`):** el botón **«Alquilar»** aparece solo para libros disponibles y solo si el usuario tiene el permiso `rentals.create` (el rol Admin no lo tiene, por lo que no puede alquilar).
+- **Solicitudes de libros (`/admin/gestion-libro`):** visible para quienes tienen `books.manage`.
+- **Mis alquileres (`/mis-alquileres`):** solo con `rentals.view_own` (el rol Admin no lo tiene).
+- La seguridad real la garantiza el backend; la UI solo oculta/condiciona por permisos (ADR-003).
+
+## Chatbot (ChatWidget)
+
+`src/components/chat/ChatWidget.tsx` + `src/stores/chatWidgetStore.ts`:
+
+- Arranca **minimizado**: solo se muestra el botón flotante «Asistente de la Biblioteca» (abajo a la derecha). Al hacer clic se abre la ventana.
+- La ventana abierta permite **maximizar/colapsar** (compacto/grande), **redimensionar** (asas de borde con teclado accesible) y **minimizar** (vuelve al botón flotante).
+- El tamaño elegido se persiste en `localStorage`; el estado abierto/cerrado arranca siempre en `false` (minimizado).
+
+## Identidad visual
+
+Tema "Sala de lectura" definido en `src/index.css` (paleta pergamino/madera/latón, tipografía Fraunces + Lora, portadas derivadas de `covers.openlibrary.org` con fallback ornamental). Cambio de presentación únicamente (ADR-021).
+
+## Comandos
+
+```bash
+npm install
+npm run dev        # desarrollo en http://localhost:5173
+npm run build      # build de producción
+npm run lint       # oxlint
+```

@@ -30,7 +30,7 @@ flowchart TD
     U[Usuario] --> FE[Frontend React]
     FE -->|HTTP + JWT| BE[Backend .NET 9]
     BE --> DB[(SQLite)]
-    
+
     FE -->|HTTP Request| AUDIT_IN[Security-Audit-MCP: Input Audit]
     AUDIT_IN --> CHAT[Chatbot API FastAPI]
     CHAT --> GRAPH[LangGraph + LangChain]
@@ -40,7 +40,7 @@ flowchart TD
     CHAT --> AUDIT_OUT[Security-Audit-MCP: Output Sanitization]
     AUDIT_OUT -->|HTTP Response| FE
 ```
-    
+
 ---
 
 ## 3. Desarrollo Evolutivo (AI Engineering)
@@ -64,19 +64,19 @@ gantt
     title Ciclo de Vida Inmutable de una Historia de Usuario (Gate-to-Gate)
     dateFormat X
     axisFormat %s
-    
+
     section 1. REQUERIMIENTO
     Crear Historia (Draft) :active, st1, 0, 10
-    
+
     section 2. PLANIFICACIÓN
     Diseño & Plan de Roles :crit, st2, 10, 30
     Apertura Rama Git (Kebab-case) :st3, 20, 30
     Compuerta de Aprobación Usuario :milestone, st4, 30, 0
-    
+
     section 3. IMPLEMENTACIÓN
     Código Incremental (In Progress) :st5, 30, 60
     Push automático a GitHub :st6, 55, 60
-    
+
     section 4. CALIDAD (QA)
     Indexación Codebase & Testeo :crit, st7, 60, 80
     Apertura Automática de PR :st8, 75, 80
@@ -85,78 +85,66 @@ gantt
 
 ### Guía de Comandos y Estados del Pipeline (Flujo Inmutable)
 
-El desarrollo está completamente automatizado y gobernado por el servidor de ciclo de vida. Cada funcionalidad debe atravesar de forma obligatoria las siguientes transiciones de estado mediante comandos secuenciales en la terminal:
-
 | Fase | Comando Ejecutado | Rol Líder | Estado en MCP | Compuerta de Seguridad / Restricciones Estrictas |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Entrada** | `create-user-story "Como... Quiero... Para..."` | Technical Lead | `Draft` | El sistema valida la sintaxis y genera un ID único incremental (ej. `US-001`). |
 | **2. Plan** | `plan-user-story "US-XXX"` | Technical Lead | `Planned` | **Prohibido modificar código.** Exige definir de forma interactiva la rama Git (`tipo/US-XXX-descripcion`). |
 | **3. Aprobación** | `approve-user-story "US-XXX"` | Technical Lead | `Approved` | Avanza explícitamente la historia autorizando el comienzo de la programación. |
 | **4. Build** | `implement-user-story "US-XXX"` | Technical Lead | `In Progress` `→` `Implemented` | Bloqueado si el estado no es `Approved` o `Rejected`. El agente escribe el incremento de código exacto y realiza un *push* directo y automatizado a la rama de la funcionalidad en GitHub. |
-| **5. QA** | `qa-check "US-XXX"` | QA | `Validated` o  `Rejected` | Ejecuta `index_repository` para analizar los cambios. Valida criterios de aceptación y documenta en el `.md`. Si pasa con éxito, abre un **Pull Request** automático hacia la rama main. Si falla, devuelve a `Rejected` y se detiene. |
+| **5. QA** | `qa-check "US-XXX"` | QA | `Validated` o `Rejected` | Ejecuta `index_repository` para analizar los cambios. Valida criterios de aceptación y documenta en el `.md`. Si pasa con éxito, abre un **Pull Request** automático hacia la rama main. Si falla, devuelve a `Rejected` y se detiene. |
 
 **Nota de Cumplimiento** Cualquier intento de saltarse una fase, modificar código fuera de la fase *Build*, o utilizar nombres de ramas sin el formato reglamentario provocará el rechazo automático del comando por parte de los agentes.
-
-**Nota sobre la documentación técnica**
-La documentación detallada, endpoints y configuraciones de cada componente no están centralizadas aquí. El rol de **Technical Writer** creará y actualizará automáticamente los archivos `README.md` dentro de cada módulo (`/backend`, `/frontend`, `/chatbot`, `/mcp`) **a medida que el código atraviese este ciclo y sea validado**.
 
 ---
 
 ## 4. Stack Tecnológico General
 
-- Frontend: React, TypeScript, Tailwind CSS.
-- Backend: C#, .NET 9, ASP.NET Core Web API, EF Core, SQLite.
-- IA & Chatbot: Python, FastAPI, LangChain, LangGraph.
-- Orquestación: Model Context Protocol (MCP), Docker Compose.
-
+| Componente | Tecnología |
+|---|---|
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Zustand + React Router |
+| Backend | C# / .NET 9 / ASP.NET Core Web API / EF Core / SQLite / Identity + JWT |
+| IA & Chatbot | Python / FastAPI / LangChain / LangGraph |
+| MCP | Python + FastMCP (Biblioteca-MCP, Security-Audit-MCP, Open Library MCP) |
+| Orquestación | Docker Compose |
 
 ---
 
 ## 5. Project Structure
 
 ```
-├── docker-compose.yml              # Docker Compose for all services
+├── docker-compose.yml              # Orquestación de todos los servicios (env requeridas)
 ├── .env.example                   # Plantilla de variables de entorno (copiar a .env)
 ├── workflow/
-│   ├── backend/                     # .NET 9 Clean Architecture
-│   │   ├── BibliotecaVirtual.slnx
-│   │   ├── .dockerignore
-│   │   └── src/
-│   │       ├── BibliotecaVirtual.Domain/       # Entities, Enums, ValueObjects, Interfaces
-│   │       ├── BibliotecaVirtual.Application/  # CQRS, Commands, Queries, Validators
-│   │       ├── BibliotecaVirtual.Infrastructure/ # EF Core DbContext, Services
-│   │       └── BibliotecaVirtual.Api/          # Controllers, Middleware, Program.cs
-│   ├── frontend/                    # React 18 + TypeScript + Vite
-│   │   ├── Dockerfile
-│   │   ├── nginx.conf              # Nginx server: SPA fallback + cache de assets
-│   │   ├── .dockerignore
-│   │   └── src/
-│   │   │   ├── routes/             # Route components
-│   │   │   ├── components/         # UI components
-│   │   │   ├── services/           # API client services
-│   │   │   ├── types/              # TypeScript type definitions
-│   │   │   └── lib/                # Utility functions
-│   │   └── ...
-│   ├── chatbot/                     # FastAPI + LangChain + LangGraph
-│   │   ├── main.py
-│   │   ├── requirements.txt
-│   │   └── app/
-│   │       ├── graph/              # LangGraph nodes
-│   │       ├── prompts/            # Prompt templates
-│   │       ├── mcp_clients/        # MCP client wrappers
-│   │       └── services/           # Business services
-│   ├── mcp/
-│   │   ├── biblioteca-mcp/         # Domain MCP server
-│   │   └── security-audit-mcp/     # Security MCP server
-│   ├── database/                    # SQLite database files
-│   └── opencode/                    # User stories, AI engineering logs
+│   ├── backend/                     # .NET 9 Clean Architecture (README propio)
+│   ├── frontend/                    # React 18 + TypeScript + Vite (README propio)
+│   ├── chatbot/                     # FastAPI + LangChain + LangGraph (README propio)
+│   ├── mcp/                         # Servidores MCP (README propio)
+│   ├── database/                    # Archivos SQLite
+│   ├── scripts/                     # Scripts de desarrollo/QA (verificación Open Library)
+│   └── opencode/                    # User stories, AI Engineering logs, instrucciones
+├── project-memory-mcp/              # Servidor MCP del ciclo de vida de historias
+└── .opencode/                       # Instrucciones, memoria de decisiones, skills
 ```
 
 ---
 
-## 6. Prerrequisitos y Configuración del Entorno
+## 6. Documentación por módulo
 
-### 6.1 Configuración de Variables de Entorno (.env)
+El detalle técnico de cada componente vive en su propio README:
+
+| Módulo | Documentación |
+|---|---|
+| Backend (.NET 9) | [`workflow/backend/README.md`](workflow/backend/README.md) — arquitectura, env, endpoints, seed |
+| Frontend (React) | [`workflow/frontend/README.md`](workflow/frontend/README.md) — env, roles/UX, chatbot, tema |
+| Chatbot (FastAPI) | [`workflow/chatbot/README.md`](workflow/chatbot/README.md) — grafo, LLM, clientes MCP |
+| Servidores MCP | [`workflow/mcp/README.md`](workflow/mcp/README.md) — configuración y herramientas |
+| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-025 |
+
+---
+
+## 7. Prerrequisitos y Configuración del Entorno
+
+### 7.1 Variables de entorno (.env)
 
 Para arrancar el stack con Docker y para que la automatización y los servidores MCP funcionen correctamente, crea un archivo `.env` en la raíz del proyecto a partir de la plantilla:
 
@@ -164,250 +152,73 @@ Para arrancar el stack con Docker y para que la automatización y los servidores
 cp .env.example .env
 ```
 
-Completa al menos los valores obligatorios marcados abajo. El `.env` está excluido de Git (`.gitignore`); la plantilla `.env.example` **sí** está versionada y solo contiene placeholders, nunca secretos reales.
-
-| Variable | Requerida | Valor por defecto | Consumidor |
-|---|---|---|---|
-| `GITHUB_TOKEN` | Sí | — | Automatización GitHub/`qa-check` |
-| `DATABASE_PATH` | Sí | `./workflow/database/BibliotecaVirtual.db` | MCPs Python (Biblioteca-MCP, Security-Audit-MCP) |
-| `JWT_KEY` | Sí | — (generar con `openssl rand -base64 48`) | Backend (firma JWT; `Jwt__Key`) |
-| `ADMIN_EMAIL` | Sí | `admin@biblioteca.local` | Backend (seeding admin) |
-| `ADMIN_PASSWORD` | Sí | — (≥ 8 chars, 1 mayúscula, 1 dígito) | Backend (seeding admin) |
-| `VITE_API_BASE_URL` | Sí (Docker) | `http://localhost:5000` | Frontend Vite (build arg) |
-| `AUTH_RATE_LIMIT_PER_MINUTE` | No | `10` | Backend (rate limiter `auth`) |
-| `SQLITE_DATA_SOURCE` | No | vacío (usa el connection string por defecto) | Backend (connection string SQLite) |
-| `CHATBOT_HOST` | No | `0.0.0.0` | Chatbot (uvicorn) |
-| `CHATBOT_PORT` | No | `8000` | Chatbot (uvicorn) |
-| `LLM_API_KEY` | No (si se define se activa el LLM) | — | Chatbot (cliente LLM LangChain/OpenAI-compatible) |
-| `LLM_MODEL` | No | `gpt-4o-mini` | Chatbot (modelo del cliente LLM) |
-| `CHATBOT_CORS_ORIGINS` | No (futura) | `http://localhost:5173` | Chatbot (CORS) |
+**Toda la configuración se maneja por variables de entorno (fail-fast):** no hay valores por defecto hardcodeados ni en código ni en las imágenes Docker (ADR-025). Si falta una variable requerida, `docker compose up` aborta con un mensaje claro indicando cuál es. El `.env` está excluido de Git (`.gitignore`); la plantilla `.env.example` **sí** está versionada y solo contiene placeholders, nunca secretos reales.
 
 > **Importante (Docker):** si ya existen contenedores o imágenes previas del stack, **debes recrearlos** para aplicar la nueva configuración de variables: `docker compose down` seguido de `docker compose up --build`. Construir de nuevo la imagen sobrescribe la existente (mismo tag `:stable`) en lugar de crear imágenes nuevas con tags distintos.
 
-### 6.2 Codebase Memory MCP
-Para que los agentes de IA puedan explorar la arquitectura del proyecto de forma autónoma, este repositorio depende de Codebase Memory MCP, el cual debe estar instalado a nivel global en tu sistema.
+### 7.2 Codebase Memory MCP
 
-Dependiendo de tu sistema operativo, asegúrate de tener Node.js instalado y ejecuta el siguiente comando en tu terminal:
+Para que los agentes de IA puedan explorar la arquitectura del proyecto de forma autónoma, este repositorio depende de Codebase Memory MCP, instalado a nivel global:
 
-Linux & macOS:
-
-**Linux & macOS:**
 ```bash
-sudo npm install -g codebase-memory-mcp
+sudo npm install -g codebase-memory-mcp   # Linux/macOS
+npm install -g codebase-memory-mcp        # Windows (administrador)
 ```
 
-**Windows (Ejecutar CMD o PowerShell como Administrador):**
-```bash
-npm install -g codebase-memory-mcp
-```
+Nota: el archivo `opencode.json` asume que `codebase-memory-mcp` está disponible globalmente en el PATH. Versión con UI: `codebase-memory-mcp --ui=true --port=9749` → `http://localhost:9749`.
 
-Nota: El archivo opencode.json de este proyecto asume que el comando `codebase-memory-mcp` está disponible globalmente en tu PATH.
+### 7.3 Dependencias MCP locales
 
-#### Versión con UI
+Los servidores de Ciclo de Vida, Dominio y Seguridad corren en la máquina anfitriona para la orquestación de IA:
 
 ```bash
-codebase-memory-mcp --ui=true --port=9749
-```
-Luego abre en el navegador:
-```bash
-http://localhost:9749
-```
-
-### 6.3 Configuración Local para Desarrollo
-
-#### Backend (.NET 9)
-
-```bash
-# Navegar al directorio del backend
-cd workflow/backend
-
-# Restaurar paquetes NuGet
-dotnet restore
-
-# Compilar la solución
-dotnet build
-
-# Ejecutar la API (Swagger en /swagger)
-dotnet run --project src/WebAPI
-```
-
-La API estará disponible en `http://localhost:5000/swagger` (desarrollo local). La base de datos SQLite se crea automáticamente en `workflow/database/`.
-
-**Variables de entorno del backend:**
-
-- `AUTH_RATE_LIMIT_PER_MINUTE` (default `10`): límite de la policy `auth` del rate limiter (register/login/refresh/revoke) por ventana de 1 minuto. Eleva el valor para baterías de pruebas que disparen ráfagas sin falsos `429`.
-- `SQLitePCLRaw.lib.e_sqlite3` está pinnado a `2.1.12` para mitigar `NU1903` (GHSA-2m69-gcr7-jv3q). Las versiones parcheadas actuales requieren glibc ≥ 2.34; si tu host usa glibc antiguo (p. ej. Debian 11, glibc 2.31), ejecuta el backend vía Docker (`docker compose up --build backend`) — la imagen `dotnet/aspnet:10.0` incluye glibc compatible.
-
-#### Frontend (React + TypeScript + Vite)
-
-```bash
-# Navegar al directorio del frontend
-cd workflow/frontend
-
-# Instalar dependencias
-npm install
-
-# Iniciar servidor de desarrollo
-npm run dev
-```
-
-El frontend estará disponible en `http://localhost:5173`.
-
----
-
-### 6.5 Instalación de Dependencias MCP (Local)
-Aunque la aplicación final se ejecuta en Docker, la orquestación de IA y los servidores MCP que interactúan con tu código deben correr directamente en tu máquina anfitriona. Antes de iniciar cualquier flujo, instala las dependencias necesarias:
-
-**1. Servidor de Ciclo de Vida (Node.js)**
-Responsable de gestionar el estado de las Historias de Usuario.
-```bash
-cd project-memory-mcp
-npm install
-cd ../..
-```
-
-**2. Servidores de Dominio y Seguridad (Python)**
-
-Responsables de auditar la seguridad (`Security-Audit-MCP`) y conectar el chatbot con la base de datos (`Biblioteca-MCP`). Asegúrate de tener Python 3.10+ instalado.
-
-## Crear entorno virtual en la raíz (opcional pero recomendado)
-```bash
-python -m venv .venv
-source .venv/bin/activate  # En Windows: .venv\Scripts\activate
-```
-
-## Instalar dependencias para los servidores MCP de Python
-```bash
+cd project-memory-mcp && npm install && cd ..
+python -m venv .venv && source .venv/bin/activate   # opcional pero recomendado
 pip install mcp fastmcp
 ```
 
 ---
 
-## 7. Ejecución local rápida (Docker)
-
-El proyecto está preparado para levantarse por completo mediante contenedores para la aplicación (Frontend, Backend, Chatbot):
-
-**1. Crear el archivo `.env` a partir de la plantilla:**
+## 8. Ejecución local rápida (Docker)
 
 ```bash
 cp .env.example .env
-# Completar JWT_KEY (openssl rand -base64 48) y ADMIN_PASSWORD (>= 8 chars, 1 mayúscula, 1 dígito)
-```
-
-> El backend requiere `JWT_KEY`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` para arrancar (fail-fast). Sin `.env`, el comando de compose aborta con un mensaje claro.
->
-> **Si ya existen contenedores o imágenes previas del stack**, debes recrearlos para que la nueva configuración se aplique: `docker compose down` y a continuación `docker compose up --build`. Al construir, la imagen se sobrescribe con el mismo tag estable (`biblioteca-virtual-<servicio>:stable`), sin acumular tags huérfanos.
-
-**2. Levantar el stack:**
-
-```bash
+# Completar las variables requeridas (ver .env.example y READMEs de módulo)
 docker compose up --build
 ```
 
-| Servicio | URL | Puerto contenedor | Puerto host |
-|---|---|---|---|
-| Frontend (Nginx + SPA) | http://localhost:5173 | 5173 | 5173 |
-| Backend API (.NET 9) | http://localhost:5000 | 5000 | 5000 |
-| Chatbot API (FastAPI) | http://localhost:8000 | 8000 | 8000 |
-| SQLite | — | volumen `database_data` en `/app/database` | — |
-
-Notas:
-- El contenedor del frontend sirve la SPA con fallback para rutas de React Router (refrescar `/login` no devuelve 404) y embebe la URL base de la API `http://localhost:5000` en el bundle (build arg `VITE_API_BASE_URL`).
-- En el primer arranque el backend siembra roles/permisos y el usuario administrador definido por `ADMIN_EMAIL`/`ADMIN_PASSWORD`; el JWT se firma con `JWT_KEY`.
-- La base SQLite persiste en el volumen Docker `database_data` (`./workflow/database/` solo para desarrollo local, fuera de contenedores).
-- Para detener: `docker compose down` (añade `-v` si quieres eliminar también el volumen de datos).
-
----
-
-## 8. Datos de ejemplo (seed)
-
-El catálogo se siembra con datos de ejemplo al arrancar el backend, a partir de la fuente única `workflow/backend/data/seed-books.json`:
-
-- **Inventario:** ~50 obras reales (mayormente clásicos de dominio público) con `Title`, `Author`, `Isbn` (ISBN-13), `Genre`, `Description`, `OpenLibraryKey`, `TotalCopies` y `AvailableCopies`.
-- **Distribución por géneros:** 9 géneros (Novela, Clásicos, Aventura, Ciencia Ficción, Fantasía, Historia, Ensayo, Terror, Poesía) para ejercitar el filtro y la búsqueda del catálogo.
-- **Variación de copias:** `TotalCopies` entre 1 y 5; al menos un libro con 0 copias disponibles para ejercitar el filtro "Solo disponibles" y el badge de disponibilidad.
-- **Regeneración idempotente:** el seed solo inserta si la tabla `Books` está vacía (mismo patrón que roles/administrador); no duplica al rearrancar. Para regenerar, borra el archivo `.db` correspondiente (se recrea esquema + seed). Controlable con `CatalogSeed:Enabled` / `CatalogSeed:FilePath`.
-
-**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. La verificación es una tarea de desarrollo/QA (script `workflow/scripts/verify_seed_open_library.py` vía el MCP `ol_verify_by_isbn`); la app en runtime no consulta Open Library (ADR-007/020).
-
-## 9. Identidad visual
-
-La SPA usa la identidad "Sala de lectura" (librería tradicional) definida exclusivamente en el frontend mediante tokens bajo `src/index.css` (light `:root` + `.dark`):
-
-- **Paleta cálida y añeja:** fondos crema/pergamino, marrones de madera/cuero (espresso, wine, wood), acentos ámbar/dorado (brass, ochre) y verde musgo (olive).
-- **Tipografía:** Fraunces Variable (display/serif) y Lora Variable (cuerpo).
-- **Portadas:** derivadas en cliente desde ISBN/OLID (`covers.openlibrary.org`) con fallback ornamental en caso de error o de imagen en blanco (el servidor de portadas devuelve un placeholder en blanco, no un 404; se detecta por tamaño natural de la imagen en el componente `BookCover`).
-- **Alcance:** cambio de presentación únicamente; no altera rutas, guardias de permisos, lógica de negocio ni contratos de API (ADR-021).
-
-## 10. Sala de lectura y UX (US-011)
-
-- **Sala de lectura (`/sala-lectura/:bookId`):** un usuario con un alquiler NO devuelto (`Active` o `Overdue`) puede leer el libro desde la acción "Leer" en "Mis alquileres". La autorización se valida en el backend: `GET /api/books/{bookId}/reading` (JWT + policy `books.read`) devuelve el libro y su descripción únicamente si el solicitante tiene un alquiler no devuelto del libro; en caso contrario responde 404. El contenido de lectura es la descripción persistida del libro.
-- **Chatbot redimensionable:** la ventana del asistente se puede agrandar/achicar con el botón de expandir/colapsar y con las asas de redimensionado (borde izquierdo para ancho, borde inferior para alto), con teclado accesible. El tamaño elegido se persiste entre navegaciones (Zustand + `localStorage`).
-- **Portadas robustas:** componente reutilizable `BookCover` con skeleton de carga, detección de portada en blanco y fallback ornamental (`CoverOrnament`).
-
----
-
-## 11. Recomendación personalizada, feedback y LLM en el chatbot (US-012)
-
-El chatbot (FastAPI + LangGraph + LangChain) amplía su grafo con **recomendaciones personalizadas de libros**, **feedback del usuario** y **generación de respuesta con LLM externo**, manteniendo la auditoría obligatoria de entrada/salida por `Security-Audit-MCP`.
-
-### 11.1 Flujo de recomendación en el grafo
-
-- `audit_input` (primera auditoría) → `load_user_state` → `classify_intent` enruta por `route_by_state`.
-- Intención `recommendation`: `preferences` (carga preferencias + perfil de historial) → `internal_catalog` (catálogo interno por género/historial vía Biblioteca-MCP) → `external_enrichment` (Open Library MCP) → `availability` (solo libros con copias disponibles) → `response` → `llm_response` (redacción con LLM o fallback heurístico) → `audit_output`.
-- Intenciones `due_reminder`/`overdue`: recordatorios de vencimiento según el estado de lectura.
-- Intención `feedback`: `feedback` → `save_feedback` (persiste vía `registrar_feedback` de Biblioteca-MCP) → `response`.
-
-### 11.2 LLM externo con PII masking y fallback
-
-- Cliente aislado en `workflow/chatbot/app/llm/client.py` (LangChain `ChatOpenAI`, compatible OpenAI).
-- La clave se lee de `LLM_API_KEY` (nunca hardcodeada); el modelo de `LLM_MODEL` (default `gpt-4o-mini`).
-- **PII masking obligatorio** (`app/utils/pii_masker.py`) antes de enviar el contexto al proveedor externo.
-- **Fallback heurístico:** si no hay clave, falta el paquete o el proveedor falla (timeout 20s), el grafo usa la respuesta heurística de `response_node`; el chatbot nunca colapsa.
-- Prompt de recomendación en `workflow/chatbot/app/prompts/recommendation_prompt.txt` (no inventar títulos/autores/disponibilidad; no mencionar datos personales).
-
-### 11.3 Nuevas herramientas de Biblioteca-MCP (US-012)
-
-| Herramienta | Tipo | Descripción |
+| Servicio | URL | Puerto host |
 |---|---|---|
-| `consultar_alquileres_usuario(user_id)` | lectura | Historial de alquileres del usuario (JOIN con catálogo) |
-| `consultar_libro_en_curso(user_id)` | lectura | Alquiler activo actual del usuario |
-| `obtener_preferencias(user_id)` | lectura | Preferencias de género guardadas |
-| `listar_recomendaciones_por_genero(user_id, limit)` | lectura | Libros disponibles de los géneros del historial/preferencias, con `reason` |
-| `registrar_feedback(user_id, book_id, rating, comment)` | **escritura acotada** | Persiste el feedback del usuario en la tabla `Feedbacks` |
+| Frontend (Nginx + SPA) | http://localhost:5173 | 5173 |
+| Backend API (.NET 9) | http://localhost:5000 | 5000 |
+| Chatbot API (FastAPI) | http://localhost:8000 | 8000 |
+| SQLite | volumen `database_data` en `/app/database` | — |
 
-`Biblioteca-MCP` gana capacidad de escritura **exclusivamente** para `registrar_feedback` (el resto sigue de solo lectura, ADR-022). El frontend nunca llama MCP directamente (ADR-007): los botones «Me gustó»/«No me gustó» de las tarjetas de recomendación envían un mensaje de seguimiento al chatbot.
+En el primer arranque el backend siembra roles/permisos y el usuario administrador definido por `ADMIN_EMAIL`/`ADMIN_PASSWORD`; el JWT se firma con `JWT_KEY`. La base SQLite persiste en el volumen Docker `database_data`.
 
-### 11.4 Frontend
-
-- `src/services/chat.ts`: tipos `BookRecommendation` y campo `recommendations` en `ChatResponse`.
-- `src/components/chat/ChatWidget.tsx`: tarjetas de recomendación (portada `BookCover` + fallback ornamental, badge de disponibilidad, razón) y botones de feedback.
-
-### 11.5 Backend (esquema)
-
-- Entidades `Feedback` y `UserPreference` en `Domain/Entities` con sus `DbSet` en `BibliotecaDbContext`; las tablas `Feedbacks` y `UserPreferences` las crea `EnsureCreated` (backend es el dueño del esquema; el chatbot escribe vía MCP).
+Para desarrollo local sin Docker (backend, frontend, chatbot por separado), consulta los READMEs de cada módulo.
 
 ---
 
-## 12. Notificaciones automáticas de vencimiento de alquileres (US-013)
+## 9. Datos de ejemplo (seed)
 
-El backend ejecuta un proceso periódico (`BackgroundService` en .NET) que detecta los alquileres **activos** cuyo `DueDate` cae en la ventana `0 < DueDate - Ahora <= 2 días` y genera una fila en la tabla `Notifications` por cada uno, sin intervención manual.
+El catálogo se siembra con ~50 obras reales desde la fuente única `workflow/backend/data/seed-books.json` al arrancar el backend (solo si la tabla `Books` está vacía, idempotente — ADR-019). Distribución por 9 géneros y variación de copias (incluye algún libro con 0 copias para ejercitar el filtro "Solo disponibles").
 
-### 12.1 Servicio de fondo (`RentalDueNotificationService`)
+**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. Es una tarea de desarrollo/QA (`workflow/scripts/verify_seed_open_library.py`); la app en runtime no consulta Open Library (ADR-007/020).
 
-- Es un `BackgroundService` que por cada ciclo crea un scope (`IServiceScopeFactory`) y despacha `GenerateDueDateNotificationsCommand` por el `IDispatcher` propio (CQRS, ADR-009). No contiene lógica de negocio.
-- **Idempotente:** existe un índice único sobre `RentalId`, por lo que una ejecución posterior nunca duplica una notificación ya creada para el mismo alquiler.
-- **Intervalo configurable:** `Notifications:CheckIntervalSeconds` en `appsettings.json` (por defecto `3600` s, mínimo `30` s), sobreescribible con la variable de entorno `NOTIFICATIONS_CHECK_INTERVAL_SECONDS` (docker-compose).
-- Solo generan notificación los alquileres `Active` dentro de la ventana; quedan excluidos los devueltos, los vencidos (`DueDate <= Ahora`) y los que aún tienen más de 2 días de margen.
-- Mensaje en español, por ejemplo: *«Tu alquiler de "El proceso" vence el 19/08/2026. Devuélvelo a tiempo.»*
+---
 
-### 12.2 Endpoints
+## 10. Identidad visual
 
-| Método | Ruta | Permiso | Descripción |
-|---|---|---|---|
-| `GET` | `/api/notifications` | `notifications.read` | Notificaciones del usuario autenticado (paginadas, ordenadas por `CreatedAt` desc). Filtro opcional `unreadOnly=true`. |
-| `PATCH` | `/api/notifications/{notificationId}/read` | `notifications.read` | Marca una notificación como leída. Devuelve `404` si no existe o no pertenece al usuario. |
+La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta cálida y añeja (pergamino, madera, latón, oliva), tipografía Fraunces + Lora, y portadas derivadas en cliente desde ISBN/OLID con fallback ornamental. Cambio de presentación únicamente (ADR-021). Detalle en `workflow/frontend/README.md`.
 
-El permiso `notifications.read` se siembra en los roles `Admin`, `Bibliotecario` y `Usuario`. La notificación es una fila en BD (sin envío real email/websocket/push); la UI de campana/panel queda para una historia futura.
+---
 
-> **Esquema:** el proyecto usa `EnsureCreated`. Si la BD ya existía antes de US-013, elimina una sola vez el archivo `.db` para que se regenere con la tabla `Notifications` (el seed es idempotente, ADR-019/024).
+## 11. Notas de versiones recientes (US-011 a US-014)
+
+- **US-011:** Sala de lectura (`/sala-lectura/:bookId`), chatbot redimensionable y portadas robustas.
+- **US-012:** Chatbot con recomendaciones personalizadas, feedback persistido (`registrar_feedback`) y LLM externo con PII masking y fallback (ADR-022/023).
+- **US-013:** Notificaciones automáticas de vencimiento (`RentalDueNotificationService`, tabla `Notifications`, endpoints `GET/PATCH /api/notifications`).
+- **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
+
+Detalle técnico de cada historia en los READMEs de módulo y en `workflow/opencode/user-stories/`.

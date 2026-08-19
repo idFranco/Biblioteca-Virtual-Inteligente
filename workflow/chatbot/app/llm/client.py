@@ -15,8 +15,6 @@ from typing import Any
 from app.prompts import load_recommendation_prompt
 from app.utils.pii_masker import mask_pii
 
-DEFAULT_MODEL = "gpt-4o-mini"
-
 
 def _api_key() -> str | None:
     key = os.getenv("LLM_API_KEY", "").strip()
@@ -24,7 +22,12 @@ def _api_key() -> str | None:
 
 
 def _model() -> str:
-    return os.getenv("LLM_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+    model = os.getenv("LLM_MODEL", "").strip()
+    if not model:
+        raise RuntimeError(
+            "Falta la variable de entorno 'LLM_MODEL', requerida cuando se define 'LLM_API_KEY'."
+        )
+    return model
 
 
 def _langchain_model() -> Any | None:

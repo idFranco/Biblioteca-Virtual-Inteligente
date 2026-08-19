@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { Maximize2, Minimize2, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { Maximize2, MessageCircle, Minimize2, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { chatService, type BookRecommendation, type ChatMessage, type ChatResponse } from '@/services/chat'
 import { bookRequestsService } from '@/services/bookRequests'
 import { BookCover } from '@/components/books/BookCover'
@@ -16,10 +16,13 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function ChatWidget() {
+  const isOpen = useChatWidgetStore((state) => state.isOpen)
   const size = useChatWidgetStore((state) => state.size)
   const widthPx = useChatWidgetStore((state) => state.widthPx)
   const heightPx = useChatWidgetStore((state) => state.heightPx)
   const toggleSize = useChatWidgetStore((state) => state.toggleSize)
+  const open = useChatWidgetStore((state) => state.open)
+  const close = useChatWidgetStore((state) => state.close)
   const setWidth = useChatWidgetStore((state) => state.setWidth)
   const setHeight = useChatWidgetStore((state) => state.setHeight)
 
@@ -184,6 +187,20 @@ export function ChatWidget() {
     }
   }
 
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={open}
+        aria-label="Abrir el asistente de la biblioteca"
+        className="wood-panel fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-brass/40 px-4 py-3 text-sm font-medium text-parchment shadow-[0_10px_34px_-12px_rgba(51,36,26,0.5)] transition-colors hover:bg-brass/20 hover:text-brass"
+      >
+        <MessageCircle className="size-5" aria-hidden="true" />
+        <span>Asistente de la Biblioteca</span>
+      </button>
+    )
+  }
+
   return (
     <div
       ref={widgetRef}
@@ -211,6 +228,14 @@ export function ChatWidget() {
           className="rounded p-1 text-parchment/80 transition-colors hover:bg-brass/20 hover:text-brass"
         >
           {size === 'large' ? <Minimize2 className="size-4" aria-hidden="true" /> : <Maximize2 className="size-4" aria-hidden="true" />}
+        </button>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Minimizar el asistente de la biblioteca"
+          className="rounded p-1 text-parchment/80 transition-colors hover:bg-brass/20 hover:text-brass"
+        >
+          <X className="size-4" aria-hidden="true" />
         </button>
       </div>
 

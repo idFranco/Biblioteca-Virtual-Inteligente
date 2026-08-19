@@ -6,15 +6,11 @@ Audita la entrada del usuario (antes de procesar) y la salida del modelo
 
 from __future__ import annotations
 
-import os
-
-from app.mcp_clients.stdio import run_mcp_tool
-
-_DEFAULT_COMMAND = "python workflow/mcp/security-audit-mcp/server.py"
+from app.mcp_clients.stdio import require_env, run_mcp_tool
 
 
 def _command() -> str:
-    return os.getenv("SECURITY_AUDIT_MCP_COMMAND", _DEFAULT_COMMAND)
+    return require_env("SECURITY_AUDIT_MCP_COMMAND")
 
 
 def _as_dict(value) -> dict:

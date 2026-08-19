@@ -1,6 +1,7 @@
 using BibliotecaVirtual.Application.Commands.Notifications;
 using BibliotecaVirtual.Application.Contracts.Notifications;
 using BibliotecaVirtual.Application.Interfaces;
+using BibliotecaVirtual.Infrastructure.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,7 +27,7 @@ public sealed class RentalDueNotificationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var intervalSeconds = _configuration.GetValue<int?>("Notifications:CheckIntervalSeconds") ?? 3600;
+        var intervalSeconds = _configuration.GetRequiredInt("Notifications:CheckIntervalSeconds");
         var interval = TimeSpan.FromSeconds(Math.Max(intervalSeconds, 30));
 
         _logger.LogInformation("RentalDueNotificationService iniciado. Comprobación cada {Interval} segundos.", interval.TotalSeconds);

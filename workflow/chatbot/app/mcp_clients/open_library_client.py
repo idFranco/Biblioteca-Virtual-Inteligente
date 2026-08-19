@@ -7,17 +7,11 @@ excepción para que el grafo aplique el fallback Bug 2.
 
 from __future__ import annotations
 
-import os
-
-from app.mcp_clients.stdio import run_mcp_tool
-
-_DEFAULT_COMMAND = (
-    "python workflow/mcp/open-library-mcp/server.py"
-)
+from app.mcp_clients.stdio import require_env, run_mcp_tool
 
 
 def _command() -> str:
-    return os.getenv("OPEN_LIBRARY_MCP_COMMAND", _DEFAULT_COMMAND)
+    return require_env("OPEN_LIBRARY_MCP_COMMAND")
 
 
 async def search_books(query: str, limit: int = 5) -> list[dict]:

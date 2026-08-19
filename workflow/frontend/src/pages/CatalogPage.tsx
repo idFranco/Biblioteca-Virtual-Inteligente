@@ -2,16 +2,22 @@ import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { booksService } from '@/services/books'
 import type { Book, BookFilters } from '@/types'
 import { BookCard } from '@/components/books/BookCard'
+import { CreateRentalDialog } from '@/components/rentals/CreateRentalDialog'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/ui/Pagination'
+import { useAuthStore } from '@/stores/authStore'
 
 export function CatalogPage() {
+  const user = useAuthStore((state) => state.user)
+  const canRent = user != null && user.permissions.includes('rentals.create')
+
   const [books, setBooks] = useState<Book[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [filters, setFilters] = useState<BookFilters>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [rentalBook, setRentalBook] = useState<Book | null>(null)
   const pageSize = 20
 
   const load = useCallback(async () => {
@@ -113,12 +119,37 @@ export function CatalogPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <BookCard key={book.id} book={book} />
+            <BookCard
+              key={book.id}
+              book={book}
+              action={
+                canRent && book.isAvailable ? (
+                  <button
+                    type="button"
+                    onClick={() => setRentalBook(book)}
+                    className="rounded-md bg-wine px-3 py-1.5 text-xs font-medium text-paper transition-colors hover:bg-oxide dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
+                  >
+                    Alquilar
+                  </button>
+                ) : undefined
+              }
+            />
           ))}
         </div>
       )}
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+      {rentalBook && (
+        <CreateRentalDialog
+          book={rentalBook}
+          onClose={() => setRentalBook(null)}
+          onCreated={() => {
+            setRentalBook(null)
+            void load()
+          }}
+        />
+      )}
     </div>
   )
 }

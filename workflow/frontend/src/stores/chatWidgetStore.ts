@@ -16,6 +16,10 @@ interface PersistedChatWidgetState {
 }
 
 interface ChatWidgetState extends PersistedChatWidgetState {
+  isOpen: boolean
+  open: () => void
+  close: () => void
+  toggleOpen: () => void
   toggleSize: () => void
   setSize: (size: ChatWidgetSize) => void
   setWidth: (width: number) => void
@@ -47,6 +51,10 @@ function persist(state: PersistedChatWidgetState) {
 
 export const useChatWidgetStore = create<ChatWidgetState>((set, get) => ({
   ...loadPersisted(),
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+  toggleOpen: () => set({ isOpen: !get().isOpen }),
   toggleSize: () => {
     const nextSize: ChatWidgetSize = get().size === 'compact' ? 'large' : 'compact'
     const state: PersistedChatWidgetState = { size: nextSize, widthPx: null, heightPx: null }

@@ -31,4 +31,18 @@ public static class ConfigurationExtensions
         var value = configuration[key];
         return int.TryParse(value, out var parsed) ? parsed : defaultValue;
     }
+
+    public static int GetRequiredInt(this IConfiguration configuration, string key)
+    {
+        var value = GetRequiredString(configuration, key);
+        if (int.TryParse(value, out var parsed))
+        {
+            return parsed;
+        }
+
+        var envName = key.Replace(":", "__", StringComparison.Ordinal);
+        throw new InvalidOperationException(
+            $"The required configuration '{key}' is not a valid integer. "
+            + $"Set it via the environment variable '{envName}'.");
+    }
 }
