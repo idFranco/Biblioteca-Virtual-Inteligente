@@ -79,3 +79,30 @@
 ## Estado
 
 Implementación completa y validada. Pendiente: push de la rama vía GitHub MCP y avance a `Implemented`, luego `qa-check US-014`.
+
+---
+
+## Iteración 2 — QA (qa-check US-014)
+
+**Fecha:** 2026-08-19
+
+### Validación ejecutada
+
+| # | Validación | Resultado |
+|---|---|---|
+| 1 | Criterios de aceptación (5 escenarios Gherkin) | ✅ 5/5 PASS |
+| 2 | `dotnet build BibliotecaVirtual.slnx` | ✅ 0 errores, 0 warnings |
+| 3 | Boot backend con env (`/health` + seed 50 libros) | ✅ 200 + 50 insertados |
+| 4 | Fail-fast backend sin env | ✅ Aborta nombrando `SQLITE_DATA_SOURCE` |
+| 5 | Admin: `POST /api/rentals`, `GET /api/rentals/mine`, `GET /api/rentals` | ✅ 403 / 403 / 200 |
+| 6 | Claims Admin reconciliados (10, sin `rentals.create`/`rentals.view_own`) | ✅ Verificado en BD |
+| 7 | Usuario: register, rent, mine + stock decrementado | ✅ 200 / 201 / 200 / 1984: 4→3 |
+| 8 | `npm run build` con env / sin env (fail-fast) | ✅ EXIT 0 / EXIT 1 |
+| 9 | `npm run lint` | ✅ EXIT 0 |
+| 10 | `pytest` chatbot (40) + MCP (25) | ✅ 65 passed |
+| 11 | `docker compose config` con/sin env | ✅ OK / aborta claro |
+| 12 | Static grep: sin `??`/`:-`/ENV defaults/`DEFAULT_*` en código | ✅ Solo `LLM_API_KEY`/`LLM_MODEL` `:-` vacío intencional |
+
+### Resultado
+
+QA **PASS** — todos los criterios de aceptación y validaciones técnicas superados. Documentación de QA registrada en `US-014.md`. Próximo: PR Gate (`create_pull_request` vía GitHub MCP) → `Validated`.
