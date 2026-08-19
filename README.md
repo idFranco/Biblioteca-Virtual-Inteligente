@@ -120,7 +120,6 @@ gantt
 │   ├── chatbot/                     # FastAPI + LangChain + LangGraph (README propio)
 │   ├── mcp/                         # Servidores MCP (README propio)
 │   ├── database/                    # Archivos SQLite
-│   ├── scripts/                     # Scripts de desarrollo/QA (verificación Open Library)
 │   └── opencode/                    # User stories, AI Engineering logs, instrucciones
 ├── project-memory-mcp/              # Servidor MCP del ciclo de vida de historias
 └── .opencode/                       # Instrucciones, memoria de decisiones, skills
@@ -138,7 +137,7 @@ El detalle técnico de cada componente vive en su propio README:
 | Frontend (React) | [`workflow/frontend/README.md`](workflow/frontend/README.md) — env, roles/UX, chatbot, tema |
 | Chatbot (FastAPI) | [`workflow/chatbot/README.md`](workflow/chatbot/README.md) — grafo, LLM, clientes MCP |
 | Servidores MCP | [`workflow/mcp/README.md`](workflow/mcp/README.md) — configuración y herramientas |
-| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-025 |
+| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-028 |
 
 ---
 
@@ -204,7 +203,7 @@ Para desarrollo local sin Docker (backend, frontend, chatbot por separado), cons
 
 El catálogo se siembra con ~50 obras reales desde la fuente única `workflow/backend/data/seed-books.json` al arrancar el backend (solo si la tabla `Books` está vacía, idempotente — ADR-019). Distribución por 9 géneros y variación de copias (incluye algún libro con 0 copias para ejercitar el filtro "Solo disponibles").
 
-**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. Es una tarea de desarrollo/QA (`workflow/scripts/verify_seed_open_library.py`); la app en runtime no consulta Open Library (ADR-007/020).
+**Semántica de "disponible en Open Library":** la obra existe en Open Library y el título devuelto coincide con el sembrado (comparación normalizada). NO implica disponibilidad de préstamo. Es una tarea de desarrollo/QA (`workflow/mcp/open-library-mcp/verify_seed_open_library.py`); la app en runtime no consulta Open Library (ADR-007/020).
 
 ---
 
@@ -222,3 +221,15 @@ La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta c�
 - **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
 
 Detalle técnico de cada historia en los READMEs de módulo y en `workflow/opencode/user-stories/`.
+
+---
+
+## 12. CI/CD
+
+El pipeline de GitHub Actions (`.github/workflows/ci.yml`) valida todo el stack en `push` y `pull_request` con tres jobs:
+
+- **`backend`:** `dotnet restore` + `dotnet build --no-restore --configuration Release` (`.NET 9`).
+- **`frontend`:** `npm ci` + `npm run build` inyectando las variables de build-time requeridas por el fail-fast (ADR-025): `VITE_API_BASE_URL` (`http://localhost:5000`) y `VITE_CHATBOT_API_BASE_URL` (`http://localhost:8000`). Sin secretos.
+- **`python`:** instala las dependencias de chatbot y de los tres MCP (`workflow/chatbot`, `workflow/mcp/biblioteca-mcp`, `workflow/mcp/open-library-mcp`, `workflow/mcp/security-audit-mcp`) y ejecuta `pytest` sobre las suites de chatbot y MCP (65 tests, autocontenidos, sin red ni API keys).
+
+Los valores de CI son variables de entorno de build del workflow (no defaults hardcodeados en código) — ver ADR-028 en `DECISIONS.md`.

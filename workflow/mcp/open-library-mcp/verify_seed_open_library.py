@@ -24,7 +24,7 @@ Variables de entorno:
     OL_VERIFY_TIMEOUT        timeout por llamada MCP en segundos (por defecto 30)
 
 Uso:
-    python workflow/scripts/verify_seed_open_library.py
+    python workflow/mcp/open-library-mcp/verify_seed_open_library.py
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from typing import Any
 # --- Resolución de rutas del monorepo (el script puede ejecutarse desde
 # cualquier cwd: se resuelve la raíz del repo subiendo desde este archivo). ---
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent
+REPO_ROOT = SCRIPT_DIR.parent.parent.parent
 CHATBOT_DIR = REPO_ROOT / "workflow" / "chatbot"
 if str(CHATBOT_DIR) not in sys.path:
     sys.path.insert(0, str(CHATBOT_DIR))

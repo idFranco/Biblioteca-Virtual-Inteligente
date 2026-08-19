@@ -19,7 +19,6 @@ jobs:
           dotnet-version: '9.0.x'
       - run: dotnet restore
       - run: dotnet build --no-restore --configuration Release
-      - run: dotnet test --no-build --configuration Release || true
 
   frontend:
     runs-on: ubuntu-latest
@@ -35,3 +34,28 @@ jobs:
           cache-dependency-path: workflow/frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_API_BASE_URL: http://localhost:5000
+          VITE_CHATBOT_API_BASE_URL: http://localhost:8000
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+        working-directory: workflow/chatbot
+      - run: pip install -r requirements.txt
+        working-directory: workflow/mcp/biblioteca-mcp
+      - run: pip install -r requirements.txt
+        working-directory: workflow/mcp/open-library-mcp
+      - run: pip install -r requirements.txt
+        working-directory: workflow/mcp/security-audit-mcp
+      - run: python -m pytest tests
+        working-directory: workflow/chatbot
+      - run: python -m pytest tests
+        working-directory: workflow/mcp/biblioteca-mcp
+      - run: python -m pytest tests
+        working-directory: workflow/mcp/open-library-mcp
