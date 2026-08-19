@@ -67,7 +67,7 @@ export function Header() {
           )}
           {canManageBookRequests && (
             <Link to="/admin/gestion-libro" className="text-sm text-parchment/85 transition-colors hover:text-brass hover:underline hover:underline-offset-4">
-              Gestión de libro
+              Solicitudes de libros
             </Link>
           )}
           {user && (

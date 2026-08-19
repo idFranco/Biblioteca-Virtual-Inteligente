@@ -7,14 +7,17 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ConnectionStrings__DefaultConnection=${SQLITE_DATA_SOURCE:-Data Source=/app/database/BibliotecaVirtual.db}
-      - SQLITE_DATA_SOURCE=${SQLITE_DATA_SOURCE:-}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?Set ASPNETCORE_ENVIRONMENT in the .env file (e.g. Development)}
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS:?Set ASPNETCORE_URLS in the .env file (e.g. http://+:5000)}
+      - SQLITE_DATA_SOURCE=${SQLITE_DATA_SOURCE:?Set SQLITE_DATA_SOURCE in the .env file (SQLite path, e.g. /app/database/BibliotecaVirtual.db)}
       - Jwt__Key=${JWT_KEY:?Set JWT_KEY in the .env file (>= 32 bytes, HS256)}
+      - Jwt__Issuer=${JWT_ISSUER:?Set JWT_ISSUER in the .env file (e.g. BibliotecaVirtual)}
+      - Jwt__Audience=${JWT_AUDIENCE:?Set JWT_AUDIENCE in the .env file (e.g. BibliotecaVirtual)}
+      - Cors__Origins=${CORS_ORIGINS:?Set CORS_ORIGINS in the .env file (e.g. http://localhost:5173)}
       - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in the .env file}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in the .env file}
-      - AUTH_RATE_LIMIT_PER_MINUTE=${AUTH_RATE_LIMIT_PER_MINUTE:-10}
-      - NOTIFICATIONS_CHECK_INTERVAL_SECONDS=${NOTIFICATIONS_CHECK_INTERVAL_SECONDS:-3600}
+      - AUTH_RATE_LIMIT_PER_MINUTE=${AUTH_RATE_LIMIT_PER_MINUTE:?Set AUTH_RATE_LIMIT_PER_MINUTE in the .env file (e.g. 10)}
+      - NOTIFICATIONS_CHECK_INTERVAL_SECONDS=${NOTIFICATIONS_CHECK_INTERVAL_SECONDS:?Set NOTIFICATIONS_CHECK_INTERVAL_SECONDS in the .env file (e.g. 3600)}
     volumes:
       - database_data:/app/database
 
@@ -24,7 +27,8 @@ services:
       context: workflow/frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?Set VITE_API_BASE_URL in the .env file (e.g. http://localhost:5000)}
+        VITE_CHATBOT_API_BASE_URL: ${VITE_CHATBOT_API_BASE_URL:?Set VITE_CHATBOT_API_BASE_URL in the .env file (e.g. http://localhost:8000)}
     ports:
       - "5173:5173"
     depends_on:
@@ -36,10 +40,16 @@ services:
       context: workflow/chatbot
       dockerfile: Dockerfile
     environment:
-      - HOST=${CHATBOT_HOST:-0.0.0.0}
-      - PORT=${CHATBOT_PORT:-8000}
-      - OPEN_LIBRARY_MCP_COMMAND=${OPEN_LIBRARY_MCP_COMMAND:-npx -y mcp-open-library}
+      - HOST=${CHATBOT_HOST:?Set CHATBOT_HOST in the .env file (e.g. 0.0.0.0)}
+      - PORT=${CHATBOT_PORT:?Set CHATBOT_PORT in the .env file (e.g. 8000)}
       - API_KEY_GROQ=${API_KEY_GROQ:?Set API_KEY_GROQ in the .env file}
+      - BIBLIOTECA_MCP_COMMAND=${BIBLIOTECA_MCP_COMMAND:?Set BIBLIOTECA_MCP_COMMAND in the .env file (MCP stdio command)}
+      - SECURITY_AUDIT_MCP_COMMAND=${SECURITY_AUDIT_MCP_COMMAND:?Set SECURITY_AUDIT_MCP_COMMAND in the .env file (MCP stdio command)}
+      - OPEN_LIBRARY_MCP_COMMAND=${OPEN_LIBRARY_MCP_COMMAND:?Set OPEN_LIBRARY_MCP_COMMAND in the .env file (MCP stdio command, e.g. npx -y mcp-open-library)}
+      - DATABASE_PATH=${DATABASE_PATH:?Set DATABASE_PATH in the .env file (SQLite path)}
+      - AUDIT_DATABASE_PATH=${AUDIT_DATABASE_PATH:?Set AUDIT_DATABASE_PATH in the .env file (audit SQLite path)}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-}
     ports:
       - "8000:8000"
 

@@ -17,8 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=../database/BibliotecaVirtual.db";
+var connectionString = builder.Configuration.GetRequiredString("SQLITE_DATA_SOURCE");
 
 connectionString = ResolveLocalSqlitePath(builder.Configuration, connectionString);
 
@@ -53,8 +52,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration.GetString("Jwt:Issuer", "BibliotecaVirtual"),
-        ValidAudience = builder.Configuration.GetString("Jwt:Audience", "BibliotecaVirtual"),
+        ValidIssuer = builder.Configuration.GetRequiredString("Jwt:Issuer"),
+        ValidAudience = builder.Configuration.GetRequiredString("Jwt:Audience"),
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
@@ -101,7 +100,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetString("Cors:Origins", "http://localhost:5173"))
+        policy.WithOrigins(builder.Configuration.GetRequiredString("Cors:Origins"))
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -113,7 +112,7 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddRateLimiter(options =>
 {
-    var authPermitLimit = builder.Configuration.GetInt("AUTH_RATE_LIMIT_PER_MINUTE", 10);
+    var authPermitLimit = builder.Configuration.GetRequiredInt("AUTH_RATE_LIMIT_PER_MINUTE");
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("auth", limiter =>
@@ -157,7 +156,7 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
         ["Admin"] = [
             "books.read", "books.create", "books.update", "books.delete",
-            "rentals.create", "rentals.return", "rentals.view_own", "rentals.view_all",
+            "rentals.return", "rentals.view_all",
             "books.request", "books.manage",
             "roles.manage", "notifications.read"],
         ["Bibliotecario"] = [
@@ -180,11 +179,21 @@ static async Task SeedRolesAsync(IServiceProvider serviceProvider)
             ?? throw new InvalidOperationException($"No se pudo recuperar el rol '{roleName}'.");
 
         var existingClaims = await roleManager.GetClaimsAsync(role);
-        foreach (var permission in permissions)
+        var desiredPermissions = new HashSet<string>(permissions);
+
+        foreach (var permission in desiredPermissions)
         {
             if (existingClaims.All(c => c.Type != "permission" || c.Value != permission))
             {
                 await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+            }
+        }
+
+        foreach (var claim in existingClaims.Where(c => c.Type == "permission"))
+        {
+            if (!desiredPermissions.Contains(claim.Value))
+            {
+                await roleManager.RemoveClaimAsync(role, claim);
             }
         }
     }
@@ -226,17 +235,21 @@ static async Task SeedAdministratorAsync(IServiceProvider serviceProvider, IConf
 
 static string ResolveLocalSqlitePath(IConfiguration configuration, string connectionString)
 {
-    if (configuration["SQLITE_DATA_SOURCE"] is { Length: > 0 } envSource)
+    var envSource = configuration["SQLITE_DATA_SOURCE"];
+    if (string.IsNullOrEmpty(envSource))
+        return connectionString;
+
+    if (envSource.Contains('='))
         return envSource;
 
-    var connectionBuilder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString);
-    if (Path.IsPathRooted(connectionBuilder.DataSource))
-        return connectionString;
+    var connectionBuilder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = envSource };
+    if (Path.IsPathRooted(envSource))
+        return connectionBuilder.ToString();
 
     var databaseDirectory = FindWorkflowDatabaseDirectory()
         ?? Path.Combine(Directory.GetCurrentDirectory(), "database");
 
-    var resolved = Path.Combine(databaseDirectory, Path.GetFileName(connectionBuilder.DataSource));
+    var resolved = Path.Combine(databaseDirectory, Path.GetFileName(envSource));
     Directory.CreateDirectory(databaseDirectory);
     connectionBuilder.DataSource = resolved;
     return connectionBuilder.ToString();

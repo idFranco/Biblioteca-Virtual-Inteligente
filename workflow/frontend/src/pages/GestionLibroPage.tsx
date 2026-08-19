@@ -139,8 +139,8 @@ export function GestionLibroPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Gestión de libro"
-        subtitle="Revisa las solicitudes de copias, dales de alta en el catálogo o recházalas."
+        title="Solicitudes de libros"
+        subtitle="Revisa las solicitudes de copias, dáles de alta en el catálogo o recházalas."
       />
 
       {error && <p className="mb-4 text-sm text-oxide">{error}</p>}

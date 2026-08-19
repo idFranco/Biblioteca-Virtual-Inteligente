@@ -1,5 +1,4 @@
 import json
-import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -10,16 +9,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "workflow" / "mcp"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from common.settings import get_database_path
+from common.settings import get_database_path, require_env
 from groq_audit import detect_injection, detect_sensitive, sanitize
 
 mcp = FastMCP("Security-Audit-MCP")
 
 DATABASE_PATH = get_database_path()
 
-_AUDIT_DB_PATH = Path(
-    os.getenv("AUDIT_DATABASE_PATH", str(REPO_ROOT / "workflow" / "database" / "AuditLog.db"))
-).resolve()
+_AUDIT_DB_PATH = Path(require_env("AUDIT_DATABASE_PATH")).resolve()
 _AUDIT_TABLE = "audit_events"
 
 

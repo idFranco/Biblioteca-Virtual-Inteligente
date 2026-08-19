@@ -42,7 +42,7 @@ START
 ## LLM externo (opcional)
 
 - Cliente: `app/llm/client.py` (LangChain `ChatOpenAI`, compatible OpenAI).
-- Config: `LLM_API_KEY` (obligatoria para activar) y `LLM_MODEL` (default `gpt-4o-mini`).
+- Config: `LLM_API_KEY` (obligatoria para activar) y `LLM_MODEL` (obligatoria si se define `LLM_API_KEY`; sin valor por defecto).
 - El contexto enviado al proveedor pasa por `app/utils/pii_masker.py` (PII masking obligatorio).
 - Si el proveedor no responde (timeout 20s, sin clave o error de red), el nodo devuelve `None` y el grafo usa el fallback heurístico; el chatbot nunca colapsa (ADR-023).
 
@@ -59,6 +59,8 @@ START
 - `open_library_client.py` → Open Library MCP (enriquecimiento externo).
 - `security_audit_client.py` → Security-Audit-MCP (auditoría de entrada/salida).
 - `stdio.py` → transporte stdio compartido (reutiliza `McpStdioClient`).
+
+Los comandos de los MCP se configuran por variables de entorno **obligatorias** (sin valores por defecto, ADR-025): `BIBLIOTECA_MCP_COMMAND`, `OPEN_LIBRARY_MCP_COMMAND` y `SECURITY_AUDIT_MCP_COMMAND`. Si falta alguna, el chatbot falla al construir el cliente con un mensaje claro.
 
 ## API
 

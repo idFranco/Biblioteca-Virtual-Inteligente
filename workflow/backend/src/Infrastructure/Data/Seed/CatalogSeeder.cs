@@ -2,6 +2,7 @@ using System.Text.Json;
 using BibliotecaVirtual.Application.Contracts.Seed;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
+using BibliotecaVirtual.Infrastructure.Common;
 using BibliotecaVirtual.Infrastructure.Data;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -17,8 +18,6 @@ namespace BibliotecaVirtual.Infrastructure.Data.Seed;
 /// </summary>
 public sealed class CatalogSeeder : ICatalogSeeder
 {
-    private const string DefaultDatasetFileName = "seed-books.json";
-
     private readonly BibliotecaDbContext _context;
     private readonly IValidator<SeedBookDto> _validator;
     private readonly IConfiguration _configuration;
@@ -38,8 +37,14 @@ public sealed class CatalogSeeder : ICatalogSeeder
 
     public async Task<CatalogSeedResult> SeedAsync(CancellationToken cancellationToken = default)
     {
-        var enabled = _configuration.GetValue<bool?>("CatalogSeed:Enabled") ?? true;
-        if (!enabled)
+        var enabled = _configuration.GetValue<bool?>("CatalogSeed:Enabled");
+        if (enabled is null)
+        {
+            throw new InvalidOperationException(
+                "The required configuration 'CatalogSeed:Enabled' is missing. Set it via the environment variable 'CatalogSeed__Enabled'.");
+        }
+
+        if (!enabled.Value)
         {
             _logger.LogInformation("Seed de catálogo deshabilitado por configuración.");
             return new CatalogSeedResult(Executed: false, Inserted: 0, Skipped: 0);
@@ -104,15 +109,10 @@ public sealed class CatalogSeeder : ICatalogSeeder
 
     private string ResolveFilePath()
     {
-        var configured = _configuration["CatalogSeed:FilePath"];
-        if (!string.IsNullOrWhiteSpace(configured))
-        {
-            return Path.IsPathRooted(configured)
-                ? configured
-                : Path.Combine(AppContext.BaseDirectory, configured);
-        }
-
-        return Path.Combine(AppContext.BaseDirectory, DefaultDatasetFileName);
+        var configured = _configuration.GetRequiredString("CatalogSeed:FilePath");
+        return Path.IsPathRooted(configured)
+            ? configured
+            : Path.Combine(AppContext.BaseDirectory, configured);
     }
 
     private static Book MapEntity(SeedBookDto dto) => new()
