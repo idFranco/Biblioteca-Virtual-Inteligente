@@ -32,3 +32,17 @@
 
 ### Resultado
 Implementación completada. Estado avanzado a `Implemented` vía MCP. Pendiente: QA (`qa-check US-015`).
+
+## Iteración 2 — QA formal (`qa-check US-015`)
+
+### Contexto
+- QA ejecutado sobre `bugfix/US-015-cicd-workflow-jobs` (`5ff6ab7`) con `index_repository` previo (2881 nodos / 6007 edges indexados).
+- Estado MCP verificado: `Implemented`.
+
+### Validación de criterios de aceptación
+1. **Frontend con env:** `.github/workflows/ci.yml` job `frontend` define `VITE_API_BASE_URL=http://localhost:5000` y `VITE_CHATBOT_API_BASE_URL=http://localhost:8000` en el paso `npm run build` (parse YAML OK). `npm run build` con env → exit 0; sin env → exit 1 (fail-fast conservado).
+2. **Job python:** presente con los 4 `pip install -r` y pytest por módulo (`working-directory`). pytest chatbot 40 + biblioteca-mcp 12 + open-library-mcp 13 = 65 passed, sin red ni secretos.
+3. **Stack completo:** 3 jobs (`backend`, `frontend`, `python`). `dotnet build --no-restore --configuration Release` → Build succeeded, 0 warnings/0 errors.
+
+### Resultado QA
+**PASS.** Documentation Gate cumplido (US-015.md + esta bitácora). PR hacia `main` creado vía GitHub MCP `create_pull_request`. Estado avanzado a `Validated` vía MCP.
