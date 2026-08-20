@@ -3,10 +3,10 @@
 ## User Story Alignment Rule
 
 Before planning or implementing any requirement, the agent must check whether there is an active User Story using the `project-lifecycle` MCP server tools.
-If there is no active User Story, the Technical Lead must create one via `project_memory_create_story` and stop after planning. Implementation is not allowed until the user explicitly approves the User Story.
+If there is no active User Story, the Technical Lead must create one via `project-lifecycle_project_memory_create_story` and stop after planning. Implementation is not allowed until the user explicitly approves the User Story.
 The agent must align every lifecycle advancement with the active User Story status.
 
-Required checks via `project_memory_get_context`:
+Required checks via `project-lifecycle_project_memory_get_context`:
 
 1. Which User Story is active?
 2. Which use cases are impacted?
@@ -22,7 +22,7 @@ If implementation was not explicitly approved by the user, the agent must stop a
 ## Lifecycle Automation Gate
 
 During the planning phase, no application code or implementation files must be created or modified. 
-Once the technical design is consolidated across all required roles, the Technical Lead must invoke the `project_memory_advance_status` tool to move the story to 'Planned' and explicitly halt to await user approval.
+Once the technical design is consolidated across all required roles, the Technical Lead must invoke the `project-lifecycle_project_memory_advance_status` tool to move the story to 'Planned' and explicitly halt to await user approval.
 
 ---
 
@@ -38,7 +38,7 @@ After reading the current project context through the MCP tools, the agent must 
 
 The agent must answer these questions internally:
 
-1. What already exists in the repository? (Use `codebase-memory` tools to scan the workspace).
+1. What already exists in the repository? (Use `codebase-memory` tools — `codebase-memory_get_architecture` first, then `codebase-memory_search_code`/`codebase-memory_search_graph` — to scan the workspace before falling back to `grep`/`read`/`bash`).
 2. What is only designed but not implemented?
 3. What is the user's requested increment?
 4. Which modules are affected?
@@ -60,4 +60,4 @@ The agent must:
 
 ## Never skip this step
 
-Do not implement, refactor, create files, or answer architecture questions before initializing the context via the `project_memory_get_context` tool.
+Do not implement, refactor, create files, or answer architecture questions before initializing the context via the `project-lifecycle_project_memory_get_context` tool.

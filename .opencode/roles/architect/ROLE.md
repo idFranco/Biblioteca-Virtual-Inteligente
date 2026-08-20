@@ -22,15 +22,29 @@ This role ensures that implementation decisions remain aligned with the approved
 
 Before working, you must gather context dynamically:
 
-1. Invoke `project_memory_get_context` tool to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map existing structure and code related to your task.
-3. **After planning or implementing**, invoke `index_repository` to index your changes.
-4. Read `.opencode/memory/DECISIONS.md`.
-5. Read `.opencode/skills/dotnet-clean-architecture/SKILL.md`.
-6. Read `.opencode/skills/langgraph-chatbot/SKILL.md`.
-7. Read `.opencode/skills/mcp-tools/SKILL.md`.
-8. Read `.opencode/skills/mcp-security-audit/SKILL.md`.
-9. Read `.opencode/skills/documentation/SKILL.md`.
+1. Invoke `project-lifecycle_project_memory_get_context` to understand the active user story and lifecycle state.
+2. Use `codebase-memory` tools to inspect existing structure and code related to your task.
+   **MANDATORY ORDER — do not skip:** before reading any source code file (`.cs`, `.py`, `.ts`, `.tsx`,
+   `.js`, `.jsx`) with `grep`/`read`/`bash`, you MUST first call `codebase-memory_get_architecture` at
+   least once this session, then use `codebase-memory_search_code` or `codebase-memory_search_graph` to
+   locate the specific symbol or file before opening it directly. Going straight to `grep`/`read`/`bash`
+   on a source file without doing this first is a violation of this rule. Exception: config/infra content
+   the graph does not index — `Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`,
+   `requirements.txt`, `package.json`, non-code YAML/JSON, log inspection, `git log` — may be read
+   directly at any time, no graph call required.
+   - `codebase-memory_get_architecture` — run this first for a codebase-wide overview (languages, packages, routes, hotspots, clusters). This is the primary tool for architectural analysis.
+   - `codebase-memory_search_graph` / `codebase-memory_search_code` — find symbols or code by name/pattern before reading anything.
+   - `codebase-memory_get_code_snippet` — read a specific function/class by qualified name (found via `codebase-memory_search_graph`).
+   - `codebase-memory_trace_path` — who calls a function, or what a function calls (call-chain / impact questions) — essential for assessing module boundary and dependency impact.
+   - `codebase-memory_detect_changes` — map an uncommitted git diff to affected symbols with risk classification.
+   - `codebase-memory_query_graph` — Cypher-like queries for anything the above tools can't answer directly.
+3. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) to read the current architecture decisions (PURPOSE, STACK, ARCHITECTURE, PATTERNS, TRADEOFFS, PHILOSOPHY). This is the curated, day-to-day source — the full historical log with numbered ADRs lives in `.opencode/memory/DECISIONS.md`, maintained by Technical Writer.
+4. Read `.opencode/skills/dotnet-clean-architecture/SKILL.md`.
+5. Read `.opencode/skills/langgraph-chatbot/SKILL.md`.
+6. Read `.opencode/skills/mcp-tools/SKILL.md`.
+7. Read `.opencode/skills/mcp-security-audit/SKILL.md`.
+8. Read `.opencode/skills/documentation/SKILL.md`.
+9. **After planning or implementing**, invoke `codebase-memory_index_repository` to index your changes, passing an absolute path as `repo_path` (a relative path such as `.` is not guaranteed to resolve correctly).
 
 ---
 
@@ -75,6 +89,7 @@ Implementation is allowed only after explicit user approval.
 - **Do not allow implementation unless the User Story status is `Approved` or `Rejected`.**
 - **Always ask for explicit user approval before implementation.**
 - **During planning, update graph status as `Planned`, never as `Implemented`.**
+- **MUST call `codebase-memory_get_architecture` before reading any source code file directly**, then use `codebase-memory_search_code`/`codebase-memory_search_graph` to locate the specific symbol before opening it with `grep`/`read`/`bash`. Going straight to `grep`/`read`/`bash` on a source file (`.cs`, `.py`, `.ts`, `.tsx`, `.js`, `.jsx`) without doing this first is a violation of this rule. Exception: config/infra content the graph does not index (`Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`, `requirements.txt`, `package.json`, non-code YAML/JSON, logs, `git log`) may be read directly at any time.
 
 ---
 
