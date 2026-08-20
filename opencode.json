@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama/qwen2.5-coder:14b",
+  // "model": "ollama/qwen2.5-coder:14b-32k",
   "autoupdate": "notify",
   "share": "disabled",
   "permission": {
@@ -106,9 +106,9 @@
   "agent": {
     "functional-analyst": {
       "description": "Analyzes requirements, use cases, and acceptance criteria.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to understand the current project state.",
       "tools": {
         "write": true,
@@ -120,9 +120,9 @@
     },
     "architect": {
       "description": "Designs architecture, module boundaries, ADRs, and technical decisions.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/architect/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to analyze the impact of changes.",
       "tools": {
         "write": true,
@@ -134,9 +134,9 @@
     },
     "technical-lead": {
       "description": "Transforms requirements into executable technical plans. Coordinates all roles.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/technical-lead/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Execute project-lifecycle tools to advance user story states.",
       "tools": {
         "write": true,
@@ -150,9 +150,9 @@
     },
     "backend-developer": {
       "description": "Implements ASP.NET Core backend, Identity, EF Core, SQLite, and business logic.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/backend-developer/ROLE.md before answering. Use dotnet-clean-architecture and auth-permissions skills. Use codebase-memory to understand existing models.",
       "tools": {
         "write": true,
@@ -164,9 +164,9 @@
     },
     "frontend-developer": {
       "description": "Implements React + TypeScript frontend with protected routes, permission-based UI, and high-level UI/UX design.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/frontend-developer/ROLE.md before answering. Use react-permissions skill. MUST APPLY the frontend-ui-ux skill: distinctive typography, cohesive palette, orchestrated animations, unexpected spatial composition, visual details. Never produce generic UI. Use codebase-memory to understand existing components.",
       "tools": {
         "write": true,
@@ -178,9 +178,9 @@
     },
     "ai-engineer": {
       "description": "Implements FastAPI, LangChain, LangGraph, and MCP servers, including the security audit MCP.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/ai-engineer/ROLE.md before answering. Use langgraph-chatbot, mcp-tools, and mcp-security-audit skills. Use codebase-memory to understand existing MCPs.",
       "tools": {
         "write": true,
@@ -195,9 +195,9 @@
     },
     "qa": {
       "description": "Designs and executes functional, integration, and regression tests.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/qa/ROLE.md before answering. Use testing-qa skill to validate increments. Use codebase-memory to understand what to test.",
       "tools": {
         "write": true,
@@ -211,9 +211,9 @@
     },
     "technical-writer": {
       "description": "Maintains README, prompt documentation, MCP docs, and AI Engineering logs.",
-      "model": "ollama/qwen2.5-coder:14b",
-      "context": 65536,
-      "temperature": 0.1,
+      // "model": "ollama/qwen2.5-coder:14b-32k",
+      // "context": 32768,
+      // "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/technical-writer/ROLE.md before answering. Use documentation skill.",
       "tools": {
         "write": true,
