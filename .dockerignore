@@ -1,0 +1,16 @@
+# Build context = raíz del repo para la imagen del chatbot.
+# Ignorar todo por defecto y permitir solo lo necesario (whitelist).
+# Docker exige re-incluir los directorios padre antes que los hijos.
+*
+!workflow
+!workflow/chatbot
+!workflow/mcp
+
+# Excluir explícitamente artefactos y datos dentro de las carpetas permitidas
+**/__pycache__
+*.pyc
+*.db
+*.sqlite
+.pytest_cache
+*.env
+node_modules
