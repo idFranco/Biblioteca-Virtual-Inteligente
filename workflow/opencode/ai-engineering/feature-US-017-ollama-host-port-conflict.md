@@ -16,7 +16,7 @@
 | Backend Developer | No impactado |
 | Frontend Developer | No impactado |
 | AI Engineer | Cambios compose/`.env`/`.env.example`; verificación de `client.py` intacto y suite pytest verde |
-| QA | Plan de validación de 7 pasos (drill de fallback pendiente en qa-check) |
+| QA | Plan de validación de 7 pasos; drill de fallback ejecutado en qa-check |
 | Technical Writer | README chatbot, `.env.example`, DECISIONS.md (ADR-032 + nota de deprecación en ADR-029), bitácora |
 
 ## Contexto
@@ -60,6 +60,7 @@
 |---|---|---|---|
 | 1 | Planificación (2026-08-21) | Functional Analyst, Architect, Technical Lead, AI Engineer, QA, Technical Writer | Plan consolidado en 5 frentes sin discrepancias; historia avanzada a `Planned` y aprobada por el usuario |
 | 2 | Implementación (2026-08-21) | AI Engineer, Technical Lead | 5 frentes aplicados; hallazgos de entorno integrados a docs (Docker Desktop sin systemd; precedencia shell→compose para `DATABASE_PATH`); validación de despliegue PASS (detalle abajo) |
+| 3 | QA — qa-check (2026-08-21) | qa | Drill de fallback pendiente desde implementación (detener systemd requiere sudo interactivo) → Drill funcional equivalente: chatbot recreado con `OLLAMA_BASE_URL=http://host.docker.internal:9/v1` → `POST /chat` **HTTP 200** heurístico sin colapsar; restauración de config verificada. Escenarios 1–3 PASS, pytest **61 passed**. Historia a PR |
 
 ## Registro de riesgos
 
@@ -70,7 +71,7 @@
 | Baja | Docker | Contenedor `ollama-1` residual en estado `Created` | `docker compose up --remove-orphans` ejecutado limpio; `docker ps` sin ollama. Cerrado |
 | Baja | Host | Firewall bloquea tráfico hacia 11434 | En Docker Desktop el proxy alcanza el loopback del host; verificado empíricamente. En Engine nativo queda como paso de diagnóstico |
 | Baja | Chatbot | Precedencia shell→compose filtra `DATABASE_PATH` relativa al contenedor | Recreación con rutas in-image explícitas; documentado en `.env.example`/ADR-032. Cerrado |
-| Baja | Chatbot | Regresión en recomendaciones/fallback | Suite pytest 61 passed; E2E `/chat` OK; drill de fallback pendiente en `qa-check`. Abierto para QA |
+| Baja | Chatbot | Regresión en recomendaciones/fallback | Suite pytest 61 passed; E2E `/chat` OK; drill de fallback **ejecutado en qa-check** (HTTP 200 heurístico con proveedor inalcanzable). Cerrado |
 
 ## Validación (ejecutada en implementación)
 
@@ -80,7 +81,18 @@
 4. **Conectividad:** desde el chatbot, GET `host.docker.internal:11434/api/tags` → 200 con `llama3.2:latest` listado; inferencia real vía `POST /api/generate` → respuesta generada. PASS
 5. **Funcional E2E:** `POST /chat` (`X-Correlation-ID: us017-smoke-1`) → respuesta en lenguaje natural del nodo `llm_response`. PASS
 6. **Auditoría:** MCP `Security-Audit-MCP` inició por stdio in-image tras corregir `DATABASE_PATH`; consulta de vencimientos respondió saneada (`[REDACTED]`, comportamiento preexistente US-012). PASS
-7. **Fallback drill:** pendiente de `qa-check` (requiere parar el servicio nativo).
+7. **Fallback drill:** ejecutado en `qa-check` — ver sección "Validación QA" abajo.
+
+## Validación QA (qa-check, 2026-08-21)
+
+| Criterio | Evidencia | Status |
+|---|---|---|
+| Stack sin conflicto de puertos | 3 servicios Up; `docker ps -a` sin ollama; `compose config` sin publicación 11434 y con `extra_hosts` | PASS |
+| Recomendaciones vía Ollama nativo | `/api/tags` in-container → 200 + `llama3.2`; `generate_recommendation()` in-container → texto natural (1024 chars); E2E `/chat` → 200 con correlation ID | PASS |
+| Fallback preservado | Chatbot con `OLLAMA_BASE_URL=http://host.docker.internal:9/v1` (inalcanzable) → `POST /chat` HTTP 200 heurístico sin colapsar; tests fallback/LLM: 12 passed; restauración verificada (`printenv` + `/chat` 200) | PASS |
+| Regresión completa | `pytest -q` → **61 passed** | PASS |
+
+**Notas QA:** (1) las recomendaciones llegan `[REDACTED]` al cliente cuando la auditoría de salida (GROQ/US-012) detecta nombres de autores en el texto del LLM — pipeline auditoría→saneo correcto tras `llm_response`, no es regresión; (2) el drill simuló proveedor inalcanzable (equivalente funcional a servicio detenido desde la perspectiva del chatbot) porque `sudo systemctl stop ollama` requiere contraseña interactiva.
 
 ### Incidencia resuelta durante la validación
 
