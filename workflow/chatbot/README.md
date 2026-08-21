@@ -41,7 +41,10 @@ START
 ## LLM local Ollama (recomendaciones)
 
 - Cliente: `app/llm/client.py` (LangChain `ChatOpenAI` compatible OpenAI apuntando a `OLLAMA_BASE_URL`).
-- Config: `OLLAMA_BASE_URL` (obligatoria, fail-fast si falta; en Docker `http://ollama:11434/v1`), `OLLAMA_MODEL` (obligatoria; `llama3.2`) y `LLM_TIMEOUT_SECONDS` (obligatoria; timeout de la llamada al proveedor, p. ej. `120`).
+- Config: `OLLAMA_BASE_URL` (obligatoria, fail-fast si falta; en Docker `http://host.docker.internal:11434/v1`, US-017), `OLLAMA_MODEL` (obligatoria; `llama3.2`) y `LLM_TIMEOUT_SECONDS` (obligatoria; timeout de la llamada al proveedor, p. ej. `120`).
+- **Topología host (US-017/ADR-032):** el compose **ya no incluye un servicio `ollama`**; el chatbot consume el Ollama nativo del host vía `extra_hosts: ["host.docker.internal:host-gateway"]` y `OLLAMA_BASE_URL=http://host.docker.internal:11434/v1`.
+  - **Docker Desktop:** resuelve `host.docker.internal` hacia el loopback del host con su propia capa de proxy → **no requiere ningún cambio en el servicio nativo**.
+  - **Docker Engine nativo:** los contenedores no alcanzan el loopback; expón el servicio systemd en todas las interfaces añadiendo al drop-in `/etc/systemd/system/ollama.service.d/override.conf` la línea `Environment="OLLAMA_HOST=0.0.0.0"` y reiniciando (`sudo systemctl daemon-reload && sudo systemctl restart ollama`). Verificación: `ss -ltnp | grep 11434` → `0.0.0.0:11434`.
 - **Prioridad de proveedor (ADR-023/029):** 1) Ollama local (`OLLAMA_BASE_URL` + `OLLAMA_MODEL=llama3.2`); 2) LLM en la nube (`LLM_API_KEY`/`LLM_MODEL`, fallback cloud); 3) heurística de `response`.
 - `LLM_API_KEY`/`LLM_MODEL` pasan a ser **opcionales** (fallback cloud): solo se usan si Ollama no está disponible o no responde.
 - El contexto enviado al proveedor pasa por `app/utils/pii_masker.py` (PII masking obligatorio) tanto hacia Ollama como hacia la nube.
