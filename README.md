@@ -216,7 +216,7 @@ La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta c�
 ## 11. Notas de versiones recientes (US-011 a US-014)
 
 - **US-011:** Sala de lectura (`/sala-lectura/:bookId`), chatbot redimensionable y portadas robustas.
-- **US-012:** Chatbot con recomendaciones personalizadas, feedback persistido (`registrar_feedback`) y LLM externo con PII masking y fallback (ADR-022/023).
+- **US-012:** Chatbot con recomendaciones personalizadas, feedback persistido (`registrar_feedback`) y LLM local Ollama (llama3.2) para las recomendaciones, con PII masking, auditoría GROQ obligatoria y fallback heurístico (ADR-022/023/029).
 - **US-013:** Notificaciones automáticas de vencimiento (`RentalDueNotificationService`, tabla `Notifications`, endpoints `GET/PATCH /api/notifications`).
 - **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
 

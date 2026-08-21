@@ -28,12 +28,26 @@ Implementation starts only after explicit user approval.
 
 Before working, you must gather context dynamically:
 
-1. Invoke `project_memory_get_context` tool to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map existing structure and code related to your task.
-3. **After planning**, invoke `index_repository` to index any repository artifacts created or updated during planning. **After implementation changes are completed**, invoke `index_repository` again to index the implementation changes.
-4. Read `.opencode/memory/DECISIONS.md`.
-
-Also read the relevant skill files depending on the feature.
+1. Invoke `project-lifecycle_project_memory_get_context` to understand existing User Stories, lifecycle state and project memory.
+2. Use `codebase-memory` tools to inspect the project graph, existing structure and code related to the task.
+   **MANDATORY ORDER — do not skip:** before reading any source code file (`.cs`, `.py`, `.ts`, `.tsx`,
+   `.js`, `.jsx`) with `grep`/`read`/`bash`, you MUST first call `codebase-memory_get_architecture` at
+   least once this session, then use `codebase-memory_search_code` or `codebase-memory_search_graph` to
+   locate the specific symbol or file before opening it directly. Going straight to `grep`/`read`/`bash`
+   on a source file without doing this first is a violation of this rule. Exception: config/infra content
+   the graph does not index — `Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`,
+   `requirements.txt`, `package.json`, non-code YAML/JSON, log inspection, `git log` — may be read
+   directly at any time, no graph call required.
+   - `codebase-memory_get_architecture` — run this first for a codebase-wide overview (languages, packages, routes, hotspots).
+   - `codebase-memory_search_graph` / `codebase-memory_search_code` — find symbols or code by name/pattern before reading anything.
+   - `codebase-memory_get_code_snippet` — read a specific function/class by qualified name (found via `codebase-memory_search_graph`).
+   - `codebase-memory_trace_path` — who calls a function, or what a function calls (call-chain / impact questions).
+   - `codebase-memory_detect_changes` — map an uncommitted git diff to affected symbols with risk classification.
+   - `codebase-memory_query_graph` — Cypher-like queries for anything the above tools can't answer directly.
+3. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) to read the current architecture decisions (PURPOSE, STACK, ARCHITECTURE, PATTERNS, TRADEOFFS, PHILOSOPHY). This is the curated, day-to-day source — the full historical log with numbered ADRs lives in `.opencode/memory/DECISIONS.md`, maintained by Technical Writer.
+4. Read the relevant skill files depending on the feature.
+5. **After planning**, invoke `codebase-memory_index_repository` to index any repository artifacts created or updated during planning. Pass an absolute path as `repo_path` (e.g. the project root) — a relative path such as `.` is not guaranteed to resolve correctly.
+6. **After implementation changes are completed**, invoke `codebase-memory_index_repository` again to index the implementation changes, with the same absolute `repo_path`.
 
 ---
 
@@ -54,9 +68,9 @@ Also read the relevant skill files depending on the feature.
 
 For every new requirement, the Technical Lead must:
 
-1. Read graph and memory.
-2. Identify or create a User Story (US-XXX).
-3. Assign a User Story ID.
+1. Invoke `project-lifecycle_project_memory_get_context` and use `codebase-memory` tools to read the project graph/codebase.
+2. Determine whether an existing User Story already covers the requirement.
+3. If no suitable User Story exists, determine the next available `US-XXX` ID from project memory and invoke `project-lifecycle_project_memory_create_story` to create it in `Draft` status. Do not skip this call — a story must exist in project memory before `project-lifecycle_project_memory_advance_status` can be used on it later in step 10.
 4. Identify impacted use cases.
 5. Identify impacted modules.
 6. **Determine which roles are actually relevant to the request and invoke ONLY those roles.**
@@ -94,8 +108,8 @@ For every new requirement, the Technical Lead must:
    - Acceptance criteria → return to corresponding role
    - HIGH risks → return to responsible role for mitigation
    - Standards → return to specific role
-9. Invoke `index_repository` to index the consolidated planning artifacts.
-10. Advance the story status to `Planned` using `project_memory_advance_status`.
+9. Invoke `codebase-memory_index_repository` to index the consolidated planning artifacts, passing an absolute path as `repo_path` (a relative path such as `.` is not guaranteed to resolve correctly).
+10. Advance the story status to `Planned` using `project-lifecycle_project_memory_advance_status`.
 11. Halt execution and output the required terminal command for the user to approve the story. Do not ask questions.
 
 ---
@@ -128,6 +142,7 @@ To authorize the implementation of this plan, you MUST execute the following com
 ## Rules
 
 - Read the project graph before planning.
+- **MUST call `codebase-memory_get_architecture` before reading any source code file directly**, then use `codebase-memory_search_code`/`codebase-memory_search_graph` to locate the specific symbol before opening it with `grep`/`read`/`bash`. Going straight to `grep`/`read`/`bash` on a source file (`.cs`, `.py`, `.ts`, `.tsx`, `.js`, `.jsx`) without doing this first is a violation of this rule. Exception: config/infra content the graph does not index (`Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`, `requirements.txt`, `package.json`, non-code YAML/JSON, logs, `git log`) may be read directly at any time.
 - Do not skip QA when code changes are involved.
 - Do not invoke roles that are not relevant to the requirement.
 - Do not modify the stack without approval.

@@ -1,13 +1,40 @@
 from __future__ import annotations
 
+import os
 import uuid
 
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.graph.build_graph import graph
 from app.graph.state import ChatState
 from app.schemas import BookRecommendation, ChatRequest, ChatResponse
 
+
+def _cors_origins() -> list[str]:
+    """Origen(es) CORS permitidos desde la variable CORS_ORIGINS (fail-fast).
+
+    Se espera una lista separada por comas; cada origen se recorta y se
+    descartan entradas vacías. Sin orígenes, el arranque falla con un error
+    claro (ADR-025).
+    """
+    raw = os.getenv("CORS_ORIGINS", "")
+    origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+    if not origins:
+        raise RuntimeError(
+            "Falta la variable de entorno 'CORS_ORIGINS' (origen(es) permitidos "
+            "separados por coma, p. ej. http://localhost:5173)."
+        )
+    return origins
+
+
 app = FastAPI(title="Biblioteca Virtual Chatbot")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type", "X-Correlation-ID"],
+    allow_credentials=False,
+)
 
 
 def normalize_state(raw: dict) -> ChatState:
