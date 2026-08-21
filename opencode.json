@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama/qwen3:8b-24k",
   "autoupdate": "notify",
   "share": "disabled",
   "permission": {
@@ -106,7 +105,6 @@
   "agent": {
     "functional-analyst": {
       "description": "Analyzes requirements, use cases, and acceptance criteria.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to understand the current project state.",
@@ -120,7 +118,6 @@
     },
     "architect": {
       "description": "Designs architecture, module boundaries, ADRs, and technical decisions.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/architect/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to analyze the impact of changes.",
@@ -134,7 +131,6 @@
     },
     "technical-lead": {
       "description": "Transforms requirements into executable technical plans. Coordinates all roles.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/technical-lead/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Execute project-lifecycle tools to advance user story states.",
@@ -150,7 +146,6 @@
     },
     "backend-developer": {
       "description": "Implements ASP.NET Core backend, Identity, EF Core, SQLite, and business logic.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/backend-developer/ROLE.md before answering. Use dotnet-clean-architecture and auth-permissions skills. Use codebase-memory to understand existing models.",
@@ -164,7 +159,6 @@
     },
     "frontend-developer": {
       "description": "Implements React + TypeScript frontend with protected routes, permission-based UI, and high-level UI/UX design.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/frontend-developer/ROLE.md before answering. Use react-permissions skill. MUST APPLY the frontend-ui-ux skill: distinctive typography, cohesive palette, orchestrated animations, unexpected spatial composition, visual details. Never produce generic UI. Use codebase-memory to understand existing components.",
@@ -178,7 +172,6 @@
     },
     "ai-engineer": {
       "description": "Implements FastAPI, LangChain, LangGraph, and MCP servers, including the security audit MCP.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/ai-engineer/ROLE.md before answering. Use langgraph-chatbot, mcp-tools, and mcp-security-audit skills. Use codebase-memory to understand existing MCPs.",
@@ -195,7 +188,6 @@
     },
     "qa": {
       "description": "Designs and executes functional, integration, and regression tests.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/qa/ROLE.md before answering. Use testing-qa skill to validate increments. Use codebase-memory to understand what to test.",
@@ -211,7 +203,6 @@
     },
     "technical-writer": {
       "description": "Maintains README, prompt documentation, MCP docs, and AI Engineering logs.",
-      "model": "ollama/qwen3:8b-24k",
       "context": 24576,
       "temperature": 0.1,
       "prompt": "Read AGENTS.md and .opencode/roles/technical-writer/ROLE.md before answering. Use documentation skill.",
@@ -221,6 +212,21 @@
         "bash": false,
         "project_memory_*": true,
         "codebase-memory_*": true
+      }
+    },
+    "auditor": {
+      "description": "Performs a complete read-only technical audit of architecture, code quality, security, testing, AI, MCP, maintainability and technical debt.",
+      "context": 24576,
+      "temperature": 0.1,
+      "prompt": "Read AGENTS.md and .opencode/roles/auditor/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Perform a strictly read-only evidence-based audit. Use dotnet-clean-architecture, auth-permissions, react-permissions, langgraph-chatbot, mcp-tools, mcp-security-audit, testing-qa and documentation skills when applicable.",
+      "tools": {
+        "write": false,
+        "edit": false,
+        "bash": true,
+        "project_memory_*": true,
+        "codebase-memory_*": true,
+        "security-audit-mcp_*": true,
+        "index_repository": true
       }
     }
   },
@@ -254,6 +260,11 @@
       "description": "Review the quality of the increment, update ALL documentation, push via MCP, and create the PR or Reject.",
       "agent": "qa",
       "template": "For story $ARGUMENTS, read and STRICTLY execute step by step the file '.opencode/commands/qa-check.md'."
+    },
+    "create-user-story-audit": {
+      "description": "Perform a complete read-only technical audit of the project.",
+      "agent": "auditor",
+      "template": "For the audit scope $ARGUMENTS, read and STRICTLY execute the instructions from the file '.opencode/commands/create-user-story-audit.md'."
     }
   },
   "compaction": {
