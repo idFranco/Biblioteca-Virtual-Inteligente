@@ -46,14 +46,17 @@ services:
       - BIBLIOTECA_MCP_COMMAND=${BIBLIOTECA_MCP_COMMAND:?Set BIBLIOTECA_MCP_COMMAND in the .env file (e.g. python /app/workflow/mcp/biblioteca-mcp/server.py)}
       - SECURITY_AUDIT_MCP_COMMAND=${SECURITY_AUDIT_MCP_COMMAND:?Set SECURITY_AUDIT_MCP_COMMAND in the .env file (e.g. python /app/workflow/mcp/security-audit-mcp/server.py)}
       - OPEN_LIBRARY_MCP_COMMAND=${OPEN_LIBRARY_MCP_COMMAND:?Set OPEN_LIBRARY_MCP_COMMAND in the .env file (e.g. python /app/workflow/mcp/open-library-mcp/server.py)}
-      - DATABASE_PATH=${DATABASE_PATH:?Set DATABASE_PATH in the .env file (e.g. /app/database/BibliotecaVirtual.db)}
-      - AUDIT_DATABASE_PATH=${AUDIT_DATABASE_PATH:?Set AUDIT_DATABASE_PATH in the .env file (e.g. /app/database/audit.db)}
       - CORS_ORIGINS=${CORS_ORIGINS:?Set CORS_ORIGINS in the .env file (e.g. http://localhost:5173)}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:?Set OLLAMA_BASE_URL in the .env file (e.g. http://host.docker.internal:11434/v1)}
       - OLLAMA_MODEL=${OLLAMA_MODEL:?Set OLLAMA_MODEL in the .env file (e.g. llama3.2)}
       - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:?Set LLM_TIMEOUT_SECONDS in the .env file (e.g. 120)}
       - LLM_API_KEY=${LLM_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-}
+    # DATABASE_PATH / AUDIT_DATABASE_PATH se resuelven desde este archivo en disco
+    # (env_file NO consulta el entorno del shell), de modo que los exports de dev
+    # del host no pueden sombrear las rutas in-image (/app/database/...).
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
