@@ -45,6 +45,7 @@ Las URLs base se leen de variables de entorno **sin valor por defecto** (`src/co
 - Arranca **minimizado**: solo se muestra el botón flotante «Asistente de la Biblioteca» (abajo a la derecha). Al hacer clic se abre la ventana.
 - La ventana abierta permite **maximizar/colapsar** (compacto/grande), **redimensionar** (asas de borde con teclado accesible) y **minimizar** (vuelve al botón flotante).
 - El tamaño elegido se persiste en `localStorage`; el estado abierto/cerrado arranca siempre en `false` (minimizado).
+- **CORS:** el origen de la SPA (p. ej. `http://localhost:5173`) debe estar listado en `CORS_ORIGINS` del servidor del chatbot para que el navegador no bloquee el `fetch` a `VITE_CHATBOT_API_BASE_URL`; no se requieren cambios de código en el frontend.
 
 ## Identidad visual
 

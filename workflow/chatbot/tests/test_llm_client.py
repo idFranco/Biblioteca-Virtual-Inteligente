@@ -1,7 +1,7 @@
 """Tests unitarios del cliente LLM (app/llm/client.py).
 
 Herméticos: sin red, sin Ollama y sin claves reales. Se parchean las variables
- de entorno con ``monkeypatch`` y la construcción de ``langchain_openai.ChatOpenAI``.
+de entorno con ``monkeypatch`` y la construcción de ``langchain_openai.ChatOpenAI``.
 """
 
 from __future__ import annotations

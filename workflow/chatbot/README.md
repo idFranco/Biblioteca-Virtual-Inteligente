@@ -13,7 +13,6 @@ START
           ├─ due_reminder   → due_reminder → audit_output
           ├─ overdue        → overdue → audit_output
           ├─ feedback       → feedback → save_feedback → response → llm_response → audit_output
-          ├─ book_query     → extract_query → internal_catalog → external_enrichment → availability → response → llm_response → audit_output
           └─ status_plain/other → response → llm_response → audit_output
   audit_output              (Security-Audit-MCP: auditoría de salida obligatoria)
       ├─ sanitizar → sanitize_response → END
@@ -35,16 +34,25 @@ START
 | `due_reminder` / `overdue` | Informan de alquileres por vencer / vencidos según el estado de lectura. |
 | `feedback` / `save_feedback` | Detectan el feedback del usuario y lo persisten vía `registrar_feedback` (Biblioteca-MCP, escritura acotada). |
 | `response` | Respuesta heurística (fallback y base). |
-| `llm_response` | Redacta la recomendación con el LLM externo (LangChain) **con PII masking**; si no está disponible, usa la heurística de `response`. |
+| `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). |
 | `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. |
 | `sanitize_response` | Sanitiza la salida si la auditoría lo requiere. |
 
-## LLM externo (opcional)
+## LLM local Ollama (recomendaciones)
 
-- Cliente: `app/llm/client.py` (LangChain `ChatOpenAI`, compatible OpenAI).
-- Config: `LLM_API_KEY` (obligatoria para activar) y `LLM_MODEL` (obligatoria si se define `LLM_API_KEY`; sin valor por defecto).
-- El contexto enviado al proveedor pasa por `app/utils/pii_masker.py` (PII masking obligatorio).
-- Si el proveedor no responde (timeout 20s, sin clave o error de red), el nodo devuelve `None` y el grafo usa el fallback heurístico; el chatbot nunca colapsa (ADR-023).
+- Cliente: `app/llm/client.py` (LangChain `ChatOpenAI` compatible OpenAI apuntando a `OLLAMA_BASE_URL`).
+- Config: `OLLAMA_BASE_URL` (obligatoria, fail-fast si falta; en Docker `http://ollama:11434/v1`), `OLLAMA_MODEL` (obligatoria; `llama3.2`) y `LLM_TIMEOUT_SECONDS` (obligatoria; timeout de la llamada al proveedor, p. ej. `120`).
+- **Prioridad de proveedor (ADR-023/029):** 1) Ollama local (`OLLAMA_BASE_URL` + `OLLAMA_MODEL=llama3.2`); 2) LLM en la nube (`LLM_API_KEY`/`LLM_MODEL`, fallback cloud); 3) heurística de `response`.
+- `LLM_API_KEY`/`LLM_MODEL` pasan a ser **opcionales** (fallback cloud): solo se usan si Ollama no está disponible o no responde.
+- El contexto enviado al proveedor pasa por `app/utils/pii_masker.py` (PII masking obligatorio) tanto hacia Ollama como hacia la nube.
+- GROQ (`API_KEY_GROQ`) se usa **exclusivamente** en Security-Audit-MCP para auditar entrada/salida; nunca redacta recomendaciones (ADR-029).
+- Si ningún proveedor responde (timeout `LLM_TIMEOUT_SECONDS`, Ollama caído, error de red o sin clave), el nodo devuelve `None` y el grafo usa el fallback heurístico; el chatbot nunca colapsa.
+
+## CORS
+
+El chatbot habilita CORS con el `CORSMiddleware` de FastAPI leyendo `CORS_ORIGINS` (lista de orígenes separados por coma, **fail-fast**: si falta la variable, no arranca). Configuración: `allow_methods=["POST","GET"]`, `allow_headers=["Content-Type","X-Correlation-ID"]` y `allow_credentials=False`.
+
+Motivo: la SPA de React se sirve en `:5173` y el chatbot responde en `:8000`; sin esta configuración el navegador bloquea `POST /chat` y su preflight `OPTIONS` por same-origin policy. `X-Correlation-ID` se permite explícitamente para preservar la trazabilidad extremo a extremo (US-009/012). `allow_credentials=False` porque el chatbot no usa cookies ni credenciales de sesión (el JWT no viaja al chatbot).
 
 ## Prompts
 
@@ -62,6 +70,18 @@ START
 
 Los comandos de los MCP se configuran por variables de entorno **obligatorias** (sin valores por defecto, ADR-025): `BIBLIOTECA_MCP_COMMAND`, `OPEN_LIBRARY_MCP_COMMAND` y `SECURITY_AUDIT_MCP_COMMAND`. Si falta alguna, el chatbot falla al construir el cliente con un mensaje claro.
 
+### Empaquetado de los MCP en la imagen del chatbot (ADR-030)
+
+La imagen Docker del chatbot incluye los **3 servidores MCP** en `/app/workflow/mcp/` (layout del monorepo preservado: `/app/workflow/mcp/<servidor>/server.py`) y se invocan **en la propia imagen** (`python .../server.py`, sin `npx`). Bajo docker compose el chatbot los lanza con:
+
+```bash
+BIBLIOTECA_MCP_COMMAND=python /app/workflow/mcp/biblioteca-mcp/server.py
+OPEN_LIBRARY_MCP_COMMAND=python /app/workflow/mcp/open-library-mcp/server.py
+SECURITY_AUDIT_MCP_COMMAND=python /app/workflow/mcp/security-audit-mcp/server.py
+```
+
+Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUDIT_DATABASE_PATH=/app/database/audit.db` desde el volumen compartido `database_data` (misma base SQLite que el backend).
+
 ## API
 
 - `GET /health` → `{"status": "healthy"}`.
@@ -69,4 +89,4 @@ Los comandos de los MCP se configuran por variables de entorno **obligatorias** 
 
 ## Tests
 
-`python3 -m pytest -q` (40 tests): grafo, seguridad, PII masking, recomendaciones, esquemas.
+`python3 -m pytest -q` (61 tests): grafo, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), CORS y cliente stdio MCP.
