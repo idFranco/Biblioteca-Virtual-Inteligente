@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Any
 
@@ -5,7 +6,13 @@ import httpx
 from fastmcp import FastMCP
 
 OPEN_LIBRARY_BASE_URL = os.getenv("OPEN_LIBRARY_BASE_URL", "https://openlibrary.org")
-OPEN_LIBRARY_TIMEOUT = float(os.getenv("OPEN_LIBRARY_TIMEOUT", "10"))
+OPEN_LIBRARY_TIMEOUT = float(os.getenv("OPEN_LIBRARY_TIMEOUT", "12"))
+# Reintentos adicionales ante fallos transitorios de red (p. ej. ConnectError
+# justo tras el build del stack). El peor caso total debe mantenerse por
+# debajo del cap externo de 30 s de run_mcp_tool:
+# (1 + OPEN_LIBRARY_RETRIES) * OPEN_LIBRARY_TIMEOUT + backoff ≈ 25 s < 30 s.
+OPEN_LIBRARY_RETRIES = int(os.getenv("OPEN_LIBRARY_RETRIES", "1"))
+OPEN_LIBRARY_RETRY_BACKOFF_SECONDS = 1.0
 SEARCH_LIMIT = int(os.getenv("OPEN_LIBRARY_SEARCH_LIMIT", "5"))
 
 mcp = FastMCP("open-library")
@@ -27,7 +34,7 @@ def _build_cover_url(cover_id: int | None, size: str = "M") -> str | None:
 
 
 async def _get_json(path: str, client: httpx.AsyncClient | None = None) -> dict[str, Any]:
-    """Descarga y decodifica un JSON de Open Library.
+    """Descarga y decodifica un JSON de Open Library con reintento transitorio.
 
     Args:
         path: ruta (con query string) relativa a ``OPEN_LIBRARY_BASE_URL``.
@@ -37,17 +44,29 @@ async def _get_json(path: str, client: httpx.AsyncClient | None = None) -> dict[
 
     Returns:
         El JSON decodificado. Lanza ``httpx.HTTPError`` si la petición falla.
+
+    Notes:
+        Los fallos de transporte (``httpx.TransportError``: ConnectError,
+        timeouts, etc.) se reintentan hasta ``OPEN_LIBRARY_RETRIES`` veces con
+        un backoff fijo; los errores HTTP (4xx/5xx) fallan sin reintento.
     """
     if client is None:
         async with httpx.AsyncClient(timeout=OPEN_LIBRARY_TIMEOUT) as default_client:
             return await _get_json(path, default_client)
 
-    response = await client.get(
-        f"{OPEN_LIBRARY_BASE_URL}{path}",
-        headers={"Accept": "application/json"},
-    )
-    response.raise_for_status()
-    return response.json()
+    url = f"{OPEN_LIBRARY_BASE_URL}{path}"
+    attempts = max(0, OPEN_LIBRARY_RETRIES) + 1
+    for attempt in range(attempts):
+        try:
+            response = await client.get(url, headers={"Accept": "application/json"})
+            response.raise_for_status()
+            return response.json()
+        except httpx.TransportError:
+            if attempt == attempts - 1:
+                raise
+            await asyncio.sleep(OPEN_LIBRARY_RETRY_BACKOFF_SECONDS)
+
+    raise AssertionError("unreachable")
 
 
 def _extract_edition_key(entry: Any) -> str | None:
