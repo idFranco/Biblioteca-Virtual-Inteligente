@@ -31,7 +31,9 @@ Que `docker compose up --build` funcione sin errores aunque el shell del host ex
 | Commit | Contenido |
 |---|---|
 | `e42b2cf` | `docs(US-018): plan técnico consolidado por roles y estado Planned` |
-| *(push implementación vía GitHub MCP)* | `fix(US-018): resolver rutas DB desde .env vía env_file y reintentar fallos transitorios en Open Library MCP` |
+| `797c7b4` | `fix(US-018): resolver rutas DB desde .env vía env_file y reintentar fallos transitorios en Open Library MCP` |
+| `dc90436` | `docs(US-018): aprobación de usuario, notas de implementación y estado de la historia` |
+| `0fedc8e` | `docs(US-018): registrar ADR-033 en la memoria de decisiones` |
 
 ## Evidencia de validación (implementación)
 
@@ -46,3 +48,16 @@ Que `docker compose up --build` funcione sin errores aunque el shell del host ex
 ## Riesgos materializados
 
 Ninguno. La advertencia teórica de doble carga de `.env` (auto-load + `env_file`) no apareció en `docker compose config`.
+
+## Iteración QA (qa-check — 2026-08-21)
+
+**Verdict: PASS (4/4).** Stack real validado con el export contaminante del shell activo:
+
+1. **Arranque:** `docker compose up --build -d` OK; 3 contenedores Up; logs chatbot sin `FileNotFoundError`/tracebacks.
+2. **Origen de rutas:** `printenv` in-container → `/app/database/BibliotecaVirtual.db` y `/app/database/audit.db` pese al shell.
+3. **E2E `/chat`:** HTTP 200 (~3.5 s), correlación `qa-us018-e2e-1`; auditoría input/output ejecutada y persistida en la audit DB corregida (IDs 11–12).
+4. **Resiliencia OL:** suite 18 passed con los 5 tests nuevos de reintento.
+
+**Hallazgo documentado (fuera de alcance, preexistente):** salida `[REDACTED]` por `audit_unavailable` — GROQ 404 `model_not_found` para `llama-3.3-70b-versatile` (deprecado por el proveedor). Mismo patrón en eventos 9–10 del QA de US-017 → no es regresión. Fix sugerido: `GROQ_MODEL=<modelo vigente>` en `.env` (p. ej. `qwen/qwen3.6-27b`); candidato a US futura.
+
+Detalle completo en `workflow/opencode/user-stories/US-018.md` → `QA Result`.
