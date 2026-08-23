@@ -48,13 +48,12 @@
     "write": true,
     "edit": true,
     "bash": true,
-    "project_memory_*": true,
+    "project-lifecycle_*": true,
     "codebase-memory_*": true,
     "biblioteca-mcp_*": true,
     "security-audit-mcp_*": true,
     "open-library_*": true,
-    "github_*": true,
-    "index_repository": true
+    "github_*": true
   },
   "mcp": {
     "project-lifecycle": {
@@ -106,39 +105,38 @@
     "functional-analyst": {
       "description": "Analyzes requirements, use cases, and acceptance criteria.",
       "temperature": 0.1,
-      "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to understand the current project state.",
+      "prompt": "Read AGENTS.md and .opencode/roles/functional-analyst/ROLE.md before answering. Use project-lifecycle_project_memory_get_context and codebase-memory tools to understand the current project state.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": false,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true
       }
     },
     "architect": {
       "description": "Designs architecture, module boundaries, ADRs, and technical decisions.",
       "temperature": 0.1,
-      "prompt": "Read AGENTS.md and .opencode/roles/architect/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools to analyze the impact of changes.",
+      "prompt": "Read AGENTS.md and .opencode/roles/architect/ROLE.md before answering. Use project-lifecycle_project_memory_get_context and codebase-memory tools to analyze the impact of changes.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": false,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true
       }
     },
     "technical-lead": {
       "description": "Transforms requirements into executable technical plans. Coordinates all roles.",
       "temperature": 0.1,
-      "prompt": "Read AGENTS.md and .opencode/roles/technical-lead/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Execute project-lifecycle tools to advance user story states.",
+      "prompt": "Read AGENTS.md and .opencode/roles/technical-lead/ROLE.md before answering. Use project-lifecycle_project_memory_get_context and codebase-memory tools. Execute project-lifecycle tools to advance user story states.",
       "tools": {
         "write": true,
         "edit": true,
         "bash": true,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true,
-        "github_*": true,
-        "index_repository": true
+        "github_*": true
       }
     },
     "backend-developer": {
@@ -149,7 +147,7 @@
         "write": true,
         "edit": true,
         "bash": true,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true
       }
     },
@@ -161,7 +159,7 @@
         "write": true,
         "edit": true,
         "bash": true,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true
       }
     },
@@ -173,7 +171,7 @@
         "write": true,
         "edit": true,
         "bash": true,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true,
         "biblioteca-mcp_*": true,
         "security-audit-mcp_*": true,
@@ -188,10 +186,9 @@
         "write": true,
         "edit": true,
         "bash": true,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true,
-        "github_*": true,
-        "index_repository": true
+        "github_*": true
       }
     },
     "technical-writer": {
@@ -202,22 +199,21 @@
         "write": true,
         "edit": true,
         "bash": false,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true
       }
     },
     "auditor": {
       "description": "Performs a complete read-only technical audit of architecture, code quality, security, testing, AI, MCP, maintainability and technical debt.",
       "temperature": 0.1,
-      "prompt": "Read AGENTS.md and .opencode/roles/auditor/ROLE.md before answering. Use project_memory_get_context and codebase-memory tools. Perform a strictly read-only evidence-based audit. Use dotnet-clean-architecture, auth-permissions, react-permissions, langgraph-chatbot, mcp-tools, mcp-security-audit, testing-qa and documentation skills when applicable.",
+      "prompt": "Read AGENTS.md and .opencode/roles/auditor/ROLE.md before answering. Use project-lifecycle_project_memory_get_context and codebase-memory tools. Perform a strictly read-only evidence-based audit. Use dotnet-clean-architecture, auth-permissions, react-permissions, langgraph-chatbot, mcp-tools, mcp-security-audit, testing-qa and documentation skills when applicable.",
       "tools": {
         "write": false,
         "edit": false,
         "bash": false,
-        "project_memory_*": true,
+        "project-lifecycle_*": true,
         "codebase-memory_*": true,
-        "security-audit-mcp_*": true,
-        "index_repository": true
+        "security-audit-mcp_*": true
       }
     }
   },
