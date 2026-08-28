@@ -1,6 +1,6 @@
 ---
 id: US-XXX
-status: Planned
+status: Draft
 ---
 
 # User Story — US-XXX — <Título>

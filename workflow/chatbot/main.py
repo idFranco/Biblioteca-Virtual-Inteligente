@@ -83,14 +83,16 @@ async def chat(
 ) -> ChatResponse:
     """Procesa un mensaje a través del grafo LangGraph auditado."""
     correlation_id = _correlation_id(x_correlation_id)
+    conversation_id = str(uuid.uuid4())
     state = ChatState(
         message=request.message,
         user_id=request.userId,
         correlation_id=correlation_id,
+        conversation_id=conversation_id,
     )
 
     try:
-        raw = await graph.ainvoke(state)
+        raw = await graph.ainvoke(state, config={"configurable": {"thread_id": conversation_id}})
         result = normalize_state(raw)
     except Exception:
         raise HTTPException(status_code=503, detail="El asistente no está disponible en este momento.")

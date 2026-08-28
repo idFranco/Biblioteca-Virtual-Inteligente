@@ -9,14 +9,17 @@ Execute STRICTLY:
 4. **CREATION:** Use GitHub MCP `create_branch` (PROHIBITED: `git checkout -b` or `git branch`). If MCP fails → STOP.
 5. **SYNCHRONIZATION:** `git fetch origin` and `git checkout <name>`.
 
-6. **INVOKE ALL ROLES (MANDATORY):**
-   a. @functional-analyst — Scope and acceptance criteria
-   b. @architect — Architecture, modules, data flow, ADRs, security
-   c. @backend-developer — Entities, DTOs, services, endpoints, migrations, validations, permissions
-   d. @frontend-developer — Pages, components, routes, guards, API integration, UI/UX decisions (APPLY frontend-ui-ux). Document aesthetic direction.
-   e. @ai-engineer — Chatbot, LangGraph, MCP servers (Biblioteca-MCP, Security-Audit-MCP), Open Library
-   f. @qa — Validation plan: functional, integration, permission, security tests
-   g. @technical-writer — Documentation plan: README, architecture, prompts, MCP, LangGraph, logs
+6. **DETERMINE AND INVOKE RELEVANT ROLES:**
+   Follow `technical-lead/ROLE.md` § Planning Responsibilities (step 6) to determine which roles are actually relevant — do not assume all roles participate. Typical responsibilities when a role is invoked:
+   - @functional-analyst — Scope and acceptance criteria
+   - @architect — Architecture, modules, data flow, ADRs, security
+   - @backend-developer — Entities, DTOs, services, endpoints, migrations, validations, permissions
+   - @frontend-developer — Pages, components, routes, guards, API integration, UI/UX decisions (APPLY frontend-ui-ux). Document aesthetic direction.
+   - @ai-engineer — Chatbot, LangGraph, MCP servers (Biblioteca-MCP, Security-Audit-MCP), Open Library
+   - @qa — Validation plan: functional, integration, permission, security tests (invoked whenever any code changes)
+   - @technical-writer — Documentation plan: README, architecture, prompts, MCP, LangGraph, logs (invoked when documentation impact is identified)
+
+   Record which roles were invoked and why in the "Role plans" section of the output.
 
 7. **CONSOLIDATE** all plans into single coherent technical plan.
 
@@ -60,7 +63,7 @@ Execute STRICTLY:
 13. **SYNCHRONIZE:** `git fetch origin` && `git reset --hard origin/<branch-name>`
 
 14. **STOP** and emit exactly:
-Planning for US-$ARGUMENTS complete. VALIDATED with all roles.
+Planning for $ARGUMENTS complete. VALIDATED with the roles invoked.
 
 ✅ Coherence: VERIFIED (X iterations) | ✅ Dependencies: DOCUMENTED | ✅ Criteria: VERIFIED ✅ No placeholders: CONFIRMED | ✅ Standards: MET | ✅ Risks: ANALYZED
 

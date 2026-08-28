@@ -16,28 +16,13 @@ This role ensures that documentation matches the real implementation and support
 
 ## Must Read Before Working (MANDATORY CONTEXT)
 
-Before working, you must gather context dynamically:
+Follow AGENTS.md § Mandatory Context Loading first.
 
-1. Invoke `project-lifecycle_project_memory_get_context` to understand the active user story and lifecycle state.
-2. Use `codebase-memory` tools to map real implementation and existing code related to your task.
-   **MANDATORY ORDER — do not skip:** before reading any source code file (`.cs`, `.py`, `.ts`, `.tsx`,
-   `.js`, `.jsx`) with `grep`/`read`/`bash`, you MUST first call `codebase-memory_get_architecture` at
-   least once this session, then use `codebase-memory_search_code` or `codebase-memory_search_graph` to
-   locate the specific symbol or file before opening it directly. Going straight to `grep`/`read`/`bash`
-   on a source file without doing this first is a violation of this rule. Exception: config/infra content
-   the graph does not index — `Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`,
-   `requirements.txt`, `package.json`, non-code YAML/JSON, log inspection, `git log` — may be read
-   directly at any time, no graph call required.
-   - `codebase-memory_get_architecture` — run this first for a codebase-wide overview (languages, packages, routes, hotspots) — the fastest way to verify documentation claims against real structure.
-   - `codebase-memory_search_graph` / `codebase-memory_search_code` — find symbols or code by name/pattern before reading anything.
-   - `codebase-memory_get_code_snippet` — read a specific function/class by qualified name (found via `codebase-memory_search_graph`), to confirm real behavior before documenting it.
-   - `codebase-memory_trace_path` — who calls a function, or what a function calls (call-chain / impact questions).
-   - `codebase-memory_detect_changes` — map an uncommitted git diff to affected symbols with risk classification — useful for scoping which docs need updating after a change.
-   - `codebase-memory_query_graph` — Cypher-like queries for anything the above tools can't answer directly.
-3. Read `.opencode/memory/DECISIONS.md` — the authoritative, chronological historical log for academic delivery.
-4. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) to check the curated architecture summary that other roles query day-to-day, and confirm it is still in sync with `DECISIONS.md`. If it has drifted, update it via `mode=update` before finishing.
-5. Read `.opencode/skills/documentation/SKILL.md`.
-6. **After documenting**, invoke `codebase-memory_index_repository` to index your changes, passing an absolute path as `repo_path` (a relative path such as `.` is not guaranteed to resolve correctly).
+In addition, for this role:
+1. Read `.opencode/memory/DECISIONS.md` — the authoritative, chronological historical log for academic delivery.
+2. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) — this is the operational source of truth for architecture decisions, updated live by whichever role makes the decision. Compare it against `.opencode/memory/DECISIONS.md`; if `manage_adr` has entries not yet reflected in `DECISIONS.md`, transcribe them into `DECISIONS.md` as a new numbered, narrative ADR entry before finishing.
+3. Read `.opencode/skills/documentation/SKILL.md`.
+4. **After documenting**, invoke `codebase-memory_index_repository` to index your changes, passing an absolute path as `repo_path` (a relative path such as `.` is not guaranteed to resolve correctly).
 
 ---
 
@@ -80,7 +65,7 @@ This role is responsible for registering **all** technical risks detected during
 ## Required Documentation
 
 - `README.md` (root)
-- `workflow/opencode/ai-engineering/` → Logs per iteration (branch name with `/` replaced by `-`)
+- `workflow/opencode/ai-engineering/` → Logs per iteration. **Ownership note:** these files are created and populated automatically by `qa-check` (QA role) with each story's QA results — do not create a competing file for the same iteration. Technical Writer's job here is to review and enrich existing logs with narrative context (why a decision was made, what it means for the delivery), not to author them from scratch.
 - Prompt documentation
 - MCP setup (Biblioteca-MCP, Security-Audit-MCP, Open Library)
 - LangGraph explanation (including audit nodes)
@@ -109,10 +94,9 @@ Implementation is allowed only after explicit user approval.
 - **Document LangGraph nodes** (including `audit_input_node` and `audit_output_node`).
 - **Document prompts** used.
 - **Iterations:** Log each iteration in `workflow/opencode/ai-engineering/`.
-- **Keep `DECISIONS.md` and `codebase-memory_manage_adr` in sync.** Whenever a new ADR is added to `DECISIONS.md`, also update the corresponding section(s) — `PURPOSE`, `STACK`, `ARCHITECTURE`, `PATTERNS`, `TRADEOFFS`, `PHILOSOPHY` — in `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=update`) in the same session. Other roles query `manage_adr` for day-to-day work and will not see `DECISIONS.md` directly, so a drift between the two means other roles silently work from stale architecture facts.
+- **Keep `DECISIONS.md` in sync with `codebase-memory_manage_adr`.** `manage_adr` is the operational source, updated live by the role making the decision (typically Architect or Technical Lead). Whenever it changes, transcribe the new/updated entry into `.opencode/memory/DECISIONS.md` as a numbered, narrative ADR in the same session or the next documentation pass. `DECISIONS.md` should never contain a decision that isn't also reflected in `manage_adr`. Other roles query `manage_adr` directly for day-to-day work, so their decisions stay current even if this transcription lags — but an out-of-sync `DECISIONS.md` means the narrative delivery record understates what was actually decided, which matters for academic evaluation.
 - **Memory updates:** Update memory files after relevant documentation changes.
 - Do not ignore architectural changes in documentation.
-- **MUST call `codebase-memory_get_architecture` before reading any source code file directly**, then use `codebase-memory_search_code`/`codebase-memory_search_graph` to locate the specific symbol before opening it with `grep`/`read`/`bash`. Going straight to `grep`/`read`/`bash` on a source file (`.cs`, `.py`, `.ts`, `.tsx`, `.js`, `.jsx`) without doing this first is a violation of this rule. Exception: config/infra content the graph does not index (`Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`, `requirements.txt`, `package.json`, non-code YAML/JSON, logs, `git log`) may be read directly at any time.
 
 ---
 
