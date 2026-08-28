@@ -5,18 +5,19 @@ Servicio Python independiente en `workflow/chatbot/` que implementa el asistente
 ## Flujo del grafo (US-012)
 
 ```text
-START
+START → reset_turn (limpia transitorios + registra mensaje user)
   → audit_input            (Security-Audit-MCP: auditoría de entrada obligatoria)
       ├─ bloqueada → block_response → audit_output
       └─ segura   → load_user_state → classify_intent (route_by_state)
           ├─ recommendation → preferences → internal_catalog → external_enrichment → availability → response → llm_response → audit_output
+          ├─ follow_up     → follow_up → llm_response → audit_output
           ├─ due_reminder   → due_reminder → audit_output
           ├─ overdue        → overdue → audit_output
           ├─ feedback       → feedback → save_feedback → response → llm_response → audit_output
           └─ status_plain/other → response → llm_response → audit_output
   audit_output              (Security-Audit-MCP: auditoría de salida obligatoria)
-      ├─ sanitizar → sanitize_response → END
-      └─ limpio   → END
+      ├─ sanitizar → sanitize_response → record_turn → END
+      └─ limpio   → record_turn → END
 ```
 
 ### Nodos
@@ -26,17 +27,25 @@ START
 | `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles). Si no es segura, el flujo va a `block_response`. |
 | `block_response` | Respuesta de bloqueo segura sin procesar el mensaje en el grafo. |
 | `load_user_state` | Carga el estado de lectura del usuario (por MCP) con fallback si MCP no está disponible. |
-| `classify_intent` | Clasifica la intención (`recommendation`, `due_reminder`, `overdue`, `feedback`, `book_query`, `status_plain`, `other`) y enruta por `route_by_state`. |
+| `classify_intent` | Clasifica la intención (`recommendation`, `follow_up`, `due_reminder`, `overdue`, `feedback`, `book_query`, `status_plain`, `other`) y enruta por `route_by_state`. |
 | `preferences` | Carga preferencias de género y perfil de historial vía Biblioteca-MCP (`obtener_preferencias`, `consultar_alquileres_usuario`). |
 | `internal_catalog` | Recomienda por historial/preferencias o consulta el catálogo interno por género (`listar_recomendaciones_por_genero`, `buscar_libros`). |
 | `external_enrichment` | Enriquece/verifica contra Open Library MCP. |
 | `availability` | Filtra las recomendaciones a solo libros disponibles (`verificar_disponibilidad`). |
 | `due_reminder` / `overdue` | Informan de alquileres por vencer / vencidos según el estado de lectura. |
 | `feedback` / `save_feedback` | Detectan el feedback del usuario y lo persisten vía `registrar_feedback` (Biblioteca-MCP, escritura acotada). |
+| `follow_up` | Resuelve preguntas sobre una recomendación previa («cuéntame más sobre la primera»): busca el selector en el historial, compone la respuesta con los detalles del libro elegido y enriquece con Open Library si hay OLID. |
 | `response` | Respuesta heurística (fallback y base). |
-| `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). |
+| `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). Actúa también en `follow_up` y smalltalk. |
 | `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. |
 | `sanitize_response` | Sanitiza la salida si la auditoría lo requiere. |
+| `reset_turn` / `record_turn` | Abren/cierran el par user/assistant del turno en la ventana de historial (poda a 12 entradas); `record_turn` incrusta las recomendaciones compactas del turno para resolver seguimientos. |
+
+## Memoria conversacional
+
+- **Checkpointer:** LangGraph compilado con `InMemorySaver` cuando `CHAT_MEMORY_DB_PATH` está definida (en Docker `/app/database/chat_memory.db` del volumen `database_data`; standalone en `.env`); `thread_id = conversationId`. Sin la variable, se compila sin checkpointer (dev/tests). **Limitación registrada (ADR-035):** la memoria por sesión se conserva durante la vida del proceso; la persistencia entre reinicios queda como mejora (`AsyncSqliteSaver`).
+- **Sesión:** `POST /chat` recibe y reutiliza `conversationId` (generado por el frontend y persistido en `sessionStorage`); dos conversaciones con ids distintos no comparten contexto.
+- **Seguimientos referenciales (AC#4):** tras recibir una recomendación, mensajes como «cuéntame más sobre la primera», «la segunda» o «háblame de tu recomendación» se clasifican `follow_up` y responden con los detalles del libro ya recomendado (orden del selector o título citado). Si no hay recomendación previa, el chatbot orienta a pedir una sin colapsar.
 
 ## LLM local Ollama (recomendaciones)
 
@@ -88,8 +97,8 @@ Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUD
 ## API
 
 - `GET /health` → `{"status": "healthy"}`.
-- `POST /chat` (`{message, userId}` + header `X-Correlation-ID`) → `ChatResponse` con `message`, `recommendations` y `action_offer`. La correlación se propaga a la auditoría (US-009/012).
+- `POST /chat` (`{message, userId, conversationId}` + header `X-Correlation-ID`) → `ChatResponse` con `message`, `recommendations`, `action_offer` y `conversation_id`. La correlación se propaga a la auditoría (US-009/012).
 
 ## Tests
 
-`python3 -m pytest -q` (61 tests): grafo, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), CORS y cliente stdio MCP.
+`python3 -m pytest -q` (102 tests): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), CORS y cliente stdio MCP.
