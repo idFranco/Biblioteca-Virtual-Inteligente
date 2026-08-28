@@ -1,0 +1,143 @@
+"""Auditoría de seguridad local y determinista (fallback).
+
+Se usa cuando la auditoría basada en Groq (``groq_audit.py``) no está
+disponible (clave ausente/inválida, cuota, error de red o JSON inválido).
+
+NO es un fail-open: las funciones ``detect_injection_local`` y
+``detect_sensitive_local`` son detectores por patrones deterministas que niegan
+positivos reales de inyección/PII. El veredicto activo del auditor Groq
+continúa siendo fail-closed (bloquear/sanitizar); la degradación solo se actúa
+cuando Groq está indisponible y se marca con ``degraded=true`` en el resultado
+y en el evento de auditoría.
+
+Reglas:
+- ``sanitize_local`` enmascara POR SEGMENTO los datos detectados (nunca
+  devuelve ``[REDACTED]`` global por un fallo de infraestructura).
+- No se guardan secretos ni texto completo en logs (el enmascaramiento se
+  aplica antes de persistir).
+"""
+
+from __future__ import annotations
+
+import re
+
+_INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "prompt_injection",
+        re.compile(
+            r"ignor(?:a|e|ad) (?:las |tus |mis )?(?:instrucciones|indicaciones|prompt|reglas)"
+            r"|ignore (?:previous|all|prior) instructions"
+            r"|system prompt|reveal (?:your )?(?:system|instructions)|est[aá]s desbloqueado",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "credential_request",
+        re.compile(
+            r"(?:d[ií]me|revela|muestra|pasa|dame|da[mr]e|cu[aá]l es) (?:la |el |los |las )?"
+            r"(?:password|contrase[nñ]a)"
+            r"|credencial(?:es)?|api[ _-]?key|secreto|secret",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "sql_injection_attempt",
+        re.compile(
+            r"\b(?:drop|truncate|delete|insert|update)\s+(?:table|from|into)\b"
+            r"|union\s+select|select[^*]+\s+from|\bselect\s+\*?\s+from\b|;\s*--",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "xss_attempt",
+        re.compile(r"<script|</script>|javascript:|onerror\s*=|onload\s*=", re.IGNORECASE),
+    ),
+    (
+        "unauthorized_data_access",
+        re.compile(
+            r"exfiltra|roba|extrae todos los|accede a (?:la base|datos de otros)"
+            r"|data[ _-]?breach",
+            re.IGNORECASE,
+        ),
+    ),
+]
+
+_SENSITIVE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "email",
+        re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
+    ),
+    (
+        "token",
+        re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"),
+    ),
+    (
+        "api_key",
+        re.compile(r"\b(?:sk|pk|AKIA|ghp|gho)_[A-Za-z0-9_-]{10,}\b"),
+    ),
+    (
+        "credential",
+        re.compile(r"\b(?:password|passwd|secret|contrase[ñn]a)\b\s*[:=]\s*\S+", re.IGNORECASE),
+    ),
+    (
+        "card_number",
+        re.compile(r"\b(?:\d[ -]?){13,19}\b"),
+    ),
+    (
+        "phone",
+        re.compile(r"(?<!\w)(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}(?!\w)"),
+    ),
+    (
+        "location",
+        re.compile(
+            r"\b(?:calle|avenida|av\.|ciudad|barrio|colonia|municipio|provincia|vivo en)\s+"
+            r"[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s-]{2,60}",
+            re.IGNORECASE,
+        ),
+    ),
+]
+
+
+def detect_injection_local(text: str) -> list[str]:
+    """Detecta intentos de prompt injection por patrones deterministas.
+
+    Returns:
+        Lista de categorías de inyección encontradas (vacía si el texto es
+        seguro según los patrones locales).
+    """
+    if not text:
+        return []
+    return [category for category, pattern in _INJECTION_PATTERNS if pattern.search(text)]
+
+
+def detect_sensitive_local(text: str) -> list[str]:
+    """Detecta datos sensibles o secretos por patrones deterministas.
+
+    Returns:
+        Lista de tipos de datos sensibles encontrados (vacía si no hay PII).
+    """
+    if not text:
+        return []
+    return [kind for kind, pattern in _SENSITIVE_PATTERNS if pattern.search(text)]
+
+
+def sanitize_local(text: str) -> tuple[str, bool]:
+    """Enmascara por segmento los datos sensibles detectados localmente.
+
+    Reemplaza únicamente los segmentos coincidentes (email, token, tarjeta…)
+    conservando el resto del texto. Nunca devuelve ``[REDACTED]`` global.
+
+    Returns:
+        Tupla ``(texto_enmascarado, fue_saneado)``.
+    """
+    if not text:
+        return text or "", False
+    was_sanitized = False
+    masked = text
+    for kind, pattern in _SENSITIVE_PATTERNS:
+        if pattern.search(masked):
+            new_masked = pattern.sub(f"[{kind.upper()}]", masked)
+            if new_masked != masked:
+                masked = new_masked
+                was_sanitized = True
+    return masked, was_sanitized

@@ -9,6 +9,29 @@ def test_chat_request_valid():
     assert request.userId == "u-1"
 
 
+def test_chat_request_accepts_conversation_id():
+    request = ChatRequest(message="hola", userId="u-1", conversationId="conv-abc")
+    assert request.conversationId == "conv-abc"
+
+
+def test_chat_response_accepts_conversation_id():
+    response = ChatResponse(message="hola", conversation_id="conv-abc")
+    assert response.conversation_id == "conv-abc"
+
+
+def test_book_recommendation_source_and_verified():
+    from app.schemas import BookRecommendation
+
+    rec = BookRecommendation(
+        title="Rayuela",
+        source="open_library",
+        openLibraryVerified=True,
+        availableCopies=0,
+    )
+    assert rec.source == "open_library"
+    assert rec.openLibraryVerified is True
+
+
 def test_chat_request_rejects_empty_message():
     with pytest.raises(Exception):
         ChatRequest(message="", userId=None)

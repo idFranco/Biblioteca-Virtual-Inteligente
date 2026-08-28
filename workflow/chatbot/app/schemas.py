@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     userId: str | None = Field(default=None, max_length=64)
+    conversationId: str | None = Field(default=None, max_length=64)
 
 
 class BookRequestMetadata(BaseModel):
@@ -29,6 +30,8 @@ class BookRecommendation(BaseModel):
     availableCopies: int = 0
     available: bool = False
     reason: str | None = None
+    source: str | None = None
+    openLibraryVerified: bool | None = None
 
 
 class ChatResponse(BaseModel):
@@ -36,3 +39,4 @@ class ChatResponse(BaseModel):
     action_offer: BookRequestMetadata | None = None
     recommendations: list[BookRecommendation] = Field(default_factory=list)
     correlation_id: str | None = None
+    conversation_id: str | None = None

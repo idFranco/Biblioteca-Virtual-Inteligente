@@ -209,3 +209,35 @@ async def test_intent_status(message):
     state = ChatState(message=message)
     result = await classify_intent_node(state)
     assert result.intent == "status"
+
+
+@pytest.mark.asyncio
+async def test_smalltalk_routes_to_conversational(monkeypatch):
+    """US-019: un saludo se enruta como smalltalk (no book_query) y responde."""
+    import app.mcp_clients.security_audit_client as security_client
+    import app.mcp_clients.biblioteca_client as biblioteca_client
+    import app.llm.client as llm_client
+
+    async def fake_audit(text, correlation_id=None):
+        return {"safe": True}
+
+    async def fake_estado(user_id):
+        return "sin_actividad"
+
+    async def fake_search(message, limit=10):
+        raise AssertionError("Un saludo no debe buscar en el catálogo")
+
+    async def fake_llm(context):
+        return None
+
+    monkeypatch.setattr(security_client, "audit_input", fake_audit)
+    monkeypatch.setattr(security_client, "audit_output", fake_audit)
+    monkeypatch.setattr(biblioteca_client, "get_estado_lectura", fake_estado)
+    monkeypatch.setattr(biblioteca_client, "buscar_libros", fake_search)
+    monkeypatch.setattr(llm_client, "generate_recommendation", fake_llm)
+
+    state = ChatState(message="buenas tardes")
+    result = normalize(await graph.ainvoke(state))
+
+    assert result.intent == "other"
+    assert result.response  # respuesta conversacional sin colapso

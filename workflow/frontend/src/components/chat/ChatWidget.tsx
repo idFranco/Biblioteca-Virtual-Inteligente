@@ -284,12 +284,18 @@ export function ChatWidget() {
                       <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                            recommendation.available
-                              ? 'bg-olive/15 text-olive dark:bg-olive/25 dark:text-parchment'
-                              : 'bg-oxide/15 text-oxide dark:bg-oxide/25 dark:text-parchment'
+                            recommendation.source === 'open_library'
+                              ? 'bg-ochre/15 text-ochre dark:bg-ochre/25 dark:text-parchment'
+                              : recommendation.available
+                                ? 'bg-olive/15 text-olive dark:bg-olive/25 dark:text-parchment'
+                                : 'bg-oxide/15 text-oxide dark:bg-oxide/25 dark:text-parchment'
                           }`}
                         >
-                          {recommendation.available ? 'Disponible' : 'Sin copias'}
+                          {recommendation.source === 'open_library'
+                            ? 'Open Library · solicitable'
+                            : recommendation.available
+                              ? 'En catálogo · disponible'
+                              : 'En catálogo · sin copias'}
                         </span>
                         <div className="flex gap-1">
                           <button

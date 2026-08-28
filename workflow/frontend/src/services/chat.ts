@@ -26,6 +26,8 @@ export interface BookRecommendation {
   availableCopies: number
   available: boolean
   reason?: string | null
+  source?: 'catalog' | 'open_library' | null
+  openLibraryVerified?: boolean | null
 }
 
 export interface ChatMessage {
@@ -40,6 +42,7 @@ export interface ChatResponse {
   message: string
   action_offer?: ChatActionOffer | null
   recommendations?: BookRecommendation[] | null
+  conversation_id?: string | null
 }
 
 function createCorrelationId(): string {
@@ -48,15 +51,32 @@ function createCorrelationId(): string {
     : `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+const CONVERSATION_KEY = 'biblioteca.conversationId'
+
+export function getOrCreateConversationId(): string {
+  const existing = window.sessionStorage.getItem(CONVERSATION_KEY)
+  if (existing) return existing
+  const created = createCorrelationId()
+  window.sessionStorage.setItem(CONVERSATION_KEY, created)
+  return created
+}
+
+function persistConversationId(id: string | null | undefined): void {
+  if (id && id !== window.sessionStorage.getItem(CONVERSATION_KEY)) {
+    window.sessionStorage.setItem(CONVERSATION_KEY, id)
+  }
+}
+
 async function sendMessage(message: string): Promise<ChatResponse> {
   const { user } = useAuthStore.getState()
+  const conversationId = getOrCreateConversationId()
   const response = await fetch(`${CHATBOT_API_BASE_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Correlation-ID': createCorrelationId(),
     },
-    body: JSON.stringify({ message, userId: user?.id ?? null }),
+    body: JSON.stringify({ message, userId: user?.id ?? null, conversationId }),
   })
 
   if (!response.ok) {
@@ -70,7 +90,9 @@ async function sendMessage(message: string): Promise<ChatResponse> {
     throw new Error(detail)
   }
 
-  return response.json() as Promise<ChatResponse>
+  const data = (await response.json()) as ChatResponse
+  persistConversationId(data.conversation_id)
+  return data
 }
 
 export const chatService = { sendMessage, createCorrelationId }

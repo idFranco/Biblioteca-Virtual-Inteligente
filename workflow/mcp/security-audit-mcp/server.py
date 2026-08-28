@@ -10,7 +10,12 @@ sys.path.insert(0, str(REPO_ROOT / "workflow" / "mcp"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common.settings import get_database_path, require_env
-from groq_audit import detect_injection, detect_sensitive, sanitize
+import groq_audit
+from local_audit import (
+    detect_injection_local,
+    detect_sensitive_local,
+    sanitize_local,
+)
 
 mcp = FastMCP("Security-Audit-MCP")
 
@@ -61,80 +66,121 @@ def _register_audit_event(event_type: str, result: str, correlation_id: str | No
 async def audit_user_input(text: str, correlation_id: str | None = None) -> dict:
     """Audita la entrada del usuario antes de procesarse en el grafo.
 
-    Clasifica inyección y datos sensibles mediante Groq. Si el LLM falla, usa
-    el fallback seguro (bloquear). Nunca almacena texto completo ni secretos.
+    Clasifica inyección y datos sensibles mediante Groq. Si el auditor activo
+    (Groq) no está disponible, se degrada al detector local determinista con
+    ``degraded=true`` (no es fail-open: niega inyección/PII real por patrones).
+    Nunca almacena texto completo ni secretos.
     """
+    degraded = False
     try:
-        injection = await detect_injection(text)
-        sensitive = await detect_sensitive(text)
+        injection = await groq_audit.detect_injection(text)
+        sensitive = await groq_audit.detect_sensitive(text)
         safe = not injection and not sensitive
         reasons = injection[:3]
     except Exception:
-        safe = False
-        reasons = ["audit_unavailable"]
-        sensitive = ["audit_unavailable"]
+        injection = detect_injection_local(text)
+        sensitive = detect_sensitive_local(text)
+        safe = not injection and not sensitive
+        reasons = injection[:3]
+        degraded = True
 
-    result = json.dumps({"safe": safe, "reasons": reasons})
+    result = json.dumps({"safe": safe, "reasons": reasons, "degraded": degraded})
     _register_audit_event("audit_user_input", result, correlation_id)
-    return {"safe": safe, "reasons": reasons, "sensitive": sensitive[:3]}
+    return {
+        "safe": safe,
+        "reasons": reasons,
+        "sensitive": sensitive[:3],
+        "degraded": degraded,
+    }
 
 
 @mcp.tool()
 async def audit_model_output(text: str, correlation_id: str | None = None) -> dict:
-    """Audita la salida del modelo antes de enviarla al frontend."""
+    """Audita la salida del modelo antes de enviarla al frontend.
+
+    Si el auditor activo (Groq) no está disponible, se degrada al detector
+    local determinista con ``degraded=true`` (nunca bloquea la salida completa
+    por un fallo de infraestructura).
+    """
+    degraded = False
     try:
-        injection = await detect_injection(text)
-        sensitive = await detect_sensitive(text)
+        injection = await groq_audit.detect_injection(text)
+        sensitive = await groq_audit.detect_sensitive(text)
         safe = not injection and not sensitive
         reasons = (injection + sensitive)[:3]
     except Exception:
-        safe = False
-        reasons = ["audit_unavailable"]
+        injection = detect_injection_local(text)
+        sensitive = detect_sensitive_local(text)
+        safe = not injection and not sensitive
+        reasons = (injection + sensitive)[:3]
+        degraded = True
 
-    result = json.dumps({"safe": safe})
+    result = json.dumps({"safe": safe, "degraded": degraded})
     _register_audit_event("audit_model_output", result, correlation_id)
-    return {"safe": safe, "reasons": reasons}
+    return {"safe": safe, "reasons": reasons, "degraded": degraded}
 
 
 @mcp.tool()
 async def detect_prompt_injection(text: str) -> dict:
-    """Detecta intentos de prompt injection en el texto vía Groq."""
+    """Detecta intentos de prompt injection en el texto vía Groq.
+
+    Se degrada al detector local determinista si Groq no está disponible.
+    """
+    degraded = False
     try:
-        injection = await detect_injection(text)
+        injection = await groq_audit.detect_injection(text)
         flagged = bool(injection)
         reasons = injection[:3]
     except Exception:
-        flagged = True
-        reasons = ["audit_unavailable"]
+        injection = detect_injection_local(text)
+        flagged = bool(injection)
+        reasons = injection[:3]
+        degraded = True
 
-    _register_audit_event("detect_prompt_injection", json.dumps({"flagged": flagged}))
-    return {"flagged": flagged, "reasons": reasons}
+    _register_audit_event("detect_prompt_injection", json.dumps({"flagged": flagged, "degraded": degraded}))
+    return {"flagged": flagged, "reasons": reasons, "degraded": degraded}
 
 
 @mcp.tool()
 async def detect_sensitive_data(text: str) -> dict:
-    """Detecta datos sensibles (emails, tokens, claves) en el texto vía Groq."""
+    """Detecta datos sensibles (emails, tokens, claves) en el texto vía Groq.
+
+    Se degrada al detector local determinista si Groq no está disponible.
+    """
+    degraded = False
     try:
-        sensitive = await detect_sensitive(text)
+        sensitive = await groq_audit.detect_sensitive(text)
         flagged = bool(sensitive)
         patterns = sensitive[:5]
     except Exception:
-        flagged = True
-        patterns = ["audit_unavailable"]
+        sensitive = detect_sensitive_local(text)
+        flagged = bool(sensitive)
+        patterns = sensitive[:5]
+        degraded = True
 
-    _register_audit_event("detect_sensitive_data", json.dumps({"flagged": flagged}))
-    return {"flagged": flagged, "patterns": patterns}
+    _register_audit_event("detect_sensitive_data", json.dumps({"flagged": flagged, "degraded": degraded}))
+    return {"flagged": flagged, "patterns": patterns, "degraded": degraded}
 
 
 @mcp.tool()
 async def sanitize_text(text: str) -> dict:
-    """Redacta PII y elimina contenido potencialmente peligroso vía Groq."""
+    """Redacta PII y elimina contenido potencialmente peligroso vía Groq.
+
+    Si Groq no está disponible, se degrada al enmascaramiento local por segmentos
+    (``sanitize_local``): NUNCA devuelve ``[REDACTED]`` global por un fallo de
+    infraestructura; solo enmascara los segmentos detectados.
+    """
+    degraded = False
     try:
-        sanitized, was_sanitized = await sanitize(text)
+        sanitized, was_sanitized = await groq_audit.sanitize(text)
     except Exception:
-        sanitized = "[REDACTED]"
-        was_sanitized = True
-    return {"safe_text": sanitized, "was_sanitized": was_sanitized}
+        sanitized, was_sanitized = sanitize_local(text)
+        degraded = True
+    return {
+        "safe_text": sanitized,
+        "was_sanitized": was_sanitized,
+        "degraded": degraded,
+    }
 
 
 @mcp.tool()

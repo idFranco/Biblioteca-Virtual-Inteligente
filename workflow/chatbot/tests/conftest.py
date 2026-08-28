@@ -41,3 +41,4 @@ def _isolate_mcp_clients(monkeypatch):
     monkeypatch.setattr(security_client, "sanitize_text", _no_security)
     monkeypatch.setattr(open_library_client, "search_books", _no_open_library)
     monkeypatch.setattr(open_library_client, "get_book_details", _no_open_library)
+    monkeypatch.setattr(open_library_client, "verify_by_isbn", _no_open_library)
