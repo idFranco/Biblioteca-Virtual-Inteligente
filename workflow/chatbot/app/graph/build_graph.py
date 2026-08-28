@@ -14,6 +14,7 @@ from app.graph.nodes.classify_intent_node import classify_intent_node
 from app.graph.nodes.external_enrichment_node import external_enrichment_node
 from app.graph.nodes.extract_query_node import extract_query_node
 from app.graph.nodes.feedback_node import feedback_node
+from app.graph.nodes.follow_up_node import follow_up_node
 from app.graph.nodes.internal_catalog_node import internal_catalog_node
 from app.graph.nodes.llm_response_node import llm_response_node
 from app.graph.nodes.load_user_state_node import load_user_state_node
@@ -84,6 +85,7 @@ def build_graph():
     workflow.add_node("due_reminder", due_reminder_node)
     workflow.add_node("overdue", overdue_node)
     workflow.add_node("feedback", feedback_node)
+    workflow.add_node("follow_up", follow_up_node)
     workflow.add_node("save_feedback", save_feedback_node)
     workflow.add_node("audit_output", audit_output_node)
     workflow.add_node("sanitize_response", sanitize_response_node)
@@ -108,6 +110,7 @@ def build_graph():
             "overdue": "overdue",
             "status_plain": "response",
             "feedback": "feedback",
+            "follow_up": "follow_up",
             "book_query": "extract_query",
             "other": "response",
         },
@@ -118,6 +121,7 @@ def build_graph():
     workflow.add_edge("overdue", "audit_output")
     workflow.add_edge("feedback", "save_feedback")
     workflow.add_edge("save_feedback", "response")
+    workflow.add_edge("follow_up", "llm_response")
 
     workflow.add_edge("extract_query", "internal_catalog")
     workflow.add_edge("internal_catalog", "external_enrichment")

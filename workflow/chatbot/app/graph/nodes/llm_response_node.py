@@ -47,16 +47,18 @@ def _greeting_fallback() -> str:
 async def llm_response_node(state: ChatState) -> ChatState:
     """Genera una respuesta en lenguaje natural con el LLM externo.
 
-    Actúa en ``recommendation`` (recomendación validada) y en ``smalltalk``
+    Actúa en ``recommendation`` (recomendación validada), ``follow_up``
+    (pregunta sobre una recomendación previa, US-019 AC#4) y en ``smalltalk``
     (saludo/smalltalk conversacional, ``intent == "other"``), inyectando la
     ventana de historial enmascarada al prompt. Si el LLM no está disponible o
-    falla, usa el fallback heurístico (recomendación o saludo) sin colapsar.
+    falla, usa el fallback heurístico (recomendación, seguimiento o saludo) sin
+    colapsar.
     """
-    if state.intent not in ("recommendation", "other"):
+    if state.intent not in ("recommendation", "other", "follow_up"):
         return state
 
     history_text = _history_window(state)
-    if state.intent == "recommendation":
+    if state.intent in ("recommendation", "follow_up"):
         base_context = _context_text(state)
     else:
         base_context = "La intención es una conversación casual o saludo del usuario."

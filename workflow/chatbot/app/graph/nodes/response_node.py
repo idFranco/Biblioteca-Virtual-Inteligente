@@ -59,7 +59,11 @@ async def response_node(state: ChatState) -> ChatState:
         )
         return state
 
-    title = (state.enrichment or {}).get("title") or "este libro"
+    title = (
+        (state.enrichment or {}).get("title")
+        or (state.query or state.message)
+        or "este libro"
+    )
     if state.enrichment_error and not state.enrichment:
         state.response = _friendly_not_available(title)
         return state
