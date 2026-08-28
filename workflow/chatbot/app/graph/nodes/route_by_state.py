@@ -8,10 +8,13 @@ def route_by_state(state: ChatState) -> str:
 
     Devuelve la clave de rama que el grafo mapea a los nodos siguientes:
     recommendation, due_reminder, overdue, status_plain, feedback,
-    book_query u other.
+    follow_up, book_query u other.
     """
     if state.intent == "recommendation":
         return "recommendation"
+
+    if state.intent == "follow_up":
+        return "follow_up"
 
     if state.intent == "status":
         reading_state = state.reading_state or "sin_actividad"
