@@ -2,6 +2,20 @@ from __future__ import annotations
 
 from app.graph.state import ChatState
 from app.llm import client as llm_client
+from app.utils.pii_masker import mask_message
+
+
+def _history_window(state: ChatState) -> str:
+    """Construye la ventana de historial conversacional enmascarada (sin PII)."""
+    history = list(getattr(state, "history", None) or [])
+    if not history:
+        return ""
+    lines = []
+    for entry in history:
+        role = entry.get("role") or "user"
+        content = mask_message(str(entry.get("content") or ""), state.user_id)
+        lines.append(f"{role}: {content}")
+    return "\n".join(lines)
 
 
 def _context_text(state: ChatState) -> str:
@@ -22,17 +36,41 @@ def _context_text(state: ChatState) -> str:
     return "Sin resultados."
 
 
-async def llm_response_node(state: ChatState) -> ChatState:
-    """Genera una recomendación en lenguaje natural con el LLM externo.
+def _greeting_fallback() -> str:
+    return (
+        "¡Hola! Soy el asistente de la biblioteca virtual. Puedo recomendarte "
+        "libros según tu historial, buscar títulos en el catálogo y resolver "
+        "dudas sobre tus alquileres. ¿En qué puedo ayudarte?"
+    )
 
-    Solo actúa en la intención ``recommendation``. Si el LLM no está disponible
-    o falla, no modifica la respuesta heurística (fallback silencioso).
+
+async def llm_response_node(state: ChatState) -> ChatState:
+    """Genera una respuesta en lenguaje natural con el LLM externo.
+
+    Actúa en ``recommendation`` (recomendación validada), ``follow_up``
+    (pregunta sobre una recomendación previa, US-019 AC#4) y en ``smalltalk``
+    (saludo/smalltalk conversacional, ``intent == "other"``), inyectando la
+    ventana de historial enmascarada al prompt. Si el LLM no está disponible o
+    falla, usa el fallback heurístico (recomendación, seguimiento o saludo) sin
+    colapsar.
     """
-    if state.intent != "recommendation":
+    if state.intent not in ("recommendation", "other", "follow_up"):
         return state
 
-    generated = await llm_client.generate_recommendation(_context_text(state))
+    history_text = _history_window(state)
+    if state.intent in ("recommendation", "follow_up"):
+        base_context = _context_text(state)
+    else:
+        base_context = "La intención es una conversación casual o saludo del usuario."
+
+    context = base_context
+    if history_text:
+        context = f"Historial reciente de la conversación:\n{history_text}\n\n{context}"
+
+    generated = await llm_client.generate_recommendation(context)
     if generated:
         state.response = generated
         state.llm_used = True
+    elif state.intent == "other" and not state.response:
+        state.response = _greeting_fallback()
     return state

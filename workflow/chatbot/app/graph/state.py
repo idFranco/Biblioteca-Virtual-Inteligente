@@ -29,3 +29,5 @@ class ChatState:
     llm_used: bool = False
     response: str | None = None
     llm_messages: list[dict[str, str]] = field(default_factory=list)
+    conversation_id: str | None = None
+    history: list[dict[str, Any]] = field(default_factory=list)

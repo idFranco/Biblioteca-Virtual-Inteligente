@@ -36,7 +36,8 @@ async def availability_node(state: ChatState) -> ChatState:
         available = [
             item
             for item in state.recommendations
-            if int(item.get("available_copies") or 0) > 0
+            if item.get("source") == "open_library"
+            or int(item.get("available_copies") or 0) > 0
         ]
         state.recommendations = available[:5]
         return state

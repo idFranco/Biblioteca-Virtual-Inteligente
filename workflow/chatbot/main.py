@@ -62,6 +62,8 @@ def _recommendations(result: ChatState) -> list[BookRecommendation]:
                 availableCopies=available_copies,
                 available=available_copies > 0,
                 reason=item.get("reason"),
+                source=item.get("source"),
+                openLibraryVerified=item.get("open_library_verified"),
             )
         )
     return recommendations
@@ -69,6 +71,18 @@ def _recommendations(result: ChatState) -> list[BookRecommendation]:
 
 def _correlation_id(header: str | None) -> str:
     return header or f"chat-{uuid.uuid4()}"
+
+
+def _conversation_id(requested: str | None) -> str:
+    """Devuelve un conversationId válido (<=64) o genera uno nuevo.
+
+    Si el cliente envió uno (persistido en sessionStorage), se reutiliza para
+    conservar la memoria conversacional entre turnos. Si es inválido o está
+    vacío, se genera uno nuevo.
+    """
+    if requested and len(requested) <= 64 and requested.strip():
+        return requested.strip()
+    return f"conv-{uuid.uuid4()}"
 
 
 @app.get("/health")
@@ -83,14 +97,21 @@ async def chat(
 ) -> ChatResponse:
     """Procesa un mensaje a través del grafo LangGraph auditado."""
     correlation_id = _correlation_id(x_correlation_id)
-    state = ChatState(
-        message=request.message,
-        user_id=request.userId,
-        correlation_id=correlation_id,
-    )
+    conversation_id = _conversation_id(request.conversationId)
+    # Se pasa un dict SIN la clave "history": así LangGraph conserva el historial
+    # almacenado en el checkpointer (mismo thread_id) y no lo reinicia a [] en
+    # cada turno. El primer turno arranca con el historial vacío del esquema.
+    initial_state = {
+        "message": request.message,
+        "user_id": request.userId,
+        "correlation_id": correlation_id,
+        "conversation_id": conversation_id,
+    }
 
     try:
-        raw = await graph.ainvoke(state)
+        raw = await graph.ainvoke(
+            initial_state, config={"configurable": {"thread_id": conversation_id}}
+        )
         result = normalize_state(raw)
     except Exception:
         raise HTTPException(status_code=503, detail="El asistente no está disponible en este momento.")
@@ -100,6 +121,7 @@ async def chat(
         action_offer=result.action_offer,
         recommendations=_recommendations(result),
         correlation_id=correlation_id,
+        conversation_id=conversation_id,
     )
 
 

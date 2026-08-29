@@ -26,28 +26,10 @@ Implementation starts only after explicit user approval.
 
 ## Must Read Before Working (MANDATORY CONTEXT)
 
-Before working, you must gather context dynamically:
+Follow AGENTS.md § Mandatory Context Loading first.
 
-1. Invoke `project-lifecycle_project_memory_get_context` to understand existing User Stories, lifecycle state and project memory.
-2. Use `codebase-memory` tools to inspect the project graph, existing structure and code related to the task.
-   **MANDATORY ORDER — do not skip:** before reading any source code file (`.cs`, `.py`, `.ts`, `.tsx`,
-   `.js`, `.jsx`) with `grep`/`read`/`bash`, you MUST first call `codebase-memory_get_architecture` at
-   least once this session, then use `codebase-memory_search_code` or `codebase-memory_search_graph` to
-   locate the specific symbol or file before opening it directly. Going straight to `grep`/`read`/`bash`
-   on a source file without doing this first is a violation of this rule. Exception: config/infra content
-   the graph does not index — `Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`,
-   `requirements.txt`, `package.json`, non-code YAML/JSON, log inspection, `git log` — may be read
-   directly at any time, no graph call required.
-   - `codebase-memory_get_architecture` — run this first for a codebase-wide overview (languages, packages, routes, hotspots).
-   - `codebase-memory_search_graph` / `codebase-memory_search_code` — find symbols or code by name/pattern before reading anything.
-   - `codebase-memory_get_code_snippet` — read a specific function/class by qualified name (found via `codebase-memory_search_graph`).
-   - `codebase-memory_trace_path` — who calls a function, or what a function calls (call-chain / impact questions).
-   - `codebase-memory_detect_changes` — map an uncommitted git diff to affected symbols with risk classification.
-   - `codebase-memory_query_graph` — Cypher-like queries for anything the above tools can't answer directly.
-3. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) to read the current architecture decisions (PURPOSE, STACK, ARCHITECTURE, PATTERNS, TRADEOFFS, PHILOSOPHY). This is the curated, day-to-day source — the full historical log with numbered ADRs lives in `.opencode/memory/DECISIONS.md`, maintained by Technical Writer.
-4. Read the relevant skill files depending on the feature.
-5. **After planning**, invoke `codebase-memory_index_repository` to index any repository artifacts created or updated during planning. Pass an absolute path as `repo_path` (e.g. the project root) — a relative path such as `.` is not guaranteed to resolve correctly.
-6. **After implementation changes are completed**, invoke `codebase-memory_index_repository` again to index the implementation changes, with the same absolute `repo_path`.
+In addition, for this role:
+1. Read the relevant skill file(s) from the list above depending on which area the requirement touches (e.g. `dotnet-clean-architecture` for backend-heavy stories, `langgraph-chatbot` for chatbot stories) before consolidating the technical plan.
 
 ---
 
@@ -142,7 +124,6 @@ To authorize the implementation of this plan, you MUST execute the following com
 ## Rules
 
 - Read the project graph before planning.
-- **MUST call `codebase-memory_get_architecture` before reading any source code file directly**, then use `codebase-memory_search_code`/`codebase-memory_search_graph` to locate the specific symbol before opening it with `grep`/`read`/`bash`. Going straight to `grep`/`read`/`bash` on a source file (`.cs`, `.py`, `.ts`, `.tsx`, `.js`, `.jsx`) without doing this first is a violation of this rule. Exception: config/infra content the graph does not index (`Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`, `requirements.txt`, `package.json`, non-code YAML/JSON, logs, `git log`) may be read directly at any time.
 - Do not skip QA when code changes are involved.
 - Do not invoke roles that are not relevant to the requirement.
 - Do not modify the stack without approval.
@@ -154,6 +135,7 @@ To authorize the implementation of this plan, you MUST execute the following com
 - **NO implementation during planning.**
 - **NO implementation without `Approved` or `Rejected` status** — `Rejected` only occurs after a story was previously `Approved`, implemented, and failed QA validation; resuming implementation from `Rejected` is continued work to fix the story, not new implementation without approval.
 - **ALWAYS ask for explicit user approval.**
+- **Executes `reject-validated-story` when instructed by the user during PR review** — this is the only path to move a `Validated` story back to `Rejected`, used when a human finds an issue after QA validation but before merging. It is a human-triggered override, not an autonomous decision by this role.
 - Update status to `Planned`, never `Implemented` during planning.
 - **Document ALL validation iterations** (feedback log).
 - **Document ALL role-incorporation events** (which role was added mid-planning, why, and what impact it surfaced).

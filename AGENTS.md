@@ -14,17 +14,17 @@ Develop a fullstack intelligent virtual library system with:
 - Internal security MCP server (`Security-Audit-MCP`) that audits chatbot input and output.
 - External MCP server based on Open Library.
 - AI Engineering workflow using opencode.
-- External LLM provider via API.
+- LLM provider via OpenAI-compatible API (local Ollama by default; swappable to a hosted provider without code changes).
 
 ## CRITICAL BEHAVIORAL OVERRIDES (READ FIRST)
 The following constraints override any natural tendency, internal checklist, or workflow:
-1. **ERROR HALTING:** If any terminal command (especially `git pull`, `git fetch`, or `dotnet`) returns a `fatal:`, `error:`, or fails authentication, YOU MUST HALT IMMEDIATELY. Do not attempt workarounds. Do not continue to the next step.
+1. **ERROR HALTING (Non-recoverable errors):** If any terminal command related to Git remote operations or authentication (`git pull`, `git fetch`, `git push`, `create_branch`, `create_pull_request`) returns a `fatal:`, `error:`, or fails authentication, YOU MUST HALT IMMEDIATELY. Do not attempt workarounds. Do not continue to the next step. These are environment/credential failures, not code failures — retrying without human intervention will not fix them.
 2. **NO LOCAL BRANCH CREATION:** You lack authorization to create local branches via Bash. The commands `git checkout -b` and `git branch` are BLACKLISTED. You must use the `create_branch` MCP tool.
 3. **NO CLI PULL REQUESTS:** `gh pr create` and `curl` for Pull Requests are BLACKLISTED. You must use the `create_pull_request` MCP tool.
 4. **NO PLACEHOLDERS OR STUBS:** You are STRICTLY FORBIDDEN from writing incomplete code. Do not use `// TODO`, `throw new NotImplementedException()`, or hardcoded mock data unless explicitly requested. You must write the complete, production-ready logic for every file you touch.
-5. **ZERO TOLERANCE FOR BROKEN BUILDS:** Before ANY `git commit`, you MUST ensure the project compiles successfully (`dotnet build` / `npm run build`). If there are compilation errors or validation failures, YOU MUST FIX THEM. You are forbidden from committing broken or non-compiling code.
+5. **ZERO TOLERANCE FOR BROKEN BUILDS (Recoverable errors):** Before ANY `git commit`, you MUST ensure the project compiles successfully (`dotnet build` / `npm run build`). If there are compilation errors, test failures, or validation failures, attempt to fix them following the Circuit Breaker rule below. You are forbidden from committing broken or non-compiling code.
 6. **STRICT ARCHITECTURAL ADHERENCE:** You cannot bypass the Clean Architecture or CQRS rules to save time. Controllers MUST remain empty except for dispatching to the Mediator. All business logic MUST reside in Handlers, and all input MUST be validated by FluentValidation before processing.
-7. **CIRCUIT BREAKER (NO INFINITE LOOPS):** If you encounter an error (compilation, test failure, or terminal error) and fail to fix it after THREE (3) consecutive attempts, YOU MUST STOP. Do not continue guessing. Halt execution, explain the deadlock, and ask the user for guidance to prevent token waste.
+7. **CIRCUIT BREAKER (NO INFINITE LOOPS):** For recoverable errors (compilation errors, test failures, lint/validation failures — NOT the non-recoverable errors covered by rule 1), if you fail to fix the error after THREE (3) consecutive attempts, YOU MUST STOP. Do not continue guessing. Halt execution, explain the deadlock, and ask the user for guidance to prevent token waste.
 8. **ZERO HARDCODED SECRETS:** You are STRICTLY FORBIDDEN from hardcoding sensitive data (passwords, JWT secrets, connection strings, API keys) in the source code. You must use environment variables, `.env` files (which must be in `.gitignore`), or ASP.NET User Secrets.
 9. **NO DESTRUCTIVE ACTIONS:** You are STRICTLY FORBIDDEN from executing destructive bash commands such as `rm -rf /`, `rm -rf *`, dropping databases, or running `git push --force`. Always ask for explicit human permission before deleting significant amounts of files or altering remote Git history.
 10. **CONVENTIONAL COMMITS REQUIRED:** Every Git commit message MUST follow the Conventional Commits specification and include the User Story ID. Example: `feat(US-001): initialize ASP.NET Core and Clean Architecture`. Do not use generic messages like "update files".
@@ -59,7 +59,7 @@ before executing any command it must:
 | Chatbot API | Python + FastAPI |
 | AI Framework | LangChain |
 | Conversation Graph | LangGraph |
-| LLM | External provider via API |
+| LLM | OpenAI-compatible API (Ollama local by default — see `~/.config/opencode/opencode.json` for provider config; the chatbot's own LLM client, independent of OpenCode's, must read model/base URL from environment variables to remain swappable) |
 | MCP Own Server | Python + FastMCP / MCP SDK — `Biblioteca-MCP` & `Security-Audit-MCP` |
 | MCP External Server | Open Library MCP server |
 | Containers | Docker Compose |
@@ -83,9 +83,19 @@ Permissions: books.read, books.create, books.update, books.delete, rentals.creat
 ## Mandatory Context Loading
 Before answering, planning, editing, or creating files, every agent must:
 1. Invoke the `project_memory_get_context` tool via the MCP `project-lifecycle` server to initialize the project context and read the active story status.
-2. Use `codebase-memory` tools to map the current repository structure and architecture if needed.
-3. Read `.opencode/instructions/READ-GRAPH-FIRST.md`
-4. Read `.opencode/memory/DECISIONS.md`
+2. Use `codebase-memory` tools to map the current repository structure and architecture. **MANDATORY ORDER — do not skip:** before reading any source code file (`.cs`, `.py`, `.ts`, `.tsx`, `.js`, `.jsx`) with `grep`/`read`/`bash`, first call `codebase-memory_get_architecture` at least once this session, then use `codebase-memory_search_code` or `codebase-memory_search_graph` to locate the specific symbol or file before opening it directly. Going straight to `grep`/`read`/`bash` on a source file without doing this first is a violation of this rule. Exception: config/infra content the graph does not index — `Dockerfile`, `docker-compose.yml`, `.env`/`.env.example`, `README*`, `requirements.txt`, `package.json`, non-code YAML/JSON, log inspection, `git log` — may be read directly at any time, no graph call required.
+   - `codebase-memory_get_architecture` — codebase-wide overview (languages, packages, routes, hotspots). Run first.
+   - `codebase-memory_search_graph` / `codebase-memory_search_code` — find symbols or code by name/pattern before reading anything.
+   - `codebase-memory_get_code_snippet` — read a specific function/class by qualified name.
+   - `codebase-memory_trace_path` — call-chain / impact questions.
+   - `codebase-memory_detect_changes` — map an uncommitted git diff to affected symbols with risk classification.
+   - `codebase-memory_query_graph` — Cypher-like queries for anything the above tools can't answer directly.
+3. Invoke `codebase-memory_manage_adr` (`project=biblioteca-virtual-inteligente`, `mode=get`) to read the current architecture decisions (PURPOSE, STACK, ARCHITECTURE, PATTERNS, TRADEOFFS, PHILOSOPHY). This is the curated, day-to-day source — the full historical log with numbered ADRs lives in `.opencode/memory/DECISIONS.md`, maintained by Technical Writer.
+4. Read `.opencode/instructions/READ-GRAPH-FIRST.md`
+
+`.opencode/memory/DECISIONS.md` is a human-readable delivery artifact, not a required operational input — see § below on ownership. Roles do not need to read it for day-to-day work; `codebase-memory_manage_adr` (step 3 above) already holds the operational architecture state.
+
+This sequence applies to every role identically. For role-specific skill files and when to call `codebase-memory_index_repository` after finishing work, see the corresponding ROLE.md file.
 
 If an agent needs to know its specific behavior, it must read its corresponding ROLE.md file.
 
@@ -125,7 +135,7 @@ Do NOT guess architectural rules or conventions. Based on the task, you MUST use
   - The only valid transition out of `Rejected` is to `In Progress`, enforced by `project_memory_advance_status` (see `project-memory-mcp/server.js`, `flow["Rejected"] = "In Progress"`).
   - After rework reaches `Implemented` again, `qa-check` must be re-executed from the top.
 - **PR Gate:** A User Story CANNOT be moved to `Validated` status without successfully executing the GitHub MCP tool `create_pull_request`. Do not simulate or skip this step.
-- **Documentation Gate:** Before moving to `Validated`, the QA agent MUST physically update the corresponding file in `workflow/opencode/user-stories/` (adding executed Technical Plan and QA results) and log the iteration in a specific file inside `workflow/opencode/ai-engineering/`. The filename MUST be based on the active branch, but you MUST replace any slashes (`/`) with dashes (`-`) to avoid creating subdirectories (e.g., `workflow/opencode/ai-engineering/feature-US-001-ai-engineering.md`).
+- **Documentation Gate:** Before moving to `Validated`, the QA agent MUST physically update the '## QA Result' section of the corresponding file in `workflow/opencode/user-stories/` (the Technical Plan and Implementation Notes are owned by earlier phases and should already be filled in — QA verifies them, it does not author them) and log the iteration in a specific file inside `workflow/opencode/ai-engineering/`.
 
 ## Architecture & Data Flow
 
@@ -137,12 +147,12 @@ Do NOT guess architectural rules or conventions. Based on the task, you MUST use
 * `[Frontend React]` --(HTTP)--> `[Chatbot FastAPI]`
 * `[Chatbot FastAPI]` --(LangGraph + LangChain)--> `[LLM External API]`
 
-**3. MCP Integrations (Tool Calls from LLM):**
-* `[LLM]` --> `[Security-Audit-MCP]` --> Writes to `[Audit Logs SQLite]`
-* `[LLM]` --> `[Biblioteca-MCP]` --> Reads/Writes to `[SQLite Core Database]`
-* `[LLM]` --> `[Open Library MCP]` --> Fetches from `[External Open Library API]`
+**3. MCP Integrations:**
+* `[LangGraph]` --(deterministic node)--> `[Security-Audit-MCP]` --> Writes to `[Audit Logs SQLite]`. This runs as the mandatory `audit_input_node`/`audit_output_node` in every graph execution — it is NOT an optional tool the LLM chooses to call.
+* `[LangGraph]` --(LLM-invoked tool, via MCP Client)--> `[Biblioteca-MCP]` --> Reads/Writes to `[SQLite Core Database]`
+* `[LangGraph]` --(LLM-invoked tool, via MCP Client)--> `[Open Library MCP]` --> Fetches from `[External Open Library API]`
 
-**Security Rule:** Every chatbot request is audited by `Security-Audit-MCP` before reaching the graph, and every response is audited before reaching the frontend.
+**Security Rule:** `audit_input_node` runs as the first deterministic node of the graph, before any LLM reasoning or tool selection occurs. `audit_output_node` runs as the last deterministic node, before the response leaves the graph. Both are structural parts of the graph topology, not tools available for the LLM to invoke or skip.
 
 ## General Code Conventions
 - English names for code.
@@ -166,21 +176,20 @@ All source code and project files MUST be created strictly inside their designat
 For every new requirement:
 1. Read project context via MCP tools.
 2. Create or update a User Story in `workflow/opencode/user-stories/`.
-3. Ask the Functional Analyst to define functional scope and acceptance criteria.
-4. Ask the Architect to analyze architectural impact.
-5. Ask the Technical Lead to create the technical plan.
-6. Ask impacted implementation roles to plan their work:
-   - Backend Developer.
-   - Frontend Developer.
-   - AI Engineer.
-7. Ask QA to define the validation plan.
-8. Ask Technical Writer to define documentation impact.
-9. Ensure the story status is advanced to 'Planned' using the `project-lifecycle` MCP tools.
-10. The Technical Lead must update the User Story file to reflect the 'Approved' status
-    before any implementation begins. This is done exclusively via the `approve-user-story` command.
+3. The Technical Lead determines which roles are actually relevant to the requirement, following the role-selection table in `.opencode/roles/technical-lead/ROLE.md` (§ Planning Responsibilities). Do not assume all roles participate in every story.
+4. The Technical Lead invokes only the selected roles to plan their work. If new impact is discovered mid-planning, additional roles are incorporated per the same ROLE.md rules.
+5. The Technical Lead consolidates all role plans into a single technical plan.
+6. Ensure the story status is advanced to 'Planned' using the `project-lifecycle` MCP tools.
+7. The Technical Lead must update the User Story file to reflect the 'Approved' status before any implementation begins. This is done exclusively via the `approve-user-story` command.
+8. `approve-user-story` must record, inside `## Implementation Approval`, the exact commit hash (or content hash) of the `## Technical Plan` section at the moment of approval. If the Technical Plan is edited after approval, the story is no longer considered validly `Approved` and must return to `Planned` before implementation can proceed.
 
-The `implement-user-story` command must verify the context state is explicitly `Approved`
-or `Rejected` before editing any code.
+The `implement-user-story` command handles two distinct entry paths, which MUST be treated differently:
+- **`Approved` → Implementation:** first implementation of a newly approved plan. Full role invocation per the plan.
+- **`Rejected` → Rework:** the story was previously `Implemented`, failed QA, and is being corrected. This is NOT new authorization to implement from scratch — only the specific issues documented in the QA rejection (see `## QA Result` in the story file) may be addressed, on the same existing branch.
+
+The command must read the current status first and branch its behavior accordingly instead of treating both as equivalent entry points.
+
+Additionally, a `Validated` story can be moved back to `Rejected` exclusively via the `reject-validated-story` command — this covers the case where a human reviewing the Pull Request on GitHub finds an issue after QA already validated it, but before merging. This is a human-triggered override, not an agent decision, and requires a documented reason (see `reject-validated-story.md`).
 
 If the status is not `Approved` or `Rejected`, the agent must:
 1. Stop immediately.
@@ -196,11 +205,12 @@ Every meaningful task must follow this loop:
 2. Identify impacted modules.
 3. Select role and skill.
 4. Produce a plan.
-5. Ask for confirmation if the change is large.
-6. Implement minimal change.
-7. Run or describe validation.
-8. Update process state via MCP tools.
-9. Update documentation if needed.
+5. Implement minimal change.
+6. Run or describe validation.
+7. Update process state via MCP tools.
+8. Update documentation if needed.
+
+Note: this loop never asks the user for conversational confirmation, regardless of change size (see § Phase Transitions & Handoffs). The only valid authorization mechanism is `approve-user-story`.
 
 ## Required Output Format for Agents
 

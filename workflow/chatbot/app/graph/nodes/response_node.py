@@ -17,10 +17,13 @@ def _recommendation_text(state: ChatState) -> str:
         author = item.get("author")
         genre = item.get("genre")
         reason = item.get("reason")
+        source = item.get("source")
         detail = f"«{title}»" + (f" de {author}" if author else "")
         if genre:
             detail += f" ({genre})"
-        if reason:
+        if source == "open_library":
+            detail += " — verificado en Open Library · puedes solicitar copia"
+        elif reason:
             detail += f" — {reason}"
         lines.append(f"{index}. {detail}")
 
@@ -56,7 +59,11 @@ async def response_node(state: ChatState) -> ChatState:
         )
         return state
 
-    title = (state.enrichment or {}).get("title") or "este libro"
+    title = (
+        (state.enrichment or {}).get("title")
+        or (state.query or state.message)
+        or "este libro"
+    )
     if state.enrichment_error and not state.enrichment:
         state.response = _friendly_not_available(title)
         return state

@@ -25,10 +25,12 @@ main_module = importlib.reload(main_module)  # re-construye el app con CORS
 class _FakeGraph:
     """Fake del grafo LangGraph: ainvoke devuelve un estado sin red."""
 
-    async def ainvoke(self, state):
+    async def ainvoke(self, state, config=None):
+        message = state.get("message") if isinstance(state, dict) else state.message
         return {
-            "message": state.message,
+            "message": message,
             "response": "Respuesta de prueba",
+            "conversation_id": (config or {}).get("configurable", {}).get("thread_id"),
             "recommendations": [],
             "action_offer": None,
         }

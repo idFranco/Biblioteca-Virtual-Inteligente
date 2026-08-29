@@ -52,6 +52,7 @@ services:
       - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:?Set LLM_TIMEOUT_SECONDS in the .env file (e.g. 120)}
       - LLM_API_KEY=${LLM_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-}
+      - CHAT_MEMORY_DB_PATH=${CHAT_MEMORY_DB_PATH:?Set CHAT_MEMORY_DB_PATH in the .env file (e.g. /app/database/chat_memory.db)}
     # DATABASE_PATH / AUDIT_DATABASE_PATH se resuelven desde este archivo en disco
     # (env_file NO consulta el entorno del shell), de modo que los exports de dev
     # del host no pueden sombrear las rutas in-image (/app/database/...).

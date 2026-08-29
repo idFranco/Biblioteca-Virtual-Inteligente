@@ -23,7 +23,7 @@ Whenever you need to create a new branch for a User Story, you MUST follow this 
 3. Conflict Check: If the tree is dirty or `main` has conflicts, HALT immediately and ask the user to resolve them.
 4. Pull changes: `git pull origin main`
 5. Ask the user for the new branch name.
-6. Create on Remote: Use the GitHub MCP tool `create_branch` (Forbidden to use local `git branch` or `git checkout -b`).
+6. Create on Remote: Use the GitHub MCP tool `create_branch` (Forbidden to use local branch-creation commands: `git branch <name>` or `git checkout -b <name>`. Read-only inspection commands such as `git branch --show-current` remain required and allowed — see § Forbidden Git Actions below for the precise scope).
 7. Checkout locally: Run `git fetch origin` followed by `git checkout <new_branch_name>`.
 
 - **Interactive Branch Naming:** When a new User Story is being planned (during the `plan-user-story` phase), the agent is strictly forbidden from auto-generating or creating the Git branch autonomously. 
@@ -41,7 +41,7 @@ Before invoking `push_files`, the agent MUST NEVER hardcode or assume a fixed li
 3. This guarantees that side-effect writes from any MCP tool (lifecycle state files, audit logs, indexing caches, etc.) are captured, regardless of which tool produced them.
 
 ## Forbidden Git Actions (Hard Constraints)
-- **NO LOCAL BRANCH CREATION:** You are STRICTLY FORBIDDEN from using local bash commands like `git checkout -b <branch>` or `git branch`. You MUST exclusively use the GitHub MCP tool `create_branch`.
+- **NO LOCAL BRANCH CREATION:** You are STRICTLY FORBIDDEN from using local bash commands that create, rename, or delete branches: `git branch <name>`, `git branch -m ...`, `git branch -d`/`-D ...`, or `git checkout -b <branch>`. You MUST exclusively use the GitHub MCP tool `create_branch` to create branches. This does NOT apply to read-only inspection commands — `git branch --show-current` (and similarly `git branch --list`, `git branch -v`) remain required/allowed at any time, since they don't create, rename, or delete anything.
 - **NO CLI OR CURL FOR PULL REQUESTS:** You are STRICTLY FORBIDDEN from using `gh`, `git push` shortcuts, or `curl` to create Pull Requests. You MUST exclusively use the GitHub MCP server tool `create_pull_request`.
 - **No Human Intervention:** Never ask the user to manually create a Pull Request or to install tools. If an MCP tool fails, halt execution, report the specific JSON-RPC error, and wait for human instructions.
 
