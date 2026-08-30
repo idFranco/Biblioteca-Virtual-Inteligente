@@ -29,7 +29,7 @@ API_KEY_GROQ = os.getenv("API_KEY_GROQ", "")
 GROQ_API_URL = os.getenv(
     "GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions"
 )
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 GROQ_TIMEOUT_SECONDS = float(os.getenv("GROQ_TIMEOUT_SECONDS", "10"))
 
 _INJECTION_SYSTEM = (

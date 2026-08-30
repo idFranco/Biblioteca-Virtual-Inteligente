@@ -131,6 +131,23 @@ def test_consultar_libro_en_curso_sin_alquiler(server):
     assert server.consultar_libro_en_curso("otro-usuario") is None
 
 
+def test_consultar_alquileres_insensible_al_case(server):
+    """El contrato userId es case-insensitive: USER-1 == user-1."""
+    lower = server.consultar_alquileres_usuario("user-1")
+    upper = server.consultar_alquileres_usuario("USER-1")
+    assert {item["book_id"] for item in upper} == {"b1", "b3"}
+    assert [r["book_id"] for r in upper] == [r["book_id"] for r in lower]
+
+
+def test_recomendaciones_insensibles_al_case(server):
+    """USER-1 (mayúsculas) debe recomendar igual que user-1 (minúsculas)."""
+    lower = server.listar_recomendaciones_por_genero("user-1", limit=5)
+    upper = server.listar_recomendaciones_por_genero("USER-1", limit=5)
+    assert {item["id"] for item in upper} == {"b1", "b3"}
+    assert {item["id"] for item in upper} == {item["id"] for item in lower}
+    assert len(upper) == len(lower)
+
+
 def test_obtener_preferencias(server):
     result = server.obtener_preferencias("user-1")
     assert len(result) == 1
@@ -179,6 +196,16 @@ def test_registrar_feedback_libro_inexistente(server):
     result = server.registrar_feedback("user-1", "no-existe", 4)
     assert result["success"] is False
     assert "no existe" in result["reason"]
+
+
+def test_registrar_feedback_normaliza_case_del_user_id(server):
+    """El feedback se persiste con UserId en minúsculas, sin importar el case enviado."""
+    result = server.registrar_feedback("USER-1", "b1", 5, "Excelente")
+    assert result["success"] is True
+    rows = sqlite3.connect(str(server.DB_PATH)).execute(
+        "SELECT UserId FROM Feedbacks WHERE BookId = 'b1'"
+    ).fetchall()
+    assert rows and all(row[0] == "user-1" for row in rows)
 
 
 def test_base_datos_no_disponible(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

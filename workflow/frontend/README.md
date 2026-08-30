@@ -47,6 +47,10 @@ Las URLs base se leen de variables de entorno **sin valor por defecto** (`src/co
 - El tamaño elegido se persiste en `localStorage`; el estado abierto/cerrado arranca siempre en `false` (minimizado).
 - **CORS:** el origen de la SPA (p. ej. `http://localhost:5173`) debe estar listado en `CORS_ORIGINS` del servidor del chatbot para que el navegador no bloquee el `fetch` a `VITE_CHATBOT_API_BASE_URL`; no se requieren cambios de código en el frontend.
 
+### Contrato `userId` (chatbot ↔ Biblioteca-MCP)
+
+`getChatUserId()` en `src/services/chat.ts` devuelve el `userId` enviado a `POST /chat`, tomado **verbatim** del claim JWT `sub` (`useAuthStore.getState().user?.id`), sin transformación de case (ADR-037). El frontend **no normaliza** el case ni el formato del id: la comparación case-insensitive es responsabilidad exclusiva de Biblioteca-MCP (`UPPER(UserId) = UPPER(?)` + `registrar_feedback` en minúsculas), de modo que la recomendación personalizada funciona con `93C1CA75-...` y `93c1ca75-...`. Devuelve `null` cuando no hay sesión activa.
+
 ## Identidad visual
 
 Tema "Sala de lectura" definido en `src/index.css` (paleta pergamino/madera/latón, tipografía Fraunces + Lora, portadas derivadas de `covers.openlibrary.org` con fallback ornamental). Cambio de presentación únicamente (ADR-021).

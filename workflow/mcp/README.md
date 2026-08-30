@@ -21,12 +21,16 @@ Toda la configuración se lee de variables de entorno **obligatorias** (ADR-025)
 | `DATABASE_PATH` | Biblioteca-MCP, Security-Audit-MCP | Ruta absoluta (o relativa a la raíz del repo) de la base SQLite principal |
 | `AUDIT_DATABASE_PATH` | Security-Audit-MCP | Ruta de la base SQLite de auditoría (`audit_events`) |
 | `API_KEY_GROQ` | Security-Audit-MCP | Clave del LLM usado para detección de inyección/datos sensibles (solo auditoría, ADR-029) |
+| `GROQ_MODEL` | Security-Audit-MCP | Modelo final de auditoría: `openai/gpt-oss-20b` (ADR-036; default alineado en `groq_audit.py`) |
+| `GROQ_TIMEOUT_SECONDS` | Security-Audit-MCP | Timeout de la llamada al auditor GROQ (default `10`) |
 
-Opcionales para Security-Audit-MCP (si no se definen, se usan los valores por defecto del servidor): `GROQ_API_URL` (endpoint de Groq), `GROQ_MODEL` (modelo de auditoría) y `GROQ_TIMEOUT_SECONDS` (timeout de la llamada).
+Si no se definen, se usan los valores por defecto del servidor: `GROQ_API_URL` (endpoint de Groq). `GROQ_MODEL` y `GROQ_TIMEOUT_SECONDS` tienen los defaults documentados arriba, **coincidiendo siempre** con `.env.example` (test `test_groq_model_default_aligned_with_env_example`).
 
 ## Biblioteca-MCP (dominio)
 
 Servidor de solo lectura (salvo `registrar_feedback`, ADR-022) que consulta la base SQLite del backend.
+
+**Contrato `userId` (ADR-037):** el frontend envía el `userId` **verbatim** del claim JWT `sub` (sin normalizar case). Biblioteca-MCP es el punto único de normalización: todas las queries que filtran por `UserId` comparan `UPPER(UserId) = UPPER(?)` y `registrar_feedback` persiste `user_id` en minúsculas. Por eso la recomendación personalizada funciona con `93C1CA75-...` o `93c1ca75-...`.
 
 | Herramienta | Tipo | Descripción |
 |---|---|---|
@@ -85,6 +89,8 @@ Bajo `docker compose`, el chatbot inyecta a los MCP:
 | `DATABASE_PATH` | `/app/database/BibliotecaVirtual.db` | Misma base SQLite que el backend (volumen compartido `database_data`) |
 | `AUDIT_DATABASE_PATH` | `/app/database/audit.db` | Base de auditoría de Security-Audit-MCP (mismo volumen) |
 | `API_KEY_GROQ` | valor del `.env` | Usada solo por Security-Audit-MCP para auditar entrada/salida |
+| `GROQ_MODEL` | `openai/gpt-oss-20b` (del `.env`) | Modelo de auditoría final (ADR-036); compose fail-fast `:?` |
+| `GROQ_TIMEOUT_SECONDS` | `10` (del `.env`) | Timeout de la llamada GROQ; compose fail-fast `:?` |
 | `BIBLIOTECA_MCP_COMMAND` | `python /app/workflow/mcp/biblioteca-mcp/server.py` | Comando stdio en-imagen |
 | `OPEN_LIBRARY_MCP_COMMAND` | `python /app/workflow/mcp/open-library-mcp/server.py` | Comando stdio en-imagen |
 | `SECURITY_AUDIT_MCP_COMMAND` | `python /app/workflow/mcp/security-audit-mcp/server.py` | Comando stdio en-imagen |
@@ -94,6 +100,7 @@ Bajo `docker compose`, el chatbot inyecta a los MCP:
 ## Tests
 
 ```bash
-python3 -m pytest workflow/mcp/biblioteca-mcp/tests
-python3 -m pytest workflow/mcp/open-library-mcp/tests
+python3 -m pytest workflow/mcp/biblioteca-mcp/tests   # 15 tests (incl. userId case-insensitive, US-020)
+python3 -m pytest workflow/mcp/open-library-mcp/tests # 18 tests
+python3 -m pytest workflow/mcp/security-audit-mcp/tests  # 18 tests (incl. GROQ_MODEL default alineado, US-020)
 ```

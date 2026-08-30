@@ -165,3 +165,19 @@ async def test_sanitize_text_active_groq_keeps_fail_closed(server_module, monkey
     result = await server_module.sanitize_text("texto")
     assert result["degraded"] is False
     assert result["safe_text"] == "[REDACTED]"
+
+
+def test_groq_model_default_aligned_with_env_example():
+    """El default de código debe coincidir con GROQ_MODEL de .env.example."""
+    import groq_audit
+    from pathlib import Path
+
+    env_example = Path(__file__).resolve().parents[4] / ".env.example"
+    text = env_example.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if line.startswith("GROQ_MODEL="):
+            env_model = line.split("=", 1)[1].strip()
+            assert groq_audit.GROQ_MODEL == env_model
+            break
+    else:
+        raise AssertionError("GROQ_MODEL no está definido en .env.example")

@@ -58,10 +58,16 @@ async def llm_response_node(state: ChatState) -> ChatState:
         return state
 
     history_text = _history_window(state)
-    if state.intent in ("recommendation", "follow_up"):
-        base_context = _context_text(state)
-    else:
-        base_context = "La intención es una conversación casual o saludo del usuario."
+    if state.intent == "other":
+        generated = await llm_client.generate_smalltalk(state.message)
+        if generated:
+            state.response = generated
+            state.llm_used = True
+        elif not state.response:
+            state.response = _greeting_fallback()
+        return state
+
+    base_context = _context_text(state)
 
     context = base_context
     if history_text:
@@ -71,6 +77,4 @@ async def llm_response_node(state: ChatState) -> ChatState:
     if generated:
         state.response = generated
         state.llm_used = True
-    elif state.intent == "other" and not state.response:
-        state.response = _greeting_fallback()
     return state

@@ -230,14 +230,59 @@ async def test_smalltalk_routes_to_conversational(monkeypatch):
     async def fake_llm(context):
         return None
 
+    async def fake_smalltalk(message):
+        return "¡Hola! ¿En qué puedo ayudarte?"
+
+    def fail_recommendation(context):
+        raise AssertionError("El smalltalk no debe reutilizar el prompt de recomendación")
+
     monkeypatch.setattr(security_client, "audit_input", fake_audit)
     monkeypatch.setattr(security_client, "audit_output", fake_audit)
     monkeypatch.setattr(biblioteca_client, "get_estado_lectura", fake_estado)
     monkeypatch.setattr(biblioteca_client, "buscar_libros", fake_search)
-    monkeypatch.setattr(llm_client, "generate_recommendation", fake_llm)
+    monkeypatch.setattr(llm_client, "generate_recommendation", fail_recommendation)
+    monkeypatch.setattr(llm_client, "generate_smalltalk", fake_smalltalk)
 
     state = ChatState(message="buenas tardes")
     result = normalize(await graph.ainvoke(state))
 
     assert result.intent == "other"
-    assert result.response  # respuesta conversacional sin colapso
+    assert result.response == "¡Hola! ¿En qué puedo ayudarte?"
+
+
+@pytest.mark.asyncio
+async def test_smalltalk_uses_dedicated_prompt_not_recommendation(monkeypatch):
+    """US-020: en intención 'other' el grafo llama generate_smalltalk y NO
+    genera recomendaciones inventadas (no toca generate_recommendation)."""
+    import app.mcp_clients.security_audit_client as security_client
+    import app.mcp_clients.biblioteca_client as biblioteca_client
+    import app.llm.client as llm_client
+
+    async def fake_audit(text, correlation_id=None):
+        return {"safe": True}
+
+    async def fake_estado(user_id):
+        return "sin_actividad"
+
+    async def no_search(message, limit=10):
+        raise AssertionError("No debe consultar el catálogo para smalltalk")
+
+    async def fake_smalltalk(message):
+        return "Gracias a ti, ¡que tengas un buen día!"
+
+    def forbid_recommendation(context):
+        raise AssertionError("Smalltalk no debe llamar generate_recommendation")
+
+    monkeypatch.setattr(security_client, "audit_input", fake_audit)
+    monkeypatch.setattr(security_client, "audit_output", fake_audit)
+    monkeypatch.setattr(biblioteca_client, "get_estado_lectura", fake_estado)
+    monkeypatch.setattr(biblioteca_client, "buscar_libros", no_search)
+    monkeypatch.setattr(llm_client, "generate_smalltalk", fake_smalltalk)
+    monkeypatch.setattr(llm_client, "generate_recommendation", forbid_recommendation)
+
+    state = ChatState(message="gracias, que tengas un buen día")
+    result = normalize(await graph.ainvoke(state))
+
+    assert result.intent == "other"
+    assert result.response == "Gracias a ti, ¡que tengas un buen día!"
+    assert result.llm_used is True
