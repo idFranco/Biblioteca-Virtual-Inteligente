@@ -137,7 +137,7 @@ El detalle técnico de cada componente vive en su propio README:
 | Frontend (React) | [`workflow/frontend/README.md`](workflow/frontend/README.md) — env, roles/UX, chatbot, tema |
 | Chatbot (FastAPI) | [`workflow/chatbot/README.md`](workflow/chatbot/README.md) — grafo, LLM, clientes MCP |
 | Servidores MCP | [`workflow/mcp/README.md`](workflow/mcp/README.md) — configuración y herramientas |
-| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-028 |
+| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-037 |
 
 ---
 
@@ -219,6 +219,8 @@ La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta c�
 - **US-012:** Chatbot con recomendaciones personalizadas, feedback persistido (`registrar_feedback`) y LLM local Ollama (llama3.2) para las recomendaciones, con PII masking, auditoría GROQ obligatoria y fallback heurístico (ADR-022/023/029).
 - **US-013:** Notificaciones automáticas de vencimiento (`RentalDueNotificationService`, tabla `Notifications`, endpoints `GET/PATCH /api/notifications`).
 - **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
+- **US-015/016/017/018/019:** CI sobre todo el stack (ADR-028), Ollama local para recomendaciones y GROQ solo auditoría (ADR-029), 3 MCP empaquetados en la imagen del chatbot (ADR-030), CORS del chatbot (ADR-031), Ollama nativo del host (ADR-032), rutas de BD por `env_file` + reintento Open Library (ADR-033), auditoría degradada sin `[REDACTED]` (ADR-034) y memoria conversacional con `follow_up` (ADR-035).
+- **US-020 (post-E2E):** contrato `userId` case-insensitive (ADR-037), modelo auditoría GROQ final `openai/gpt-oss-20b` (ADR-036), smalltalk con prompt dedicado (sin recomendaciones inventadas), limpieza de residuo E2E en SQLite runtime y propagación de `GROQ_MODEL`/contrato `userId` a compose/CI/docs.
 
 Detalle técnico de cada historia en los READMEs de módulo y en `workflow/opencode/user-stories/`.
 
@@ -230,6 +232,6 @@ El pipeline de GitHub Actions (`.github/workflows/ci.yml`) valida todo el stack 
 
 - **`backend`:** `dotnet restore` + `dotnet build --no-restore --configuration Release` (`.NET 9`).
 - **`frontend`:** `npm ci` + `npm run build` inyectando las variables de build-time requeridas por el fail-fast (ADR-025): `VITE_API_BASE_URL` (`http://localhost:5000`) y `VITE_CHATBOT_API_BASE_URL` (`http://localhost:8000`). Sin secretos.
-- **`python`:** instala las dependencias de chatbot y de los tres MCP (`workflow/chatbot`, `workflow/mcp/biblioteca-mcp`, `workflow/mcp/open-library-mcp`, `workflow/mcp/security-audit-mcp`) y ejecuta `pytest` sobre las suites de chatbot y MCP (65 tests, autocontenidos, sin red ni API keys).
+- **`python`:** instala las dependencias de chatbot y de los tres MCP (`workflow/chatbot`, `workflow/mcp/biblioteca-mcp`, `workflow/mcp/open-library-mcp`, `workflow/mcp/security-audit-mcp`) y ejecuta `pytest` sobre las suites de chatbot y MCP (**154 tests** — chatbot 103, biblioteca-mcp 15, open-library-mcp 18, security-audit-mcp 18 —, autocontenidos, sin red ni API keys). El job de security-audit-mcp define `GROQ_MODEL=openai/gpt-oss-20b` y `GROQ_TIMEOUT_SECONDS=10` como variables de entorno del workflow (ADR-036), sin secretos.
 
 Los valores de CI son variables de entorno de build del workflow (no defaults hardcodeados en código) — ver ADR-028 en `DECISIONS.md`.

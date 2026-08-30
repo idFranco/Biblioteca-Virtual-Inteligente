@@ -36,7 +36,7 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 | `feedback` / `save_feedback` | Detectan el feedback del usuario y lo persisten vía `registrar_feedback` (Biblioteca-MCP, escritura acotada). |
 | `follow_up` | Resuelve preguntas sobre una recomendación previa («cuéntame más sobre la primera»): busca el selector en el historial, compone la respuesta con los detalles del libro elegido y enriquece con Open Library si hay OLID. |
 | `response` | Respuesta heurística (fallback y base). |
-| `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). Actúa también en `follow_up` y smalltalk. |
+| `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). Actúa también en `follow_up`. En la intención **`other` (smalltalk)** usa `generate_smalltalk()` con el prompt dedicado `smalltalk_prompt.txt` (respuesta breve/cortés, nunca recomienda libros ni consulta catálogo); si el LLM no responde, `_greeting_fallback()` garantiza una respuesta breve (US-020/AC#3). |
 | `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. |
 | `sanitize_response` | Sanitiza la salida si la auditoría lo requiere. |
 | `reset_turn` / `record_turn` | Abren/cierran el par user/assistant del turno en la ventana de historial (poda a 12 entradas); `record_turn` incrusta las recomendaciones compactas del turno para resolver seguimientos. |
@@ -57,7 +57,7 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 - **Prioridad de proveedor (ADR-023/029):** 1) Ollama local (`OLLAMA_BASE_URL` + `OLLAMA_MODEL=llama3.2`); 2) LLM en la nube (`LLM_API_KEY`/`LLM_MODEL`, fallback cloud); 3) heurística de `response`.
 - `LLM_API_KEY`/`LLM_MODEL` pasan a ser **opcionales** (fallback cloud): solo se usan si Ollama no está disponible o no responde.
 - El contexto enviado al proveedor pasa por `app/utils/pii_masker.py` (PII masking obligatorio) tanto hacia Ollama como hacia la nube.
-- GROQ (`API_KEY_GROQ`) se usa **exclusivamente** en Security-Audit-MCP para auditar entrada/salida; nunca redacta recomendaciones (ADR-029).
+- GROQ (`API_KEY_GROQ`) se usa **exclusivamente** en Security-Audit-MCP para auditar entrada/salida; nunca redacta recomendaciones (ADR-029). El modelo final de auditoría es `GROQ_MODEL=openai/gpt-oss-20b` (ADR-036; default alineado en `groq_audit.py` y `.env.example`). Con GROQ caído, el fallback local degrada con `{degraded: true}` sin `[REDACTED]` global (ADR-034).
 - Si ningún proveedor responde (timeout `LLM_TIMEOUT_SECONDS`, Ollama caído, error de red o sin clave), el nodo devuelve `None` y el grafo usa el fallback heurístico; el chatbot nunca colapsa.
 
 ## CORS
@@ -70,6 +70,7 @@ Motivo: la SPA de React se sirve en `:5173` y el chatbot responde en `:8000`; si
 
 `app/prompts/`:
 - `recommendation_prompt.txt`: redacción de recomendaciones (no inventar títulos/autores/disponibilidad; no mencionar datos personales).
+- `smalltalk_prompt.txt`: respuesta breve/cortés para intención `other` (saludos/despedidas/agradecimientos); prohibe recomendar libros o inventar datos (US-020).
 - `classify_intent_missing_book.md`, `external_enrichment_open_library.md`, `book_request_offer.md`, `book_request_confirmed.md`: prompts del flujo de solicitud de libros (US-009).
 
 ## Clientes MCP
@@ -98,7 +99,8 @@ Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUD
 
 - `GET /health` → `{"status": "healthy"}`.
 - `POST /chat` (`{message, userId, conversationId}` + header `X-Correlation-ID`) → `ChatResponse` con `message`, `recommendations`, `action_offer` y `conversation_id`. La correlación se propaga a la auditoría (US-009/012).
+- **Contrato `userId` (ADR-037):** el frontend envía el `userId` **verbatim** del claim JWT `sub`, sin transformación de case. `userId` puede llegar en mayúsculas o minúsculas; Biblioteca-MCP compara de forma case-insensitive (`UPPER(UserId) = UPPER(?)`), por lo que la recomendación personalizada funciona con cualquier case.
 
 ## Tests
 
-`python3 -m pytest -q` (102 tests): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), CORS y cliente stdio MCP.
+`python3 -m pytest -q` (103 tests): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP.

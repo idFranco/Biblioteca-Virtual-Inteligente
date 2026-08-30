@@ -99,7 +99,8 @@ def get_estado_lectura(user_id: str) -> dict:
     """
     try:
         active = _db().query(
-            "SELECT DueDate FROM Rentals WHERE UserId = ? AND Status = 'Active'",
+            "SELECT DueDate FROM Rentals "
+            "WHERE UPPER(UserId) = UPPER(?) AND Status = 'Active'",
             [user_id],
         )
     except Exception:
@@ -152,7 +153,7 @@ def consultar_alquileres_usuario(user_id: str) -> list[dict]:
             "SELECT r.Id, r.BookId, b.Title, r.RentedAt, r.DueDate, "
             "r.ReturnedAt, r.Status "
             "FROM Rentals r JOIN Books b ON b.Id = r.BookId "
-            "WHERE r.UserId = ? ORDER BY r.RentedAt DESC",
+            "WHERE UPPER(r.UserId) = UPPER(?) ORDER BY r.RentedAt DESC",
             [user_id],
         )
     except Exception:
@@ -187,7 +188,7 @@ def consultar_libro_en_curso(user_id: str) -> dict | None:
         rows = _db().query(
             "SELECT r.Id, r.BookId, b.Title, r.DueDate, r.Status "
             "FROM Rentals r JOIN Books b ON b.Id = r.BookId "
-            "WHERE r.UserId = ? AND r.Status = 'Active' "
+            "WHERE UPPER(r.UserId) = UPPER(?) AND r.Status = 'Active' "
             "ORDER BY r.RentedAt DESC LIMIT 1",
             [user_id],
         )
@@ -218,7 +219,7 @@ def obtener_preferencias(user_id: str) -> list[dict]:
     try:
         rows = _db().query(
             "SELECT Id, Genre, CreatedAt FROM UserPreferences "
-            "WHERE UserId = ? ORDER BY CreatedAt DESC",
+            "WHERE UPPER(UserId) = UPPER(?) ORDER BY CreatedAt DESC",
             [user_id],
         )
     except Exception:
@@ -246,12 +247,14 @@ def listar_recomendaciones_por_genero(user_id: str, limit: int = 5) -> list[dict
     try:
         genres = _db().query(
             "SELECT DISTINCT b.Genre FROM Rentals r "
-            "JOIN Books b ON b.Id = r.BookId WHERE r.UserId = ? "
+            "JOIN Books b ON b.Id = r.BookId "
+            "WHERE UPPER(r.UserId) = UPPER(?) "
             "AND b.Genre IS NOT NULL AND b.Genre <> ''",
             [user_id],
         )
         preferred = _db().query(
-            "SELECT Genre FROM UserPreferences WHERE UserId = ?",
+            "SELECT Genre FROM UserPreferences "
+            "WHERE UPPER(UserId) = UPPER(?)",
             [user_id],
         )
     except Exception:
@@ -323,7 +326,7 @@ def registrar_feedback(user_id: str, book_id: str, rating: int, comment: str | N
         _db().execute(
             "INSERT INTO Feedbacks (Id, UserId, BookId, Rating, Comment, CreatedAt) "
             "VALUES (?, ?, ?, ?, ?, datetime('now'))",
-            [feedback_id, user_id, book_id, normalized_rating, comment],
+            [feedback_id, user_id.lower(), book_id, normalized_rating, comment],
         )
     except Exception:
         return {"success": False, "reason": "No se pudo registrar el feedback."}

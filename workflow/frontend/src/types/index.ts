@@ -1,4 +1,9 @@
 export interface User {
+  /**
+   * Id del claim JWT `sub`. Contrato (ADR-037): se envía al chatbot VERBATIM,
+   * sin transformación de case; la normalización es responsabilidad exclusiva
+   * de Biblioteca-MCP (comparación case-insensitive).
+   */
   id: string
   fullName: string
   email: string

@@ -10,14 +10,14 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?Set ASPNETCORE_ENVIRONMENT in the .env file (e.g. Development)}
       - ASPNETCORE_URLS=${ASPNETCORE_URLS:?Set ASPNETCORE_URLS in the .env file (e.g. http://+:5000)}
       - SQLITE_DATA_SOURCE=${SQLITE_DATA_SOURCE:?Set SQLITE_DATA_SOURCE in the .env file (SQLite path, e.g. /app/database/BibliotecaVirtual.db)}
-      - Jwt__Key=${JWT_KEY:?Set JWT_KEY in the .env file (>= 32 bytes, HS256)}
-      - Jwt__Issuer=${JWT_ISSUER:?Set JWT_ISSUER in the .env file (e.g. BibliotecaVirtual)}
-      - Jwt__Audience=${JWT_AUDIENCE:?Set JWT_AUDIENCE in the .env file (e.g. BibliotecaVirtual)}
+      - Jwt__Key=${JWT__KEY:?Set JWT__KEY in the .env file (>= 32 bytes, HS256)}
+      - Jwt__Issuer=${JWT__ISSUER:?Set JWT__ISSUER in the .env file (e.g. BibliotecaVirtual)}
+      - Jwt__Audience=${JWT__AUDIENCE:?Set JWT__AUDIENCE in the .env file (e.g. BibliotecaVirtual)}
       - Cors__Origins=${CORS_ORIGINS:?Set CORS_ORIGINS in the .env file (e.g. http://localhost:5173)}
       - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in the .env file}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in the .env file}
       - AUTH_RATE_LIMIT_PER_MINUTE=${AUTH_RATE_LIMIT_PER_MINUTE:?Set AUTH_RATE_LIMIT_PER_MINUTE in the .env file (e.g. 10)}
-      - NOTIFICATIONS_CHECK_INTERVAL_SECONDS=${NOTIFICATIONS_CHECK_INTERVAL_SECONDS:?Set NOTIFICATIONS_CHECK_INTERVAL_SECONDS in the .env file (e.g. 3600)}
+      - Notifications__CheckIntervalSeconds=${NOTIFICATIONS__CHECK_INTERVAL_SECONDS:?Set NOTIFICATIONS__CHECK_INTERVAL_SECONDS in the .env file (e.g. 3600)}
     volumes:
       - database_data:/app/database
 
@@ -52,6 +52,8 @@ services:
       - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:?Set LLM_TIMEOUT_SECONDS in the .env file (e.g. 120)}
       - LLM_API_KEY=${LLM_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-}
+      - GROQ_MODEL=${GROQ_MODEL:?Set GROQ_MODEL in the .env file (e.g. openai/gpt-oss-20b)}
+      - GROQ_TIMEOUT_SECONDS=${GROQ_TIMEOUT_SECONDS:?Set GROQ_TIMEOUT_SECONDS in the .env file (e.g. 10)}
       - CHAT_MEMORY_DB_PATH=${CHAT_MEMORY_DB_PATH:?Set CHAT_MEMORY_DB_PATH in the .env file (e.g. /app/database/chat_memory.db)}
     # DATABASE_PATH / AUDIT_DATABASE_PATH se resuelven desde este archivo en disco
     # (env_file NO consulta el entorno del shell), de modo que los exports de dev

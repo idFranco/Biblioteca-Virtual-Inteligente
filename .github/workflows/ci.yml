@@ -59,3 +59,8 @@ jobs:
         working-directory: workflow/mcp/biblioteca-mcp
       - run: python -m pytest tests
         working-directory: workflow/mcp/open-library-mcp
+      - run: python -m pytest tests
+        working-directory: workflow/mcp/security-audit-mcp
+        env:
+          GROQ_MODEL: openai/gpt-oss-20b
+          GROQ_TIMEOUT_SECONDS: '10'

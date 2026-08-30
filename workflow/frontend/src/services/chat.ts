@@ -67,16 +67,29 @@ function persistConversationId(id: string | null | undefined): void {
   }
 }
 
+/**
+ * Devuelve el `userId` para enviar a `/chat`, tomado VERBATIM del claim
+ * JWT `sub` (sin transformación de case). El backend/Biblioteca-MCP compara
+ * de forma case-insensitive, por lo que el valor se preserva tal cual.
+ *
+ * Contrato: el frontend no debe normalizar el case ni el formato de este id;
+ * la normalización es responsabilidad exclusiva del seam de Biblioteca-MCP.
+ * Retorna null cuando no hay sesión activa.
+ */
+export function getChatUserId(): string | null {
+  return useAuthStore.getState().user?.id ?? null
+}
+
 async function sendMessage(message: string): Promise<ChatResponse> {
-  const { user } = useAuthStore.getState()
   const conversationId = getOrCreateConversationId()
+  const userId = getChatUserId()
   const response = await fetch(`${CHATBOT_API_BASE_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Correlation-ID': createCorrelationId(),
     },
-    body: JSON.stringify({ message, userId: user?.id ?? null, conversationId }),
+    body: JSON.stringify({ message, userId, conversationId }),
   })
 
   if (!response.ok) {
