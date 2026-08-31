@@ -33,6 +33,7 @@ public sealed class UpdateBookCommandHandler : ICommandHandler<UpdateBookCommand
         book.Isbn = command.Isbn?.Trim();
         book.Genre = command.Genre?.Trim();
         book.Description = command.Description?.Trim();
+        book.Content = command.Content?.Trim();
         book.OpenLibraryKey = command.OpenLibraryKey?.Trim();
         book.TotalCopies = command.TotalCopies;
         book.AvailableCopies = command.AvailableCopies;

@@ -19,6 +19,7 @@ jobs:
           dotnet-version: '9.0.x'
       - run: dotnet restore
       - run: dotnet build --no-restore --configuration Release
+      - run: dotnet test --no-build --configuration Release
 
   frontend:
     runs-on: ubuntu-latest

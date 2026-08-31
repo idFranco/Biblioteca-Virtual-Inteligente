@@ -3,6 +3,7 @@ import { booksService } from '@/services/books'
 import type { Book, BookFilters } from '@/types'
 import { BookCard } from '@/components/books/BookCard'
 import { CreateRentalDialog } from '@/components/rentals/CreateRentalDialog'
+import { BookRequestDialog } from '@/components/requests/BookRequestDialog'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/ui/Pagination'
 import { useAuthStore } from '@/stores/authStore'
@@ -10,6 +11,7 @@ import { useAuthStore } from '@/stores/authStore'
 export function CatalogPage() {
   const user = useAuthStore((state) => state.user)
   const canRent = user != null && user.permissions.includes('rentals.create')
+  const canRequest = user != null && user.permissions.includes('books.request')
 
   const [books, setBooks] = useState<Book[]>([])
   const [page, setPage] = useState(1)
@@ -18,6 +20,7 @@ export function CatalogPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [rentalBook, setRentalBook] = useState<Book | null>(null)
+  const [requestOpen, setRequestOpen] = useState(false)
   const pageSize = 20
 
   const load = useCallback(async () => {
@@ -115,7 +118,20 @@ export function CatalogPage() {
       {loading ? (
         <p className="text-sm text-sepia">Cargando catálogo...</p>
       ) : books.length === 0 ? (
-        <p className="text-sm text-sepia dark:text-tan">No se encontraron libros con los filtros aplicados.</p>
+        <div className="texture-grain rounded-lg border border-tan/80 bg-card p-8 text-center shadow-sm dark:border-wood">
+          <p className="text-sm text-sepia dark:text-tan">
+            No se encontraron libros con los filtros aplicados.
+          </p>
+          {canRequest && (
+            <button
+              type="button"
+              onClick={() => setRequestOpen(true)}
+              className="mt-4 inline-block rounded-md bg-wine px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-oxide dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
+            >
+              Solicitar título
+            </button>
+          )}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
@@ -130,6 +146,14 @@ export function CatalogPage() {
                     className="rounded-md bg-wine px-3 py-1.5 text-xs font-medium text-paper transition-colors hover:bg-oxide dark:bg-primary dark:text-primary-foreground dark:hover:brightness-110"
                   >
                     Alquilar
+                  </button>
+                ) : canRequest && !book.isAvailable ? (
+                  <button
+                    type="button"
+                    onClick={() => setRequestOpen(true)}
+                    className="rounded-md border border-brass/50 bg-paper px-3 py-1.5 text-xs font-medium text-espresso transition-colors hover:bg-brass/15 dark:bg-wood-dark dark:text-parchment"
+                  >
+                    Solicitar título
                   </button>
                 ) : undefined
               }
@@ -148,6 +172,13 @@ export function CatalogPage() {
             setRentalBook(null)
             void load()
           }}
+        />
+      )}
+
+      {requestOpen && (
+        <BookRequestDialog
+          onClose={() => setRequestOpen(false)}
+          onCreated={() => setRequestOpen(false)}
         />
       )}
     </div>

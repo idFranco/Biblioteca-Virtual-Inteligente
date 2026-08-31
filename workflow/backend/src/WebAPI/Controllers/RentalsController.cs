@@ -38,10 +38,14 @@ public sealed class RentalsController : ControllerBase
     }
 
     [HttpPost("{rentalId:guid}/return")]
-    [Authorize(Policy = "rentals.return")]
+    [Authorize(Policy = "rentals.return_own")]
     public Task<RentalResponse> Return(Guid rentalId, CancellationToken cancellationToken)
     {
-        return _dispatcher.DispatchAsync<RentalResponse>(new ReturnRentalCommand(rentalId), cancellationToken);
+        var command = new ReturnRentalCommand(
+            rentalId,
+            UserId,
+            User.HasClaim("permission", "rentals.return"));
+        return _dispatcher.DispatchAsync<RentalResponse>(command, cancellationToken);
     }
 
     [HttpGet("mine")]

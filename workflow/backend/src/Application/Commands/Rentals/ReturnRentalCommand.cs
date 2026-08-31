@@ -3,4 +3,7 @@ using BibliotecaVirtual.Application.Contracts.Rentals;
 
 namespace BibliotecaVirtual.Application.Commands.Rentals;
 
-public sealed record ReturnRentalCommand(Guid RentalId) : BaseCommand<RentalResponse>;
+public sealed record ReturnRentalCommand(
+    Guid RentalId,
+    Guid RequesterUserId,
+    bool CanReturnAny) : BaseCommand<RentalResponse>;

@@ -8,13 +8,16 @@ Servicio Python independiente en `workflow/chatbot/` que implementa el asistente
 START → reset_turn (limpia transitorios + registra mensaje user)
   → audit_input            (Security-Audit-MCP: auditoría de entrada obligatoria)
       ├─ bloqueada → block_response → audit_output
-      └─ segura   → load_user_state → classify_intent (route_by_state)
-          ├─ recommendation → preferences → internal_catalog → external_enrichment → availability → response → llm_response → audit_output
-          ├─ follow_up     → follow_up → llm_response → audit_output
-          ├─ due_reminder   → due_reminder → audit_output
-          ├─ overdue        → overdue → audit_output
-          ├─ feedback       → feedback → save_feedback → response → llm_response → audit_output
-          └─ status_plain/other → response → llm_response → audit_output
+      └─ segura   → credential_guard (defensa en profundidad, US-021)
+          ├─ guard    → audit_output (rechazo fijo de credenciales)
+          └─ process  → load_user_state → classify_intent (route_by_state)
+              ├─ recommendation → preferences → internal_catalog → external_enrichment → availability → response → llm_response → audit_output
+              ├─ follow_up     → follow_up → llm_response → audit_output
+              ├─ guidance      → guidance → audit_output
+              ├─ due_reminder   → due_reminder → audit_output
+              ├─ overdue        → overdue → audit_output
+              ├─ feedback       → feedback → save_feedback → response → llm_response → audit_output
+              └─ status_plain/other → response → llm_response → audit_output
   audit_output              (Security-Audit-MCP: auditoría de salida obligatoria)
       ├─ sanitizar → sanitize_response → record_turn → END
       └─ limpio   → record_turn → END
@@ -26,8 +29,9 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 |---|---|
 | `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles). Si no es segura, el flujo va a `block_response`. |
 | `block_response` | Respuesta de bloqueo segura sin procesar el mensaje en el grafo. |
+| `credential_guard` | **Nodo determinista de defensa en profundidad (US-021):** corre después de `audit_input` y antes de todo razonamiento LLM. Regex con verbos de petición (`dame|p[áa]same|suministra|proporciona|muestra|revela|give me|send me|...`) + objetos (`jwt|token|password|contrase[nñ]a|credencial(?:es)?|api[ _-]?key|secret|ses[ióo]n|session|cookie`). Si matchea → `guard_triggered=True` y respuesta fija cortés sin credenciales, pasando por `audit_output`. No debilita la auditoría (ADR-008/034). |
 | `load_user_state` | Carga el estado de lectura del usuario (por MCP) con fallback si MCP no está disponible. |
-| `classify_intent` | Clasifica la intención (`recommendation`, `follow_up`, `due_reminder`, `overdue`, `feedback`, `book_query`, `status_plain`, `other`) y enruta por `route_by_state`. |
+| `classify_intent` | Clasifica la intención (`recommendation`, `follow_up`, `guidance`, `due_reminder`, `overdue`, `feedback`, `book_query`, `status_plain`, `other`) y enruta por `route_by_state`. |
 | `preferences` | Carga preferencias de género y perfil de historial vía Biblioteca-MCP (`obtener_preferencias`, `consultar_alquileres_usuario`). |
 | `internal_catalog` | Recomienda por historial/preferencias o consulta el catálogo interno por género (`listar_recomendaciones_por_genero`, `buscar_libros`). |
 | `external_enrichment` | Enriquece/verifica contra Open Library MCP. |
@@ -35,6 +39,7 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 | `due_reminder` / `overdue` | Informan de alquileres por vencer / vencidos según el estado de lectura. |
 | `feedback` / `save_feedback` | Detectan el feedback del usuario y lo persisten vía `registrar_feedback` (Biblioteca-MCP, escritura acotada). |
 | `follow_up` | Resuelve preguntas sobre una recomendación previa («cuéntame más sobre la primera»): busca el selector en el historial, compone la respuesta con los detalles del libro elegido y enriquece con Open Library si hay OLID. |
+| `guidance` | **Guía conversacional para lectores novatos (US-021):** intención `guidance` evaluada antes del catch-all `book_query` y de `smalltalk`. Consulta `buscar_libros(tema, limit=10)` y `obtener_preferencias(user_id)` (try/except → `[]`), construye contexto con matches **reales** (solo `title/author/genre`) y llama `generate_guidance(context_text)` con `guide_prompt.txt`; si el LLM falla → fallback heurístico `_guidance_fallback` que referencia solo títulos reales (nunca inventa). |
 | `response` | Respuesta heurística (fallback y base). |
 | `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). Actúa también en `follow_up`. En la intención **`other` (smalltalk)** usa `generate_smalltalk()` con el prompt dedicado `smalltalk_prompt.txt` (respuesta breve/cortés, nunca recomienda libros ni consulta catálogo); si el LLM no responde, `_greeting_fallback()` garantiza una respuesta breve (US-020/AC#3). |
 | `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. |
@@ -71,6 +76,7 @@ Motivo: la SPA de React se sirve en `:5173` y el chatbot responde en `:8000`; si
 `app/prompts/`:
 - `recommendation_prompt.txt`: redacción de recomendaciones (no inventar títulos/autores/disponibilidad; no mencionar datos personales).
 - `smalltalk_prompt.txt`: respuesta breve/cortés para intención `other` (saludos/despedidas/agradecimientos); prohibe recomendar libros o inventar datos (US-020).
+- `guide_prompt.txt`: guía conversacional para lectores novatos (intención `guidance`, US-021); prohibe inventar títulos, referencia solo libros listados del catálogo, tono de bibliotecario, sugiere géneros accesibles.
 - `classify_intent_missing_book.md`, `external_enrichment_open_library.md`, `book_request_offer.md`, `book_request_confirmed.md`: prompts del flujo de solicitud de libros (US-009).
 
 ## Clientes MCP
@@ -103,4 +109,4 @@ Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUD
 
 ## Tests
 
-`python3 -m pytest -q` (103 tests): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP.
+`python3 -m pytest -q` (103 tests + nuevos de US-021): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP. US-021 añade `tests/test_guidance.py` (clasificación `guidance`, catálogo real, fallback heurístico, sin inventar títulos, regresión smalltalk) y `tests/test_credential_guard.py` (JWT/token/password/EN, respuesta fija, `audit_output` ejecutado, mensaje normal no dispara, auditoría intacta).

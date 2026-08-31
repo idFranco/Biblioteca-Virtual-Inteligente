@@ -11,5 +11,6 @@ public sealed record UpdateBookCommand(
     string? Genre,
     string? Description,
     string? OpenLibraryKey,
+    string? Content,
     int TotalCopies,
     int AvailableCopies) : BaseCommand<BookResponse>;

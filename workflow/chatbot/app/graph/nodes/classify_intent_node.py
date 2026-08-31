@@ -16,6 +16,13 @@ _FEEDBACK_PATTERNS = re.compile(
     r"me gust[oó]|me encant[oó]|no me gust[oó]|no me encant[oó]|recomendad[oa]|excelente|muy buen|mal[oa] recomendaci[oó]n",
     re.IGNORECASE,
 )
+_GUIDANCE_PATTERNS = re.compile(
+    r"lector principiante|principiante|novato|no s[ée] qu[ée] leer|"
+    r"por d[óo]nde empiezo|empezar a leer|primera vez que leo|gu[ií]a(?:me)?|"
+    r"ay[uú]dame a (?:elegir|encontrar|empezar)|estoy empezando|"
+    r"qu[ée] me recomiendas para empezar",
+    re.IGNORECASE,
+)
 _SMALLTALK_PATTERNS = re.compile(
     r"^\s*[¿¡]?(hola|buenas|buen[oa]s? d[ií]as|buen[oa]s? tardes|buen[oa]s? noches|qu[eé] tal|"
     r"c[oó]mo est[aaá]s|qu[eé] haces|gracias|muchas gracias|adi[oó]s|chao|bye|"
@@ -44,10 +51,23 @@ def _looks_like_book_query(message: str) -> bool:
 async def classify_intent_node(state: ChatState) -> ChatState:
     """Clasifica la intención del mensaje con heurísticas ligeras.
 
-    Orden de evaluación: status, follow_up, feedback, recommendation,
+    Orden de evaluación: status, follow_up, guidance, recommendation, feedback,
     smalltalk y book_query. Los patrones de smalltalk se evalúan ANTES del
     catch-all, de modo que un saludo («hola», «buenas tardes») no se convierte
     en una búsqueda en catálogo.
+
+    ``guidance`` (US-021 item 1) captura las peticiones de orientación de un
+    lector principiante («soy un lector principiante», «guíame», «no sé qué
+    leer») y se evalúa ANTES de ``recommendation``: sin este orden,
+    ``_RECOMMENDATION_PATTERNS`` (que incluye «qué leer» y «qué me
+    recomiendas») capturaría frases de guía como «no sé qué leer» o «qué me
+    recomiendas para empezar» antes de llegar a ``guidance`` (AC 1a). Los
+    mensajes de recomendación sencillos («recomiéndame un libro», «¿qué me
+    recomiendas?») no matchean marcadores de guidance y siguen siendo
+    ``recommendation``. ``guidance`` también se evalúa ANTES de smalltalk: los
+    marcadores de guidance son específicos, mientras que saludos/despedidas/
+    agradecimientos y «ayúdame» a secas siguen siendo smalltalk (regresión
+    US-020 intacta).
 
     ``follow_up`` (US-019 AC#4) captura las preguntas sobre una recomendación
     previa («cuéntame más sobre la primera», «háblame de tu recomendación»).
@@ -64,6 +84,8 @@ async def classify_intent_node(state: ChatState) -> ChatState:
         and _FOLLOW_UP_PATTERNS.search(message)
     ):
         state.intent = "follow_up"
+    elif _GUIDANCE_PATTERNS.search(message):
+        state.intent = "guidance"
     elif _RECOMMENDATION_PATTERNS.search(message):
         state.intent = "recommendation"
     elif _FEEDBACK_PATTERNS.search(message):

@@ -10,4 +10,5 @@ public sealed record CreateBookCommand(
     string? Genre,
     string? Description,
     string? OpenLibraryKey,
+    string? Content,
     int TotalCopies) : BaseCommand<BookResponse>;

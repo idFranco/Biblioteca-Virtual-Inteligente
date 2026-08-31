@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { authService } from '@/services/auth'
+import { BookRequestDialog } from '@/components/requests/BookRequestDialog'
 
 export function Header() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
+  const [requestOpen, setRequestOpen] = useState(false)
 
   const canManageBooks = user != null &&
     user.permissions.includes('books.create') &&
@@ -15,6 +18,8 @@ export function Header() {
 
   const canViewOwnRentals = user != null && user.permissions.includes('rentals.view_own')
   const canManageRentals = user != null && user.permissions.includes('rentals.view_all')
+
+  const canRequestBooks = user != null && user.permissions.includes('books.request')
 
   async function handleLogout() {
     await authService.logout()
@@ -60,6 +65,20 @@ export function Header() {
               Mis alquileres
             </Link>
           )}
+          {canRequestBooks && (
+            <>
+              <button
+                type="button"
+                onClick={() => setRequestOpen(true)}
+                className="text-sm text-parchment/85 transition-colors hover:text-brass hover:underline hover:underline-offset-4"
+              >
+                Solicitar título
+              </button>
+              <Link to="/mis-solicitudes" className="text-sm text-parchment/85 transition-colors hover:text-brass hover:underline hover:underline-offset-4">
+                Mis solicitudes
+              </Link>
+            </>
+          )}
           {canManageRentals && (
             <Link to="/admin/rentals" className="text-sm text-parchment/85 transition-colors hover:text-brass hover:underline hover:underline-offset-4">
               Gestión de alquileres
@@ -86,6 +105,13 @@ export function Header() {
           )}
         </nav>
       </div>
+
+      {requestOpen && (
+        <BookRequestDialog
+          onClose={() => setRequestOpen(false)}
+          onCreated={() => setRequestOpen(false)}
+        />
+      )}
     </header>
   )
 }

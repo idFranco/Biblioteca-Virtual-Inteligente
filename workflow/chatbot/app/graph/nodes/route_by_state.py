@@ -7,7 +7,7 @@ def route_by_state(state: ChatState) -> str:
     """Enruta el flujo según la intención clasificada y el estado de lectura.
 
     Devuelve la clave de rama que el grafo mapea a los nodos siguientes:
-    recommendation, due_reminder, overdue, status_plain, feedback,
+    recommendation, due_reminder, overdue, status_plain, feedback, guidance,
     follow_up, book_query u other.
     """
     if state.intent == "recommendation":
@@ -26,6 +26,9 @@ def route_by_state(state: ChatState) -> str:
 
     if state.intent == "feedback":
         return "feedback"
+
+    if state.intent == "guidance":
+        return "guidance"
 
     if state.intent == "book_query":
         return "book_query"

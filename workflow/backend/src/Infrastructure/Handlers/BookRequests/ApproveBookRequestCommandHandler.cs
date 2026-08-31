@@ -51,6 +51,7 @@ public sealed class ApproveBookRequestCommandHandler : ICommandHandler<ApproveBo
             command.Genre ?? request.Genre,
             command.Description ?? request.Description,
             request.OpenLibraryKey,
+            Content: null,
             command.TotalCopies);
 
         var createdBook = await _dispatcher.DispatchAsync<BookResponse>(createBookCommand, cancellationToken);

@@ -30,6 +30,11 @@ public sealed class ReturnRentalCommandHandler : ICommandHandler<ReturnRentalCom
             .FirstOrDefaultAsync(r => r.Id == command.RentalId, cancellationToken)
             ?? throw new KeyNotFoundException($"No se encontró el alquiler con id '{command.RentalId}'.");
 
+        if (!command.CanReturnAny && rental.UserId != command.RequesterUserId)
+        {
+            throw new KeyNotFoundException($"No se encontró el alquiler con id '{command.RentalId}'.");
+        }
+
         if (rental.Status == RentalStatus.Returned)
         {
             throw new ConflictException("El alquiler ya ha sido devuelto.");

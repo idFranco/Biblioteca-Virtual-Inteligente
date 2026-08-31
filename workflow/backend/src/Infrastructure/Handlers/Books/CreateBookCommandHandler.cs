@@ -31,6 +31,7 @@ public sealed class CreateBookCommandHandler : ICommandHandler<CreateBookCommand
             Isbn = command.Isbn?.Trim(),
             Genre = command.Genre?.Trim(),
             Description = command.Description?.Trim(),
+            Content = command.Content?.Trim(),
             OpenLibraryKey = command.OpenLibraryKey?.Trim(),
             TotalCopies = command.TotalCopies,
             AvailableCopies = command.TotalCopies,

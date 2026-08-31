@@ -49,6 +49,7 @@ public sealed class GetBookForReadingQueryHandler : IQueryHandler<GetBookForRead
             book.TotalCopies,
             book.AvailableCopies,
             book.AvailableCopies > 0,
+            book.Content,
             entry.Rental.RentedAt,
             entry.Rental.DueDate);
     }

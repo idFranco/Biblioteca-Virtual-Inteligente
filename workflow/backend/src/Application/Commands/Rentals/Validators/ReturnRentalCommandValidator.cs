@@ -9,5 +9,8 @@ public sealed class ReturnRentalCommandValidator : AbstractValidator<ReturnRenta
     {
         RuleFor(x => x.RentalId)
             .NotEmpty().WithMessage("El alquiler es obligatorio.");
+
+        RuleFor(x => x.RequesterUserId)
+            .NotEmpty().WithMessage("El usuario que solicita la devolución es obligatorio.");
     }
 }

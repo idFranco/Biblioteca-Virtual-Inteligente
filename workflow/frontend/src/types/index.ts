@@ -32,6 +32,8 @@ export interface Book {
 export interface BookForReading extends Book {
   rentedAt: string
   dueDate: string
+  /** Contenido textual del libro (puede estar vacío si el ejemplar no lo incluye). */
+  content: string | null
 }
 
 export interface PagedBooks {

@@ -4,9 +4,11 @@ using BibliotecaVirtual.Application.Contracts.Rentals;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
 using BibliotecaVirtual.Domain.Enums;
+using BibliotecaVirtual.Infrastructure.Common;
 using BibliotecaVirtual.Infrastructure.Data;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace BibliotecaVirtual.Infrastructure.Handlers.Rentals;
 
@@ -14,11 +16,16 @@ public sealed class CreateRentalCommandHandler : ICommandHandler<CreateRentalCom
 {
     private readonly BibliotecaDbContext _context;
     private readonly IValidator<CreateRentalCommand> _validator;
+    private readonly IConfiguration _configuration;
 
-    public CreateRentalCommandHandler(BibliotecaDbContext context, IValidator<CreateRentalCommand> validator)
+    public CreateRentalCommandHandler(
+        BibliotecaDbContext context,
+        IValidator<CreateRentalCommand> validator,
+        IConfiguration configuration)
     {
         _context = context;
         _validator = validator;
+        _configuration = configuration;
     }
 
     public async Task<RentalResponse> HandleAsync(
@@ -31,15 +38,31 @@ public sealed class CreateRentalCommandHandler : ICommandHandler<CreateRentalCom
             .FirstOrDefaultAsync(b => b.Id == command.BookId, cancellationToken)
             ?? throw new KeyNotFoundException($"No se encontró el libro con id '{command.BookId}'.");
 
-        var hasActiveDuplicate = await _context.Rentals.AnyAsync(
-            r => r.BookId == command.BookId &&
-                 r.UserId == command.UserId &&
-                 r.Status == RentalStatus.Active,
-            cancellationToken);
+        var normalizedTitle = book.Title.ToLower();
 
-        if (hasActiveDuplicate)
+        var hasActiveDuplicateTitle = await (
+            from activeRental in _context.Rentals
+            join candidate in _context.Books on activeRental.BookId equals candidate.Id
+            where activeRental.UserId == command.UserId
+                  && activeRental.Status == RentalStatus.Active
+                  && candidate.Title.ToLower() == normalizedTitle
+            select activeRental.Id)
+            .AnyAsync(cancellationToken);
+
+        if (hasActiveDuplicateTitle)
         {
             throw new ConflictException("Ya tienes un alquiler activo de este libro.");
+        }
+
+        var maxActivePerUser = _configuration.GetInt("Rentals:MaxActivePerUser", 5);
+
+        var activeCount = await _context.Rentals.CountAsync(
+            r => r.UserId == command.UserId && r.Status == RentalStatus.Active,
+            cancellationToken);
+
+        if (activeCount >= maxActivePerUser)
+        {
+            throw new ConflictException($"Has alcanzado el máximo de {maxActivePerUser} alquileres activos.");
         }
 
         var dueDate = command.DueDate ?? DateTime.UtcNow.AddDays(14);
