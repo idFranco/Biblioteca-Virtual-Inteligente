@@ -103,10 +103,25 @@ Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUD
 
 ## API
 
-- `GET /health` → `{"status": "healthy"}`.
+- `GET /health` → `{"status": "healthy", "ollama": "ok" | "down", "groq": "ok" | "down"}` con HTTP 200 si está sano, 503 `{"status": "degraded", ...}` si alguna dependencia falla (US-023).
 - `POST /chat` (`{message, userId, conversationId}` + header `X-Correlation-ID`) → `ChatResponse` con `message`, `recommendations`, `action_offer` y `conversation_id`. La correlación se propaga a la auditoría (US-009/012).
 - **Contrato `userId` (ADR-037):** el frontend envía el `userId` **verbatim** del claim JWT `sub`, sin transformación de case. `userId` puede llegar en mayúsculas o minúsculas; Biblioteca-MCP compara de forma case-insensitive (`UPPER(UserId) = UPPER(?)`), por lo que la recomendación personalizada funciona con cualquier case.
 
+## Validación de arranque (US-023)
+
+El contenedor del chatbot valida las dependencias al **arrancar** (fail-fast, ADR-025): si el modelo local Ollama no está activo o no existe conexión a GROQ, el proceso finaliza con código 1 y un diagnóstico explícito, por lo que `docker compose up --build` queda bloqueado con el error en los logs del servicio.
+
+```sh
+docker compose up --build          # falla si Ollama/GROQ no responden con logs claros
+docker compose ps                  # chatbot healthy/unhealthy
+curl localhost:8000/health         # 200 {"status":"healthy","ollama":"ok","groq":"ok"}
+```
+
+- `python -m app.startup_checks` (entrada del Dockerfile) ejecuta `check_ollama()` (`GET $OLLAMA_BASE_URL/models`, el modelo `$OLLAMA_MODEL` debe estar en la lista) y `check_groq()` (`GET $GROQ_MODELS_URL` con Bearer `$API_KEY_GROQ`; un 401/403 se reporta como clave inválida). Sin API key configurada, GROQ se marca como `down` (degraded), no bloquea el arranque, preservando el fallback a Ollama (US-014).
+- `/health` usa `probe_health()` (TTL 30 s, timeouts de sonda 3 s): para reportar el estado en vivo sin esperar el ciclo de salud de compose.
+- `python -m app.healthcheck` es la sonda de `docker-compose.yml` (`interval: 30s`, `timeout: 10s`, `retries: 3`, `start_period: 30s`): GET a `http://127.0.0.1:8000/health`, exit 0 si 200.
+- En runtime el fail-fast no bloquea las peticiones: si una dependencia cae después de arrancar, el sistema degrada a `503` y el planificador elige el mejor modelo disponible (ADR-023, heurística).
+
 ## Tests
 
-`python3 -m pytest -q` (103 tests + nuevos de US-021): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP. US-021 añade `tests/test_guidance.py` (clasificación `guidance`, catálogo real, fallback heurístico, sin inventar títulos, regresión smalltalk) y `tests/test_credential_guard.py` (JWT/token/password/EN, respuesta fija, `audit_output` ejecutado, mensaje normal no dispara, auditoría intacta).
+`python3 -m pytest -q` (150 tests): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP. US-021 añade `tests/test_guidance.py` (clasificación `guidance`, catálogo real, fallback heurístico, sin inventar títulos, regresión smalltalk) y `tests/test_credential_guard.py` (JWT/token/password/EN, respuesta fija, `audit_output` ejecutado, mensaje normal no dispara, auditoría intacta). US-023 añade `tests/test_startup_checks.py` (checks Ollama/GROQ y sonda con caché mediante cliente `httpx` simulado), `tests/test_health.py` (`/health` 200/503) y `tests/test_healthcheck.py` (sonda de compose exit/informa).
