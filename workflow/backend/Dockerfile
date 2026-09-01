@@ -6,6 +6,7 @@ COPY src/Domain/BibliotecaVirtual.Domain.csproj src/Domain/
 COPY src/Application/BibliotecaVirtual.Application.csproj src/Application/
 COPY src/Infrastructure/BibliotecaVirtual.Infrastructure.csproj src/Infrastructure/
 COPY src/WebAPI/BibliotecaVirtual.WebAPI.csproj src/WebAPI/
+COPY tests/BibliotecaVirtual.Tests/BibliotecaVirtual.Tests.csproj tests/BibliotecaVirtual.Tests/
 RUN dotnet restore
 
 COPY . .
