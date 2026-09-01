@@ -5,9 +5,11 @@ import uuid
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.graph.build_graph import graph
 from app.graph.state import ChatState
 from app.schemas import BookRecommendation, ChatRequest, ChatResponse
+from app.startup_checks import probe_health
 
 
 def _cors_origins() -> list[str]:
@@ -86,8 +88,12 @@ def _conversation_id(requested: str | None) -> str:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "healthy"}
+async def health() -> JSONResponse:
+    """Liveness + dependencias LLM reales: 200 healthy / 503 degraded (US-023)."""
+    probe = await probe_health()
+    if probe.get("ollama") == "ok" and probe.get("groq") == "ok":
+        return JSONResponse({"status": "healthy", **probe})
+    return JSONResponse({"status": "degraded", **probe}, status_code=503)
 
 
 @app.post("/chat")

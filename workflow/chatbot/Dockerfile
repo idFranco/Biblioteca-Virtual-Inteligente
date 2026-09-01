@@ -19,4 +19,4 @@ COPY workflow/chatbot /app
 COPY workflow/mcp /app/workflow/mcp
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn main:app --host \"$HOST\" --port \"$PORT\""]
+CMD ["sh", "-c", "python -m app.startup_checks && exec uvicorn main:app --host \"$HOST\" --port \"$PORT\""]
