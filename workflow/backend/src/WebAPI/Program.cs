@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text;
 using BibliotecaVirtual.Application.Interfaces;
 using BibliotecaVirtual.Domain.Entities;
@@ -73,6 +74,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("permission", "rentals.create"));
     options.AddPolicy("rentals.return", policy =>
         policy.RequireClaim("permission", "rentals.return"));
+    options.AddPolicy("rentals.return_own", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("permission", "rentals.return") ||
+            context.User.HasClaim("permission", "rentals.view_own")));
     options.AddPolicy("rentals.view_own", policy =>
         policy.RequireClaim("permission", "rentals.view_own"));
     options.AddPolicy("rentals.view_all", policy =>
@@ -139,6 +144,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BibliotecaDbContext>();
     db.Database.EnsureCreated();
+    await AlignSchemaAsync(db);
     await SeedRolesAsync(scope.ServiceProvider);
     await SeedAdministratorAsync(scope.ServiceProvider, builder.Configuration);
 
@@ -271,4 +277,35 @@ static string? FindWorkflowDatabaseDirectory()
     }
 
     return null;
+}
+
+static async Task AlignSchemaAsync(BibliotecaDbContext db)
+{
+    var connection = db.Database.GetDbConnection();
+    if (connection.State != ConnectionState.Open)
+    {
+        await connection.OpenAsync();
+    }
+
+    var hasContentColumn = false;
+    await using (var command = connection.CreateCommand())
+    {
+        command.CommandText = "PRAGMA table_info(Books)";
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            if (string.Equals(reader.GetString(1), "Content", StringComparison.OrdinalIgnoreCase))
+            {
+                hasContentColumn = true;
+                break;
+            }
+        }
+    }
+
+    if (!hasContentColumn)
+    {
+        await using var alterCommand = connection.CreateCommand();
+        alterCommand.CommandText = "ALTER TABLE Books ADD COLUMN Content TEXT";
+        await alterCommand.ExecuteNonQueryAsync();
+    }
 }

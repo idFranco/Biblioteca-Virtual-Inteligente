@@ -10,5 +10,6 @@ public sealed record SeedBookDto(
     string? Genre,
     string? Description,
     string? OpenLibraryKey,
+    string? Content,
     int TotalCopies,
     int AvailableCopies);

@@ -26,6 +26,7 @@ class ChatState:
     feedback_payload: dict[str, Any] | None = None
     blocked: bool = False
     sanitized: bool = False
+    guard_triggered: bool = False
     llm_used: bool = False
     response: str | None = None
     llm_messages: list[dict[str, str]] = field(default_factory=list)

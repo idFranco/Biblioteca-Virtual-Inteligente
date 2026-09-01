@@ -11,6 +11,7 @@ import { AlquileresAdminPage } from '@/pages/AlquileresAdminPage'
 import { GestionLibroPage } from '@/pages/GestionLibroPage'
 import { HomePage } from '@/pages/HomePage'
 import { SalaLecturaPage } from '@/pages/SalaLecturaPage'
+import { MisSolicitudesPage } from '@/pages/MisSolicitudesPage'
 
 export const router = createBrowserRouter([
   {
@@ -70,6 +71,14 @@ export const router = createBrowserRouter([
         element: (
           <PermissionGuard permissions={['rentals.view_own', 'books.read']}>
             <SalaLecturaPage />
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: 'mis-solicitudes',
+        element: (
+          <PermissionGuard permissions={['books.request']}>
+            <MisSolicitudesPage />
           </PermissionGuard>
         ),
       },

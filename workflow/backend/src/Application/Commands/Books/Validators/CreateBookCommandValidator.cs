@@ -24,6 +24,9 @@ public sealed class CreateBookCommandValidator : AbstractValidator<CreateBookCom
         RuleFor(x => x.Description)
             .MaximumLength(2000).WithMessage("La descripción no puede superar los 2000 caracteres.");
 
+        RuleFor(x => x.Content)
+            .MaximumLength(100000).WithMessage("El contenido no puede superar los 100000 caracteres.");
+
         RuleFor(x => x.OpenLibraryKey)
             .MaximumLength(64).WithMessage("La clave de Open Library no puede superar los 64 caracteres.");
 

@@ -12,4 +12,7 @@
   <Folder Name="/src/WebAPI/">
     <Project Path="src/WebAPI/BibliotecaVirtual.WebAPI.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BibliotecaVirtual.Tests/BibliotecaVirtual.Tests.csproj" />
+  </Folder>
 </Solution>

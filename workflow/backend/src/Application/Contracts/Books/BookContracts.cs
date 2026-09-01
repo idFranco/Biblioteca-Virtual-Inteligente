@@ -23,6 +23,7 @@ public sealed record BookForReadingResponse(
     int TotalCopies,
     int AvailableCopies,
     bool IsAvailable,
+    string? Content,
     DateTime RentedAt,
     DateTime DueDate);
 
@@ -33,6 +34,7 @@ public sealed record CreateBookRequest(
     string? Genre,
     string? Description,
     string? OpenLibraryKey,
+    string? Content,
     int TotalCopies);
 
 public sealed record UpdateBookRequest(
@@ -42,6 +44,7 @@ public sealed record UpdateBookRequest(
     string? Genre,
     string? Description,
     string? OpenLibraryKey,
+    string? Content,
     int TotalCopies,
     int AvailableCopies);
 

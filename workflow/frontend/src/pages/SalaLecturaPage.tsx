@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { BookOpen } from 'lucide-react'
 import { booksService } from '@/services/books'
 import type { BookForReading } from '@/types'
 import { BookCover } from '@/components/books/BookCover'
@@ -118,9 +119,33 @@ export function SalaLecturaPage() {
           <div className="ornament-rule mt-3 max-w-md">
             <span className="ornament-diamond" />
           </div>
-          <p className="mt-5 max-w-prose font-serif text-base leading-8 text-espresso dark:text-parchment">
-            {book.description ?? 'Este ejemplar no incluye contenido textual disponible.'}
-          </p>
+
+          {book.content ? (
+            <div className="texture-grain mt-6 rounded-lg border border-tan/70 bg-paper p-6 shadow-[0_1px_3px_rgba(51,36,26,0.12),0_10px_24px_-12px_rgba(51,36,26,0.24)] sm:p-8 dark:border-wood dark:bg-wood-dark">
+              <p className="mx-auto max-w-prose whitespace-pre-line font-serif text-base leading-relaxed text-espresso dark:text-parchment">
+                {book.content}
+              </p>
+            </div>
+          ) : (
+            <div className="texture-grain mt-6 rounded-lg border border-tan/70 bg-paper p-8 text-center shadow-[0_1px_3px_rgba(51,36,26,0.12),0_10px_24px_-12px_rgba(51,36,26,0.24)] dark:border-wood dark:bg-wood-dark">
+              <span
+                aria-hidden="true"
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-brass/40 bg-brass/10 text-brass"
+              >
+                <BookOpen className="size-7" />
+              </span>
+              <div className="ornament-rule mx-auto mt-5 max-w-xs">
+                <span className="ornament-diamond" />
+              </div>
+              <p className="mx-auto mt-5 max-w-prose font-serif text-base leading-relaxed text-espresso dark:text-parchment">
+                {book.description ??
+                  'Este ejemplar no incluye contenido textual disponible en la sala de lectura.'}
+              </p>
+              <p className="mx-auto mt-4 max-w-prose text-sm text-sepia dark:text-tan">
+                Mientras tanto, puedes consultar la ficha del libro o devolverlo cuando termines.
+              </p>
+            </div>
+          )}
 
           <div className="mt-8">
             <Link

@@ -11,10 +11,12 @@ from app.graph.nodes.audit_output_node import audit_output_node
 from app.graph.nodes.availability_node import availability_node
 from app.graph.nodes.block_response_node import block_response_node
 from app.graph.nodes.classify_intent_node import classify_intent_node
+from app.graph.nodes.credential_guard_node import credential_guard_node
 from app.graph.nodes.external_enrichment_node import external_enrichment_node
 from app.graph.nodes.extract_query_node import extract_query_node
 from app.graph.nodes.feedback_node import feedback_node
 from app.graph.nodes.follow_up_node import follow_up_node
+from app.graph.nodes.guidance_node import guidance_node
 from app.graph.nodes.internal_catalog_node import internal_catalog_node
 from app.graph.nodes.llm_response_node import llm_response_node
 from app.graph.nodes.load_user_state_node import load_user_state_node
@@ -54,25 +56,34 @@ def _route_intent(state: ChatState) -> str:
     return "blocked" if state.blocked else "process"
 
 
+def _route_guard(state: ChatState) -> str:
+    return "guard" if state.guard_triggered else "process"
+
+
 def _route_output(state: ChatState) -> str:
     return "sanitize" if state.sanitized else "record"
 
 
 def build_graph():
-    """Construye el grafo LangGraph del chatbot (flujo US-012 + US-019).
+    """Construye el grafo LangGraph del chatbot (flujo US-012 + US-019 + US-021).
 
     Auditoría obligatoria: Security-Audit-MCP antes (audit_input) y después
-    (audit_output) de procesar. Memoria conversacional: el turno nuevo comienza
-    en ``reset_turn`` (limpia transitorios + registra el mensaje user) y
-    termina en ``record_turn`` (registra la respuesta assistant). Recomendación
-    personalizada por historial/preferencias con validación cruzada Open
-    Library.
+    (audit_output) de procesar. Defensa en profundidad (US-021): tras
+    ``audit_input`` se ejecuta ``credential_guard`` (rechazo determinista de
+    peticiones de credenciales, sin razonamiento LLM); su respuesta pasa por
+    ``audit_output`` igual que el resto. Memoria conversacional: el turno nuevo
+    comienza en ``reset_turn`` (limpia transitorios + registra el mensaje user)
+    y termina en ``record_turn`` (registra la respuesta assistant).
+    Recomendación personalizada por historial/preferencias con validación
+    cruzada Open Library y guía conversacional para lectores principiantes
+    (intención ``guidance``).
     """
     workflow = StateGraph(ChatState)
 
     workflow.add_node("reset_turn", reset_turn_node)
     workflow.add_node("audit_input", audit_input_node)
     workflow.add_node("block_response", block_response_node)
+    workflow.add_node("credential_guard", credential_guard_node)
     workflow.add_node("load_user_state", load_user_state_node)
     workflow.add_node("classify_intent", classify_intent_node)
     workflow.add_node("preferences", preferences_node)
@@ -86,6 +97,7 @@ def build_graph():
     workflow.add_node("overdue", overdue_node)
     workflow.add_node("feedback", feedback_node)
     workflow.add_node("follow_up", follow_up_node)
+    workflow.add_node("guidance", guidance_node)
     workflow.add_node("save_feedback", save_feedback_node)
     workflow.add_node("audit_output", audit_output_node)
     workflow.add_node("sanitize_response", sanitize_response_node)
@@ -96,7 +108,12 @@ def build_graph():
     workflow.add_conditional_edges(
         "audit_input",
         _route_intent,
-        {"blocked": "block_response", "process": "load_user_state"},
+        {"blocked": "block_response", "process": "credential_guard"},
+    )
+    workflow.add_conditional_edges(
+        "credential_guard",
+        _route_guard,
+        {"guard": "audit_output", "process": "load_user_state"},
     )
     workflow.add_edge("block_response", "audit_output")
     workflow.add_edge("load_user_state", "classify_intent")
@@ -111,6 +128,7 @@ def build_graph():
             "status_plain": "response",
             "feedback": "feedback",
             "follow_up": "follow_up",
+            "guidance": "guidance",
             "book_query": "extract_query",
             "other": "response",
         },
@@ -122,6 +140,7 @@ def build_graph():
     workflow.add_edge("feedback", "save_feedback")
     workflow.add_edge("save_feedback", "response")
     workflow.add_edge("follow_up", "llm_response")
+    workflow.add_edge("guidance", "audit_output")
 
     workflow.add_edge("extract_query", "internal_catalog")
     workflow.add_edge("internal_catalog", "external_enrichment")

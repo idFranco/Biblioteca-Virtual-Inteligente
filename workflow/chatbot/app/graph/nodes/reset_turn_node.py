@@ -18,6 +18,7 @@ _TRANSIENT_FIELDS = (
     "feedback_payload",
     "blocked",
     "sanitized",
+    "guard_triggered",
     "llm_used",
     "response",
     "llm_messages",

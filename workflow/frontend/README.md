@@ -38,6 +38,20 @@ Las URLs base se leen de variables de entorno **sin valor por defecto** (`src/co
 - **Mis alquileres (`/mis-alquileres`):** solo con `rentals.view_own` (el rol Admin no lo tiene).
 - La seguridad real la garantiza el backend; la UI solo oculta/condiciona por permisos (ADR-003).
 
+## Sala de lectura con contenido (US-021)
+
+`pages/SalaLecturaPage.tsx` renderiza el **contenido real** del libro alquilado (`BookForReadingResponse.content`, ADR-041) con tipografía de lectura: fondo "papel" (`texture-grain`, `bg-paper dark:bg-wood-dark`), columna `max-w-prose` centrada, `font-serif`, `whitespace-pre-line`, `leading-relaxed`. Cuando el libro **no tiene `Content`**, se muestra un **placeholder informativo on-brand** (ornamento + `BookOpen` + `book.description`) — nunca una pantalla en blanco. Mantiene la ficha superior y el botón "Volver a mis alquileres".
+
+## Devolución self-service en Mis alquileres (US-021)
+
+`pages/MisAlquileresPage.tsx` muestra un botón **«Devolver»** por fila cuando `Status == Active | Overdue` y el usuario puede devolver: `canReturn = permissions.includes('rentals.return') || permissions.includes('rentals.view_own')` (política `rentals.return_own`, ADR-039). Incluye confirmación (`window.confirm`), estado `returningId` con "Devolviendo..." y refresco de stock tras `rentalsService.returnRental(rental.id)`. `AlquileresAdminPage` (staff) permanece intacta.
+
+## Solicitar título + Mis solicitudes (US-021)
+
+- **Diálogo `BookRequestDialog`** (`components/requests/`): campos título ⚠, autor ⚠, ISBN opcional; submit → `bookRequestsService.createRequest({title, author, isbn})`; estados `submitting`/`error`; estética on-brand. Entradas en: (a) el **estado vacío de búsqueda** del catálogo (`books.length === 0`), (b) la **ficha de un libro sin copias disponibles**, (c) un **enlace en el Header** visible con `books.request` (los 3 roles).
+- **Mis solicitudes (`/mis-solicitudes`):** página ligera `pages/MisSolicitudesPage.tsx` que consume `GET /api/book-requests/mine` con badges de estado Pending/Approved/Rejected; ruta protegida por `books.request`.
+- Reutiliza los endpoints backend existentes (sin cambios backend, ADR-042); la prevención de duplicados pendientes (409) se mantiene.
+
 ## Chatbot (ChatWidget)
 
 `src/components/chat/ChatWidget.tsx` + `src/stores/chatWidgetStore.ts`:

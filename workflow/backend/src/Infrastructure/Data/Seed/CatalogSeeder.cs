@@ -122,6 +122,7 @@ public sealed class CatalogSeeder : ICatalogSeeder
         Isbn = dto.Isbn,
         Genre = dto.Genre,
         Description = dto.Description,
+        Content = dto.Content,
         OpenLibraryKey = dto.OpenLibraryKey,
         TotalCopies = dto.TotalCopies,
         AvailableCopies = dto.AvailableCopies,

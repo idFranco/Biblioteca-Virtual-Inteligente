@@ -34,9 +34,14 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "credential_request",
         re.compile(
-            r"(?:d[ií]me|revela|muestra|pasa|dame|da[mr]e|cu[aá]l es) (?:la |el |los |las )?"
-            r"(?:password|contrase[nñ]a)"
-            r"|credencial(?:es)?|api[ _-]?key|secreto|secret",
+            r"(?:d[ií]me|revel(?:a|ar|e|as)|mu[ée]str(?:a|ar|e|as)|pas(?:a|ar)|"
+            r"p[áa]same|dame|da[mr]e|cu[aá]l es|suministr(?:a|ar|e|as)|"
+            r"proporcion(?:a|ar|e|as)|facilit(?:a|ar|e|as)|env[ií](?:a|ar|e|as)|"
+            r"compart(?:e|ir|a|as)|give me|send me|show me)(?:me|te|le|nos|les|se)?"
+            r"(?: la | el | los | las | tu | su | mi | mis | de [mt]i |"
+            r" your | my | our | their | his | her )?"
+            r"(?:password|contrase[nñ]a|jwt|token|sesi[óo]n|session|cookie)"
+            r"|credencial(?:es)?|api[ _-]?key|secreto|secret|password|contrase[nñ]a",
             re.IGNORECASE,
         ),
     ),

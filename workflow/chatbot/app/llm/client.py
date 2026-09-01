@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from app.prompts import load_recommendation_prompt, load_smalltalk_prompt
+from app.prompts import load_guide_prompt, load_recommendation_prompt, load_smalltalk_prompt
 from app.utils.pii_masker import mask_pii
 
 
@@ -144,6 +144,32 @@ async def generate_smalltalk(user_message: str) -> str | None:
 
     prompt = load_smalltalk_prompt().format(
         context=mask_pii(user_message).strip() or "No hay datos."
+    )
+
+    try:
+        response = await model.ainvoke([{"role": "user", "content": prompt}])
+        text = getattr(response, "content", None)
+        if isinstance(text, str) and text.strip():
+            return text.strip()
+        return None
+    except Exception:
+        return None
+
+
+async def generate_guidance(context_text: str) -> str | None:
+    """Genera una guía conversacional para lectores principiantes (US-021).
+
+    Espejo de ``generate_recommendation``: Ollama local con prioridad sobre la
+    nube, contexto enmascarado (PII) y ``None`` si el LLM no está disponible o
+    falla (el grafo usa el fallback heurístico, ADR-023). El prompt prohíbe
+    inventar títulos: solo referencia los libros reales listados en el contexto.
+    """
+    model = _langchain_model()
+    if model is None:
+        return None
+
+    prompt = load_guide_prompt().format(
+        context=mask_pii(context_text).strip() or "No hay datos."
     )
 
     try:

@@ -89,11 +89,11 @@ El `Dockerfile` no fija variables por defecto; `docker-compose.yml` las inyecta 
 | `POST` | `/api/books` | `books.create` | Crear libro |
 | `PUT` | `/api/books/{id}` | `books.update` | Actualizar libro |
 | `DELETE` | `/api/books/{id}` | `books.delete` | Eliminar libro |
-| `GET` | `/api/books/{bookId}/reading` | `books.read` + alquiler activo | Contenido de lectura (Sala de lectura) |
-| `POST` | `/api/rentals` | `rentals.create` | Crear alquiler con fecha límite |
+| `GET` | `/api/books/{bookId}/reading` | `books.read` + alquiler activo | Contenido de lectura (Sala de lectura) — incluye `content` (US-021) |
+| `POST` | `/api/rentals` | `rentals.create` | Crear alquiler con fecha límite (reglas de negocio US-021: sin duplicado de título activo + tope de concurrentes) |
 | `GET` | `/api/rentals/mine` | `rentals.view_own` | Alquileres del usuario autenticado |
 | `GET` | `/api/rentals` | `rentals.view_all` | Todos los alquileres (paginado) |
-| `PATCH` | `/api/rentals/{id}/return` | `rentals.return` | Registrar devolución y liberar stock |
+| `PATCH` | `/api/rentals/{id}/return` | `rentals.return_own` | Registrar devolución y liberar stock (self-service por propiedad, US-021) |
 | `POST` | `/api/book-requests` | `books.request` | Solicitar copia de un libro no disponible |
 | `GET` | `/api/book-requests` | `books.manage` | Solicitudes (admin/bibliotecario) |
 | `PATCH` | `/api/book-requests/{id}/approve` | `books.manage` | Aprobar solicitud y dar de alta el libro |
@@ -107,8 +107,34 @@ El `Dockerfile` no fija variables por defecto; `docker-compose.yml` las inyecta 
 
 `RentalDueNotificationService` es un `BackgroundService` que por cada ciclo despacha `GenerateDueDateNotificationsCommand` (CQRS) y detecta alquileres **activos** con `0 < DueDate - Now <= 2 días`. Idempotente por índice único sobre `RentalId`. Intervalo configurable por `NOTIFICATIONS_CHECK_INTERVAL_SECONDS`.
 
+## Reglas de negocio de alquiler (US-021)
+
+Forzadas en el **backend** (`CreateRentalCommandHandler`, fuente de verdad, no solo UI):
+
+1. **Sin duplicado de título activo:** un usuario no puede tener un alquiler activo de un libro del **mismo título** que otro alquiler activo suyo (comparación case-insensitive `ToLower()`, sin importar si son filas `Book` distintas). → `409 Conflict` "Ya tienes un alquiler activo de este libro." y **no decrementa stock**.
+2. **Tope de alquileres activos concurrentes:** máximo **5** por usuario (un `Overdue` cuenta como activo), configurable vía `Rentals__MaxActivePerUser` (default 5). Al superarlo → `409 Conflict` indicando el límite y **no decrementa stock**.
+
+Sin cambios de contrato de API (nuevo 409) ni de índice DB (tablas pequeñas; el handler es la fuente de verdad). Cubierto por tests xUnit del proyecto `tests/BibliotecaVirtual.Tests`.
+
+## Devolución self-service por propiedad (US-021)
+
+El endpoint `PATCH /api/rentals/{id}/return` usa la política **`rentals.return_own`** = `rentals.return` **o** `rentals.view_own`:
+
+- **Usuario** (con `rentals.view_own`): puede devolver **solo su propio** alquiler desde "Mis alquileres".
+- **Bibliotecario/Admin** (con `rentals.return`): pueden devolver **cualquier** alquiler.
+- **Anti-enumeración:** si un usuario intenta devolver un alquiler ajeno sin `rentals.return`, el handler lanza `KeyNotFoundException` → **404** (no revela la existencia del alquiler ajeno).
+- `ReturnRentalCommand` gana `RequesterUserId` y `CanReturnAny`; solo el controller construye el comando. Resto del flujo intacto (stock +1, `ReturnedAt`, `Status` → `Overdue` si vencido).
+
+## Contenido de lectura (US-021)
+
+- `Book.Content` (TEXT, opcional) expuesto en `BookForReadingResponse.content` y en `CreateBookRequest`/`UpdateBookRequest` (opcional, `MaximumLength(100000)`).
+- **Alineación de esquema idempotente sin regenerar la BD runtime:** helper en `Program.cs` tras `EnsureCreated` que ejecuta `PRAGMA table_info(Books)` y, si falta la columna, `ALTER TABLE Books ADD COLUMN Content TEXT` (no destructivo).
+- Seed opcional con extractos de dominio público en `seed-books.json`.
+- El frontend renderiza el contenido con tipografía de lectura y un placeholder on-brand cuando está vacío (nunca pantalla en blanco).
+
 ## Tests / validación
 
 ```bash
 dotnet build BibliotecaVirtual.slnx
+dotnet test BibliotecaVirtual.slnx   # proyecto tests/BibliotecaVirtual.Tests (US-021)
 ```

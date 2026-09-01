@@ -137,7 +137,7 @@ El detalle técnico de cada componente vive en su propio README:
 | Frontend (React) | [`workflow/frontend/README.md`](workflow/frontend/README.md) — env, roles/UX, chatbot, tema |
 | Chatbot (FastAPI) | [`workflow/chatbot/README.md`](workflow/chatbot/README.md) — grafo, LLM, clientes MCP |
 | Servidores MCP | [`workflow/mcp/README.md`](workflow/mcp/README.md) — configuración y herramientas |
-| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-037 |
+| Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-042 |
 
 ---
 
@@ -221,6 +221,7 @@ La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta c�
 - **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
 - **US-015/016/017/018/019:** CI sobre todo el stack (ADR-028), Ollama local para recomendaciones y GROQ solo auditoría (ADR-029), 3 MCP empaquetados en la imagen del chatbot (ADR-030), CORS del chatbot (ADR-031), Ollama nativo del host (ADR-032), rutas de BD por `env_file` + reintento Open Library (ADR-033), auditoría degradada sin `[REDACTED]` (ADR-034) y memoria conversacional con `follow_up` (ADR-035).
 - **US-020 (post-E2E):** contrato `userId` case-insensitive (ADR-037), modelo auditoría GROQ final `openai/gpt-oss-20b` (ADR-036), smalltalk con prompt dedicado (sin recomendaciones inventadas), limpieza de residuo E2E en SQLite runtime y propagación de `GROQ_MODEL`/contrato `userId` a compose/CI/docs.
+- **US-021 (observaciones de runtime):** guía conversacional del chatbot para lectores novatos (intención `guidance` + `guide_prompt.txt`) y rechazo determinista de JWT/credenciales (nodo `credential_guard`, ADR-040); restricción de alquileres en backend — sin duplicado de título activo + tope de 5 concurrentes (`Rentals__MaxActivePerUser`, ADR-038); sala de lectura con contenido real (`Book.Content` + alineación de esquema idempotente, ADR-041); devolución self-service por propiedad (`rentals.return_own`, ADR-039); y superficie de UI para solicitar títulos (diálogo + "Mis solicitudes", ADR-042).
 
 Detalle técnico de cada historia en los READMEs de módulo y en `workflow/opencode/user-stories/`.
 

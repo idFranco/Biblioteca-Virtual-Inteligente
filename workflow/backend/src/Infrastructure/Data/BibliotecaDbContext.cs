@@ -31,6 +31,7 @@ public sealed class BibliotecaDbContext : IdentityDbContext<User, Role, Guid>
             entity.Property(e => e.Isbn).HasMaxLength(20);
             entity.Property(e => e.Genre).HasMaxLength(100);
             entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Content).HasColumnType("TEXT");
             entity.Property(e => e.OpenLibraryKey).HasMaxLength(64);
         });
 

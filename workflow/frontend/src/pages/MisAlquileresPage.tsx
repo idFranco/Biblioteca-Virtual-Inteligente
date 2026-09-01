@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { rentalsService } from '@/services/rentals'
+import { useAuthStore } from '@/stores/authStore'
 import type { Rental, RentalStatus } from '@/types'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/ui/Pagination'
@@ -24,12 +25,18 @@ const statusVariants: Record<RentalStatus, 'active' | 'returned' | 'overdue'> = 
 }
 
 export function MisAlquileresPage() {
+  const user = useAuthStore((state) => state.user)
+  const canReturn =
+    user != null &&
+    (user.permissions.includes('rentals.return') || user.permissions.includes('rentals.view_own'))
+
   const [rentals, setRentals] = useState<Rental[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [statusFilter, setStatusFilter] = useState<RentalStatus | ''>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [returningId, setReturningId] = useState<string | null>(null)
   const pageSize = 20
 
   const load = useCallback(async () => {
@@ -49,6 +56,22 @@ export function MisAlquileresPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  async function handleReturn(rental: Rental) {
+    if (!window.confirm(`¿Devolver "${rental.bookTitle}"? El préstamo quedará cerrado.`)) {
+      return
+    }
+    setReturningId(rental.id)
+    setError(null)
+    try {
+      await rentalsService.returnRental(rental.id)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo registrar la devolución.')
+    } finally {
+      setReturningId(null)
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -92,6 +115,7 @@ export function MisAlquileresPage() {
                 <th className="px-4 py-2 text-left font-medium text-sepia">Fecha de devolución</th>
                 <th className="px-4 py-2 text-center font-medium text-sepia">Estado</th>
                 <th className="px-4 py-2 text-center font-medium text-sepia">Sala de lectura</th>
+                {canReturn && <th className="px-4 py-2 text-right font-medium text-sepia">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -120,6 +144,22 @@ export function MisAlquileresPage() {
                         <span className="text-xs text-sepia/60 dark:text-tan/50">—</span>
                       )}
                     </td>
+                    {canReturn && (
+                      <td className="px-4 py-2 text-right">
+                        {rental.status === 'Active' || rental.status === 'Overdue' ? (
+                          <button
+                            type="button"
+                            disabled={returningId === rental.id}
+                            onClick={() => void handleReturn(rental)}
+                            className="rounded-md bg-olive px-3 py-1.5 text-xs font-medium text-paper transition-colors hover:brightness-110 disabled:opacity-50"
+                          >
+                            {returningId === rental.id ? 'Devolviendo...' : 'Devolver'}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-sepia/60 dark:text-tan/50">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )
               })}
