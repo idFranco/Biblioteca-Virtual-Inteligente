@@ -183,8 +183,10 @@ pip install mcp fastmcp
 ```bash
 cp .env.example .env
 # Completar las variables requeridas (ver .env.example y READMEs de módulo)
-docker compose up --build
+docker compose up --build --abort-on-container-exit --exit-code-from backend
 ```
+
+> **Fail-fast global (US-025):** con `--abort-on-container-exit --exit-code-from backend`, si **cualquier** servicio termina con código distinto de cero (por ejemplo, el chatbot al no encontrar Ollama/GROQ al arrancar), Docker Compose **detiene todos los contenedores** y el comando devuelve el código de salida del servicio indicado (`backend`). La pila **nunca queda parcialmente levantada**. Además, los healthchecks en backend, frontend y chatbot junto con `depends_on: condition: service_healthy` impiden que un servicio dependiente arranque antes de que su dependencia esté sana.
 
 | Servicio | URL | Puerto host |
 |---|---|---|
