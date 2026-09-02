@@ -61,6 +61,21 @@ def _ollama_model() -> str:
     return model
 
 
+def _ollama_model_loaded(model: str, available_ids: list[str]) -> bool:
+    """True si ``model`` está cargado en Ollama (tolerando el tag por defecto).
+
+    - Si ``model`` incluye tag explícito (``llama3.2:13b``) -> match exacto.
+    - Si no (``llama3.2``) -> se considera cargado si existe ``llama3.2`` o
+      ``llama3.2:<tag>`` (Ollama reporta ``<name>:<tag>``, tag por defecto
+      ``latest``), replicando lo que resuelve el cliente LLM (US-024).
+    """
+    if ":" in model:
+        return model in available_ids
+    return model in available_ids or any(
+        mid.startswith(f"{model}:") for mid in available_ids
+    )
+
+
 async def check_ollama() -> None:
     """Fail-fast: verifica que el modelo local Ollama esté activo y cargado.
 
@@ -82,7 +97,7 @@ async def check_ollama() -> None:
         ) from exc
 
     ids = [item.get("id") for item in (payload.get("data") or [])]
-    if model not in ids:
+    if not _ollama_model_loaded(model, ids):
         raise RuntimeError(
             f"El modelo local Ollama no está cargado: '{model}' no aparece en '{url}' "
             f"(modelos disponibles: {', '.join(ids) or 'ninguno'})."

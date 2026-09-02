@@ -135,6 +135,71 @@ def test_ollama_model_unloaded_raises(monkeypatch):
         asyncio_run(checks.check_ollama())
 
 
+# ── check_ollama: tolerancia al tag de Ollama (US-024) ──────────
+
+def test_ollama_ok_when_model_has_tag_suffix(monkeypatch):
+    """(g) OLLAMA_MODEL sin tag y modelo cargado con tag :latest -> no lanza."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2")
+    _install_client(
+        monkeypatch,
+        lambda url: _FakeResponse(
+            200, _ollama_models_payload(["qwen3:8b", "llama3.2:latest"])
+        ),
+    )
+
+    asyncio_run(checks.check_ollama())
+
+
+def test_ollama_ok_when_model_match_without_tag(monkeypatch):
+    """(h) OLLAMA_MODEL sin tag y modelo cargado sin tag -> no lanza (regresión)."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2")
+    _install_client(monkeypatch, lambda url: _FakeResponse(200, _ollama_models_payload(["llama3.2"])))
+
+    asyncio_run(checks.check_ollama())
+
+
+def test_ollama_ok_when_explicit_tag_matches(monkeypatch):
+    """(i) OLLAMA_MODEL con tag explícito y ese tag cargado -> no lanza."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2:13b")
+    _install_client(
+        monkeypatch,
+        lambda url: _FakeResponse(200, _ollama_models_payload(["llama3.2:latest", "llama3.2:13b"])),
+    )
+
+    asyncio_run(checks.check_ollama())
+
+
+def test_ollama_explicit_tag_does_not_match_other_tag(monkeypatch):
+    """(j) Tag explícito no matchea otro tag del mismo modelo -> RuntimeError."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2:13b")
+    _install_client(monkeypatch, lambda url: _FakeResponse(200, _ollama_models_payload(["llama3.2:latest"])))
+
+    with pytest.raises(RuntimeError, match="llama3.2:13b"):
+        asyncio_run(checks.check_ollama())
+
+
+def test_ollama_without_tag_does_not_match_other_model(monkeypatch):
+    """(k) Sin tag no matchea un modelo distinto (sin falso positivo)."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.1")
+    _install_client(
+        monkeypatch,
+        lambda url: _FakeResponse(200, _ollama_models_payload(["llama3.2:latest"])),
+    )
+
+    with pytest.raises(RuntimeError, match="llama3.1"):
+        asyncio_run(checks.check_ollama())
+
+
 # ── check_groq ──────────────────────────────────────────────────
 
 def test_groq_ok_happy_path(monkeypatch):
@@ -236,6 +301,24 @@ def test_probe_health_reports_down_when_key_missing(monkeypatch):
 
     result = asyncio_run(checks.probe_health())
     assert result == {"ollama": "ok", "groq": "down"}
+
+
+def test_probe_health_ollama_ok_with_tag_suffix(monkeypatch):
+    """(n') /health reporta ollama ok cuando el modelo tiene tag :latest."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2")
+    monkeypatch.setenv("API_KEY_GROQ", "sk-test")
+
+    def _handler(url):
+        if "ollama" in url:
+            return _FakeResponse(200, _ollama_models_payload(["llama3.2:latest"]))
+        return _FakeResponse(200, {"data": []})
+
+    _install_client(monkeypatch, _handler)
+
+    result = asyncio_run(checks.probe_health())
+    assert result == {"ollama": "ok", "groq": "ok"}
 
 
 def test_probe_health_uses_cache_within_ttl(monkeypatch):
