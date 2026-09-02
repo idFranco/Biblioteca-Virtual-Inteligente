@@ -69,6 +69,10 @@ Las URLs base se leen de variables de entorno **sin valor por defecto** (`src/co
 
 Tema "Sala de lectura" definido en `src/index.css` (paleta pergamino/madera/latón, tipografía Fraunces + Lora, portadas derivadas de `covers.openlibrary.org` con fallback ornamental). Cambio de presentación únicamente (ADR-021).
 
+## Docker (HEALTHCHECK)
+
+El `Dockerfile` (multi-stage: node → nginx) incluye un `HEALTHCHECK` que comprueba `http://127.0.0.1:5173/` con `wget` cada 30 s (timeout 5 s, 3 reintentos). Esto permite que `docker compose` con `depends_on: condition: service_healthy` detecte si el frontend no arrancó correctamente y detenga la pila en modo fail-fast global (US-025).
+
 ## Comandos
 
 ```bash

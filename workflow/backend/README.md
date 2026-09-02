@@ -53,7 +53,7 @@ La API queda en `http://localhost:5000` (Swagger en `/swagger`). La base se crea
 
 ### Docker
 
-El `Dockerfile` no fija variables por defecto; `docker-compose.yml` las inyecta como obligatorias (ver README raíz).
+El `Dockerfile` no fija variables por defecto; `docker-compose.yml` las inyecta como obligatorias (ver README raíz). Incluye un `HEALTHCHECK` que consulta `http://127.0.0.1:5000/health` cada 30 s (timeout 10 s, 3 reintentos, período de arranque 40 s) para que Docker y `docker compose` conozcan el estado real del servicio. Combinado con `depends_on: condition: service_healthy`, los servicios dependientes (frontend, chatbot) no arrancan hasta que el backend esté sano.
 
 ## Seed
 

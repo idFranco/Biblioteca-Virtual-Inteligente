@@ -112,10 +112,12 @@ Los servidores reciben `DATABASE_PATH=/app/database/BibliotecaVirtual.db` y `AUD
 El contenedor del chatbot valida las dependencias al **arrancar** (fail-fast, ADR-025): si el modelo local Ollama no está activo o no existe conexión a GROQ, el proceso finaliza con código 1 y un diagnóstico explícito, por lo que `docker compose up --build` queda bloqueado con el error en los logs del servicio.
 
 ```sh
-docker compose up --build          # falla si Ollama/GROQ no responden con logs claros
+docker compose up --build --abort-on-container-exit --exit-code-from backend   # falla si Ollama/GROQ no responden → aborta TODO el stack
 docker compose ps                  # chatbot healthy/unhealthy
 curl localhost:8000/health         # 200 {"status":"healthy","ollama":"ok","groq":"ok"}
 ```
+
+> **Fail-fast global (US-025):** con `--abort-on-container-exit --exit-code-from backend`, si el chatbot termina con código 1 al arrancar (Ollama/GROQ no disponibles), Docker Compose detiene **todos** los contenedores y el comando sale con código distinto de cero. La pila nunca queda parcialmente activa.
 
 - `python -m app.startup_checks` (entrada del Dockerfile) ejecuta `check_ollama()` (`GET $OLLAMA_BASE_URL/models`; el modelo `$OLLAMA_MODEL` se considera cargado si coincide ignorando el sufijo `:tag`, p. ej. `llama3.2` matchea `llama3.2` o `llama3.2:latest`; con tag explícito, p. ej. `llama3.2:13b`, el match es exacto — US-024) y `check_groq()` (`GET $GROQ_MODELS_URL` con Bearer `$API_KEY_GROQ`; un 401/403 se reporta como clave inválida). Sin API key configurada, GROQ se marca como `down` (degraded), no bloquea el arranque, preservando el fallback a Ollama (US-014).
 - `/health` usa `probe_health()` (TTL 30 s, timeouts de sonda 3 s): para reportar el estado en vivo sin esperar el ciclo de salud de compose.
