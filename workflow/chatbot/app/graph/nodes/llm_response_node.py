@@ -59,7 +59,7 @@ async def llm_response_node(state: ChatState) -> ChatState:
 
     history_text = _history_window(state)
     if state.intent == "other":
-        generated = await llm_client.generate_smalltalk(state.message)
+        generated = await llm_client.generate_smalltalk(state.message, history_text)
         if generated:
             state.response = generated
             state.llm_used = True

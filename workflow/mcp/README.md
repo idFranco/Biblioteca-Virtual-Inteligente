@@ -96,11 +96,3 @@ Bajo `docker compose`, el chatbot inyecta a los MCP:
 | `SECURITY_AUDIT_MCP_COMMAND` | `python /app/workflow/mcp/security-audit-mcp/server.py` | Comando stdio en-imagen |
 
 **Diferencia vs. ejecución local standalone:** localmente cada servidor se lanza con su propio intérprete Python (p. ej. `python workflow/mcp/biblioteca-mcp/server.py`) y `DATABASE_PATH` apunta a una ruta del repo (`./workflow/database/BibliotecaVirtual.db`); en Docker los servidores corren **dentro del contenedor del chatbot** leyendo el mismo archivo SQLite del volumen `database_data` que el backend. El layout `/app/workflow/mcp/<servidor>/server.py` preserva la estructura del monorepo, por lo que el bootstrap `sys.path` de `common/settings.py` (resolución vía `parents[3]`) sigue funcionando sin cambios en la imagen.
-
-## Tests
-
-```bash
-python3 -m pytest workflow/mcp/biblioteca-mcp/tests   # 15 tests (incl. userId case-insensitive, US-020)
-python3 -m pytest workflow/mcp/open-library-mcp/tests # 18 tests
-python3 -m pytest workflow/mcp/security-audit-mcp/tests  # 18 tests (incl. GROQ_MODEL default alineado, US-020)
-```
