@@ -184,3 +184,83 @@ async def test_generate_recommendation_masks_pii_before_sending(monkeypatch):
     prompt = model.captured_messages[0]["content"]
     assert "[EMAIL]" in prompt
     assert "juan@example.com" not in prompt
+
+
+# ── classify_intent (US-027) ──────────────────────────────────────
+
+def _set_ollama_env(monkeypatch) -> None:
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2")
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "120")
+
+
+@pytest.mark.asyncio
+async def test_classify_intent_returns_other_when_llm_unavailable(monkeypatch):
+    """LLM None -> fallback seguro (other, [], 0.0) (ADR-023)."""
+    _set_ollama_env(monkeypatch)
+    monkeypatch.setattr(llm_client, "_langchain_model", lambda: None)
+
+    intent, tools, conf = await llm_client.classify_intent("recomiéndame un libro")
+    assert intent == "other"
+    assert tools == []
+    assert conf == 0.0
+
+
+@pytest.mark.asyncio
+async def test_classify_intent_parses_valid_json(monkeypatch):
+    """Llama3.2 devuelve JSON válido -> se parsea intent/tools/confidence."""
+    _set_ollama_env(monkeypatch)
+    response = _FakeResponse(
+        '{"intent": "recommendation", "tools": ["listar_recomendaciones_por_genero", "obtener_preferencias"], "confidence": 0.92}'
+    )
+    model = _FakeModel(response=response)
+    monkeypatch.setattr(llm_client, "_langchain_model", lambda: model)
+
+    intent, tools, conf = await llm_client.classify_intent("¿qué me recomiendas?")
+    assert intent == "recommendation"
+    assert tools == ["listar_recomendaciones_por_genero", "obtener_preferencias"]
+    assert 0.9 < conf <= 1.0
+
+
+@pytest.mark.asyncio
+async def test_classify_intent_filters_invalid_tools_and_intents(monkeypatch):
+    """Tools desconocidas y intents inválidos se filtran (fail-safe)."""
+    _set_ollama_env(monkeypatch)
+    response = _FakeResponse(
+        '{"intent": "hack_intent", "tools": ["DROP_TABLE", "buscar_libros", "no_existe"], "confidence": 1.0}'
+    )
+    model = _FakeModel(response=response)
+    monkeypatch.setattr(llm_client, "_langchain_model", lambda: model)
+
+    intent, tools, conf = await llm_client.classify_intent("cuéntame")
+    assert intent == "other"  # intent inválido -> other
+    assert tools == ["buscar_libros"]  # solo tools válidas, máx 2
+    assert conf == 1.0
+
+
+@pytest.mark.asyncio
+async def test_classify_intent_handles_json_in_fence(monkeypatch):
+    """JSON envuelto en ```json ... ``` se extrae correctamente."""
+    _set_ollama_env(monkeypatch)
+    raw = 'Claro. ```json\n{"intent": "book_query", "tools": ["buscar_libros"], "confidence": 0.88}\n```'
+    model = _FakeModel(response=_FakeResponse(raw))
+    monkeypatch.setattr(llm_client, "_langchain_model", lambda: model)
+
+    intent, tools, conf = await llm_client.classify_intent("tienen Cien Años?")
+    assert intent == "book_query"
+    assert tools == ["buscar_libros"]
+    assert 0.8 < conf < 0.9
+
+
+@pytest.mark.asyncio
+async def test_classify_intent_returns_other_on_invalid_json(monkeypatch):
+    """JSON no parseable -> fallback seguro (other, [], 0.0)."""
+    _set_ollama_env(monkeypatch)
+    model = _FakeModel(response=_FakeResponse("no soy un json"))
+    monkeypatch.setattr(llm_client, "_langchain_model", lambda: model)
+
+    intent, tools, conf = await llm_client.classify_intent("hola")
+    assert intent == "other"
+    assert tools == []
+    assert conf == 0.0

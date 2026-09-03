@@ -2,15 +2,16 @@
 
 Servicio Python independiente en `workflow/chatbot/` que implementa el asistente de la biblioteca como un **grafo de estados dirigido** (LangGraph). Nunca toca la base de datos directamente: todo el acceso a datos va por los MCP servers (ADR-011).
 
-## Flujo del grafo (US-012)
+## Flujo del grafo (US-012 + US-027 híbrido)
 
 ```text
 START → reset_turn (limpia transitorios + registra mensaje user)
-  → audit_input            (Security-Audit-MCP: auditoría de entrada obligatoria)
+  → audit_input            (Security-Audit-MCP: auditoría de entrada obligatoria,
+                            incluye detección unificada de credential_request ES/EN)
       ├─ bloqueada → block_response → audit_output
-      └─ segura   → credential_guard (defensa en profundidad, US-021)
-          ├─ guard    → audit_output (rechazo fijo de credenciales)
-          └─ process  → load_user_state → classify_intent (route_by_state)
+      └─ segura   → load_user_state → llm_classify (LLM como primera línea, US-027)
+          → tool_executor (ejecuta determinísticamente las tools sugeridas por el LLM)
+          → route_by_state
               ├─ recommendation → preferences → internal_catalog → external_enrichment → availability → response → llm_response → audit_output
               ├─ follow_up     → follow_up → llm_response → audit_output
               ├─ guidance      → guidance → audit_output
@@ -27,11 +28,11 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 
 | Nodo | Responsabilidad |
 |---|---|
-| `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles). Si no es segura, el flujo va a `block_response`. |
+| `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles, petición de credenciales). Si no es segura, el flujo va a `block_response`. |
 | `block_response` | Respuesta de bloqueo segura sin procesar el mensaje en el grafo. |
-| `credential_guard` | **Nodo determinista de defensa en profundidad (US-021):** corre después de `audit_input` y antes de todo razonamiento LLM. Regex con verbos de petición (`dame|p[áa]same|suministra|proporciona|muestra|revela|give me|send me|...`) + objetos (`jwt|token|password|contrase[nñ]a|credencial(?:es)?|api[ _-]?key|secret|ses[ióo]n|session|cookie`). Si matchea → `guard_triggered=True` y respuesta fija cortés sin credenciales, pasando por `audit_output`. No debilita la auditoría (ADR-008/034). |
 | `load_user_state` | Carga el estado de lectura del usuario (por MCP) con fallback si MCP no está disponible. |
-| `classify_intent` | Clasifica la intención (`recommendation`, `follow_up`, `guidance`, `due_reminder`, `overdue`, `feedback`, `book_query`, `status_plain`, `other`) y enruta por `route_by_state`. |
+| `llm_classify` | **Clasificación híbrida (US-027):** el LLM (`classify_intent` + `classify_intent_prompt.txt`) clasifica la intención y sugiere hasta 2 tools de Biblioteca-MCP como primera línea. Resuelve el bug del subjuntivo «recomiendes» que el regex no capturaba. Si el LLM no está disponible o devuelve `other` con confianza 0, cae al clasificador heurístico ({recommendation, follow_up, guidance, due_reminder, overdue, feedback, book_query, status_plain, other}) que enruta por `route_by_state`. |
+| `tool_executor` | **Ejecución determinista de tools (US-027):** ejecuta las tools sugeridas por el LLM (`state.suggested_tools`) sobre Biblioteca-MCP y guarda resultados en `state.tool_results`. El LLM SOLO sugiere nombres; la ejecución está controlada por el grafo (diseño híbrido, no agentic). |
 | `preferences` | Carga preferencias de género y perfil de historial vía Biblioteca-MCP (`obtener_preferencias`, `consultar_alquileres_usuario`). |
 | `internal_catalog` | Recomienda por historial/preferencias o consulta el catálogo interno por género (`listar_recomendaciones_por_genero`, `buscar_libros`). |
 | `external_enrichment` | Enriquece/verifica contra Open Library MCP. |
@@ -126,4 +127,4 @@ curl localhost:8000/health         # 200 {"status":"healthy","ollama":"ok","groq
 
 ## Tests
 
-`python3 -m pytest -q` (157 unit tests + 1 e2e opcional): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP. US-021 añade `tests/test_guidance.py` (clasificación `guidance`, catálogo real, fallback heurístico, sin inventar títulos, regresión smalltalk) y `tests/test_credential_guard.py` (JWT/token/password/EN, respuesta fija, `audit_output` ejecutado, mensaje normal no dispara, auditoría intacta). US-023 añade `tests/test_startup_checks.py` (checks Ollama/GROQ y sonda con caché mediante cliente `httpx` simulado), `tests/test_health.py` (`/health` 200/503) y `tests/test_healthcheck.py` (sonda de compose exit/informa). US-024 amplía `test_startup_checks.py` con la tolerancia al sufijo `:tag` de `OLLAMA_MODEL` (match exacto cuando el tag es explícito). **US-026** añade `tests/test_smalltalk_guidance.py` (guard determinista del prompt: saludo abierto vs despedida/agradecimiento cierre; enrutado sin catálogo y regresión de cierre). La prueba e2e real de conversación `tests/test_e2e_conversation.py` (marcada `@pytest.mark.e2e`, se ejecuta con `-m e2e`) autentica contra el backend con las credenciales `ADMIN_EMAIL`/`ADMIN_PASSWORD` del `.env`, envía un "hola" abierto y un seguimiento en la misma conversación.
+`python3 -m pytest -q` (183 unit tests + 1 e2e opcional): grafo, memoria conversacional y seguimiento `follow_up`, seguridad, PII masking, recomendaciones, esquemas, cliente LLM (Ollama/nube/fallback), smalltalk dedicado (US-020), CORS y cliente stdio MCP. US-021 añade `tests/test_guidance.py` (clasificación `guidance`, catálogo real, fallback heurístico, sin inventar títulos, regresión smalltalk) y `tests/test_credential_guard.py`. US-023 añade `tests/test_startup_checks.py` (checks Ollama/GROQ y sonda con caché mediante cliente `httpx` simulado), `tests/test_health.py` (`/health` 200/503) y `tests/test_healthcheck.py` (sonda de compose exit/informa). US-026 añade `tests/test_smalltalk_guidance.py` (guard determinista del prompt: saludo abierto vs despedida/agradecimiento cierre; enrutado sin catálogo y regresión de cierre). **US-027** añade: `tests/test_llm_classify.py` (clasificación LLM, ruta preferente, fallback heurístico, bug del subjuntivo «recomiendes», no colapso), `tests/test_tool_executor.py` (ejecución determinista de tools sugeridas, deduplicación, fallo individual elegante, tool desconocida, sin user_id) y refactoriza `tests/test_credential_guard.py` para verificar la detección bilingüe ES/EN unificada en Security-Audit-MCP (`local_audit.py`), sin el nodo de grafo `credential_guard` ya eliminado. La prueba e2e real de conversación `tests/test_e2e_conversation.py` (marcada `@pytest.mark.e2e`, se ejecuta con `-m e2e`) autentica contra el backend con las credenciales `ADMIN_EMAIL`/`ADMIN_PASSWORD` del `.env`, envía un "hola" abierto y un seguimiento en la misma conversación. En Security-Audit-MCP, `tests/test_local_fallback.py` verifica la detección bilingüe (`77 tests`).
