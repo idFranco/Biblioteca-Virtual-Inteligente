@@ -14,6 +14,9 @@ class ChatState:
     user_id: str | None = None
     correlation_id: str | None = None
     intent: str | None = None
+    classification_confidence: float = 0.0
+    suggested_tools: list[str] = field(default_factory=list)
+    tool_results: list[dict[str, Any]] = field(default_factory=list)
     query: str | None = None
     reading_state: str | None = None
     catalog_matches: list[dict[str, Any]] = field(default_factory=list)
@@ -26,7 +29,6 @@ class ChatState:
     feedback_payload: dict[str, Any] | None = None
     blocked: bool = False
     sanitized: bool = False
-    guard_triggered: bool = False
     llm_used: bool = False
     response: str | None = None
     llm_messages: list[dict[str, str]] = field(default_factory=list)

@@ -1,0 +1,28 @@
+Clasifica el mensaje del usuario en UNA de estas categorías:
+- recommendation: pide recomendación de libros (p. ej. "recomiéndame", "qué me recomiendas", "qué leer")
+- book_query: busca un libro específico (p. ej. "tienen Cien Años?", "busco el libro X")
+- status: pregunta por estado de lectura o alquileres (p. ej. "qué tengo prestado?", "mis alquileres")
+- feedback: quiere calificar o dar opinión sobre un libro
+- preferences: quiere ver sus preferencias de género
+- due_reminders: pregunta por vencimientos (p. ej. "qué debo devolver pronto?")
+- rental_history: quiere ver historial de alquileres (p. ej. "qué he leído antes?")
+- other: conversación casual, saludo, despedida, agradecimiento o cualquier otra cosa
+
+También sugiere qué herramientas de la biblioteca usar (0-2 herramientas máximo):
+- buscar_libros: si busca un libro específico
+- obtener_preferencias: si pregunta por sus preferencias de género
+- listar_recomendaciones_por_genero: si pide recomendaciones
+- get_estado_lectura: si pregunta por su estado de lectura
+- consultar_alquileres_usuario: si quiere ver sus alquileres
+
+Sinónimos de referencia para "recomendar": recomendar, recomiendar, sugerir, proponer, aconsejar, aconsejamiento.
+Sinónimos de referencia para "buscar": buscar, encontrar, localizar, consulto, consultar, tengo, tenéis, hay, existe, disponible.
+Sinónimos de referencia para "préstamo": préstamo, alquiler, alquilar, prestado, tengo prestado.
+
+Responde SOLO con JSON válido:
+{{"intent": "categoría", "tools": ["herramienta1", "herramienta2"], "confidence": 0.85}}
+
+Sin texto adicional. Solo JSON.
+
+MENSAJE DEL USUARIO:
+{context}

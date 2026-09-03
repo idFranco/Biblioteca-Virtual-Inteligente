@@ -34,14 +34,34 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "credential_request",
         re.compile(
-            r"(?:d[ií]me|revel(?:a|ar|e|as)|mu[ée]str(?:a|ar|e|as)|pas(?:a|ar)|"
-            r"p[áa]same|dame|da[mr]e|cu[aá]l es|suministr(?:a|ar|e|as)|"
+            # 1) VERBO DE PETICIÓN + OBJETO DE CREDENCIAL (ES o EN).
+            #    Requiere ambos para evitar falsos positivos: un "token"/"sesión"
+            #    mencionado en contexto de libro NO dispara (ADR-040 + US-027).
+            r"(?:"
+            # Verbos ES
+            r"dame|d[aá]me|p[aá]same|pasa|suministr(?:a|ar|e|as)|"
             r"proporcion(?:a|ar|e|as)|facilit(?:a|ar|e|as)|env[ií](?:a|ar|e|as)|"
-            r"compart(?:e|ir|a|as)|give me|send me|show me)(?:me|te|le|nos|les|se)?"
-            r"(?: la | el | los | las | tu | su | mi | mis | de [mt]i |"
-            r" your | my | our | their | his | her )?"
-            r"(?:password|contrase[nñ]a|jwt|token|sesi[óo]n|session|cookie)"
-            r"|credencial(?:es)?|api[ _-]?key|secreto|secret|password|contrase[nñ]a",
+            r"compart(?:e|ir|a|as)|revel(?:a|ar|e|as)|mu[ée]str(?:a|ar|e|as)|"
+            r"necesito|quiero|quisiera|ens[eé][ñn]ame|cu[aá]l es"
+            # Verbos EN
+            r"|(?:give|send|show|provide|reveal|share|obtain|fetch|access|retrieve)"
+            r"(?:\s+(?:me|us|him|her|them))?"
+            r"|\bwhat is|\bwhere is|\bi need|\bi want|\btell me|\bgive me\b|\bshow me\b"
+            r"|\bmay i have|\bcan i have|\bfetch me\b|\bprovide me with\b"
+            r")"
+            # Clíticos de objeto + determinantes/posesivos (ES/EN)
+            r"\s*(?:me|te|le|nos|los|les|se|du|to|us|them|my|your|his|her|our|their)?"
+            r"\s*(?:la|el|los|las|tu|su|mi|mis|de [mt]i|de la|del|de los|de las|"
+            r"your|my|our|their|his|her|the|a|an)?"
+            r"\s+(?:password|contrase[ñn]a|jwt|token|session|ses(?:si|i)[oó]n|cookie|"
+            r"session[ ]?id|authorization|api[ _-]?key|access[ _-]?token|"
+            r"secret|secreto|credentials?|credencial(?:es)?|otp|code|pin|"
+            r"c[oó]digo|tarjeta)"
+            # 2) MENCIÓN BARE de contraseña (ES o EN): dispara sin verbo de petición
+            r"|(?:la |el |mi |su |tu |your |my |our |their |the )?"
+            r"(?:contrase[ñn]a|password)"
+            r"(?:\s+(?:de|del|de la|para|para el|of|for|to)\s+[\w@.-]+)?"
+            r"",
             re.IGNORECASE,
         ),
     ),

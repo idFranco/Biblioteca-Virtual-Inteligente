@@ -17,8 +17,29 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from app.prompts import load_guide_prompt, load_recommendation_prompt, load_smalltalk_prompt
+import json
+import re
+
+from app.prompts import (
+    load_classify_intent_prompt,
+    load_guide_prompt,
+    load_recommendation_prompt,
+    load_smalltalk_prompt,
+)
 from app.utils.pii_masker import mask_pii
+
+# Intents válidos y tools válidos (usados para validar la respuesta del LLM).
+_VALID_INTENTS = frozenset({
+    "recommendation", "book_query", "status", "feedback",
+    "preferences", "due_reminders", "rental_history", "other",
+})
+_VALID_TOOLS = frozenset({
+    "buscar_libros", "obtener_preferencias", "listar_recomendaciones_por_genero",
+    "get_estado_lectura", "consultar_alquileres_usuario",
+})
+# Patrón para extraer JSON de una respuesta del LLM que pueda incluir texto
+# adicional (p. ej. ````json ... ``` ``` o texto libre alrededor del JSON).
+_JSON_EXTRACT = re.compile(r"\{[^{}]*\}")
 
 
 def _api_key() -> str | None:
@@ -180,3 +201,74 @@ async def generate_guidance(context_text: str) -> str | None:
         return None
     except Exception:
         return None
+
+
+async def classify_intent(
+    message: str,
+    user_id: str | None = None,
+    conversation_id: str | None = None,
+    history: list[dict[str, Any]] | None = None,
+) -> tuple[str, list[str], float]:
+    """Clasifica la intención del usuario usando el LLM.
+
+    Devuelve ``(intent, suggested_tools, confidence)``.
+
+    - ``intent``: una de las categorías válidas (recommendation, book_query,
+      status, feedback, preferences, due_reminders, rental_history, other).
+    - ``suggested_tools``: 0-2 nombres de herramientas de Biblioteca-MCP.
+    - ``confidence``: puntuación 0.0-1.0 (0.0 si el LLM no está disponible o
+      falla).
+
+    Si el LLM no está disponible o devuelve un JSON inválido, devuelve
+    ``("other", [], 0.0)`` como fallback seguro (ADR-023).
+    """
+    model = _langchain_model()
+    if model is None:
+        return ("other", [], 0.0)
+
+    history_text = ""
+    if history:
+        recent = history[-6:]
+        history_text = "\n".join(
+            f"Usuario: {m.get('content', '')}" if m.get("role") == "user"
+            else f"Asistente: {m.get('content', '')}"
+            for m in recent
+        )
+        history_text = f"\n\nCONTEXTO CONVERSACIONAL RECIENTE:\n{history_text}\n"
+
+    full_context = f"{message}{history_text}"
+    prompt = load_classify_intent_prompt().format(context=mask_pii(full_context))
+
+    try:
+        response = await model.ainvoke([{"role": "user", "content": prompt}])
+        text = getattr(response, "content", None)
+        if not isinstance(text, str) or not text.strip():
+            return ("other", [], 0.0)
+
+        raw = text.strip()
+        match = _JSON_EXTRACT.search(raw)
+        if not match:
+            return ("other", [], 0.0)
+
+        data = json.loads(match.group())
+        intent = str(data.get("intent", "other")).strip().lower()
+        tools_raw = data.get("tools", [])
+        confidence_raw = data.get("confidence", 0.0)
+
+        if intent not in _VALID_INTENTS:
+            intent = "other"
+
+        tools = []
+        if isinstance(tools_raw, list):
+            for t in tools_raw[:2]:
+                if isinstance(t, str) and t.strip() in _VALID_TOOLS:
+                    tools.append(t.strip())
+
+        try:
+            confidence = max(0.0, min(1.0, float(confidence_raw)))
+        except (TypeError, ValueError):
+            confidence = 0.0
+
+        return (intent, tools, confidence)
+    except Exception:
+        return ("other", [], 0.0)

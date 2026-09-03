@@ -16,3 +16,8 @@ def load_smalltalk_prompt() -> str:
 def load_guide_prompt() -> str:
     """Carga la plantilla de guía conversacional desde app/prompts/."""
     return (PROMPTS_DIR / "guide_prompt.txt").read_text(encoding="utf-8")
+
+
+def load_classify_intent_prompt() -> str:
+    """Carga la plantilla de clasificación de intención desde app/prompts/."""
+    return (PROMPTS_DIR / "classify_intent_prompt.txt").read_text(encoding="utf-8")

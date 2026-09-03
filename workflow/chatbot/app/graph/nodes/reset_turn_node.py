@@ -8,6 +8,9 @@ _HISTORY_WINDOW = 12
 # actual (el checkpointer de LangGraph fusiona el estado entre invocaciones).
 _TRANSIENT_FIELDS = (
     "intent",
+    "classification_confidence",
+    "suggested_tools",
+    "tool_results",
     "query",
     "catalog_matches",
     "recommendations",
@@ -18,7 +21,6 @@ _TRANSIENT_FIELDS = (
     "feedback_payload",
     "blocked",
     "sanitized",
-    "guard_triggered",
     "llm_used",
     "response",
     "llm_messages",
@@ -28,10 +30,16 @@ _TRANSIENT_FIELDS = (
 def _reset_transient(state: ChatState) -> None:
     for field in _TRANSIENT_FIELDS:
         if field in state.__dataclass_fields__:
-            if field in ("catalog_matches", "recommendations", "llm_messages"):
+            if field in (
+                "catalog_matches",
+                "recommendations",
+                "llm_messages",
+                "suggested_tools",
+                "tool_results",
+            ):
                 setattr(state, field, [])
             else:
-                setattr(state, field, None if field != "enrichment_error" else False)
+                setattr(state, field, None if field != "enrichment_error" and field != "classification_confidence" else False)
 
 
 def _append_user_message(state: ChatState) -> None:
