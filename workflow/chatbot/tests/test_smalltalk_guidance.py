@@ -84,7 +84,7 @@ async def test_greeting_open_response_via_graph(monkeypatch):
 
     received: list[str] = []
 
-    async def fake_smalltalk(message):
+    async def fake_smalltalk(message, history_text=""):
         received.append(message)
         # Simula el comportamiento del nuevo prompt: saludo abierto, sin despedida.
         return "¡Hola! ¿En qué puedo ayudarte hoy? ¿Buscas un libro o prefieres una recomendación?"
@@ -144,7 +144,7 @@ async def test_farewell_still_close_regression(monkeypatch):
 
     farewell = "¡Hasta luego! Gracias por visitar la biblioteca, vuelve cuando quieras."
 
-    async def fake_smalltalk(message):
+    async def fake_smalltalk(message, history_text=""):
         return farewell
 
     def forbid_recommendation(context):

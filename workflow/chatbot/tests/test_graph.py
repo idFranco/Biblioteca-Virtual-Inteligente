@@ -230,7 +230,7 @@ async def test_smalltalk_routes_to_conversational(monkeypatch):
     async def fake_llm(context):
         return None
 
-    async def fake_smalltalk(message):
+    async def fake_smalltalk(message, history_text=""):
         return "¡Hola! ¿En qué puedo ayudarte?"
 
     def fail_recommendation(context):
@@ -267,7 +267,7 @@ async def test_smalltalk_uses_dedicated_prompt_not_recommendation(monkeypatch):
     async def no_search(message, limit=10):
         raise AssertionError("No debe consultar el catálogo para smalltalk")
 
-    async def fake_smalltalk(message):
+    async def fake_smalltalk(message, history_text=""):
         return "Gracias a ti, ¡que tengas un buen día!"
 
     def forbid_recommendation(context):

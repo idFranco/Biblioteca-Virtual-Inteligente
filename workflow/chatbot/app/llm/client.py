@@ -152,19 +152,25 @@ async def generate_recommendation(context_text: str) -> str | None:
         return None
 
 
-async def generate_smalltalk(user_message: str) -> str | None:
+async def generate_smalltalk(
+    user_message: str, history_text: str = ""
+) -> str | None:
     """Genera una respuesta breve y cortés para conversación casual/smalltalk.
 
     Usa un prompt dedicado (nunca el de recomendación) para que el LLM no derive
-    a recomendar libros inventados en una intención ``other``. Si el LLM no está
-    disponible o falla, devuelve None para que el grafo use el fallback de saludo.
+    a recomendar libros inventados en una intención ``other``. Si se le pasa el
+    historial conversacional (``history_text``), se inyecta en el prompt para que
+    el LLM no repita el saludo inicial ni cierre con despedidas en medio de una
+    conversación (US-028). Si el LLM no está disponible o falla, devuelve ``None``
+    para que el grafo use el fallback de saludo.
     """
     model = _langchain_model()
     if model is None:
         return None
 
     prompt = load_smalltalk_prompt().format(
-        context=mask_pii(user_message).strip() or "No hay datos."
+        context=mask_pii(user_message).strip() or "No hay datos.",
+        history=mask_pii(history_text).strip() or "No hay historial previo.",
     )
 
     try:

@@ -137,6 +137,7 @@ El detalle técnico de cada componente vive en su propio README:
 | Frontend (React) | [`workflow/frontend/README.md`](workflow/frontend/README.md) — env, roles/UX, chatbot, tema |
 | Chatbot (FastAPI) | [`workflow/chatbot/README.md`](workflow/chatbot/README.md) — grafo, LLM, clientes MCP |
 | Servidores MCP | [`workflow/mcp/README.md`](workflow/mcp/README.md) — configuración y herramientas |
+| Database | [`workflow/database/README.md`](workflow/database/README.md) — bases SQLite y scripts de utilidad |
 | Decisiones de arquitectura | [`.opencode/memory/DECISIONS.md`](.opencode/memory/DECISIONS.md) — ADR-001 a ADR-042 |
 
 ---
@@ -215,22 +216,7 @@ La SPA usa la identidad **"Sala de lectura"** (librería tradicional): paleta c�
 
 ---
 
-## 11. Notas de versiones recientes (US-011 a US-014)
-
-- **US-011:** Sala de lectura (`/sala-lectura/:bookId`), chatbot redimensionable y portadas robustas.
-- **US-012:** Chatbot con recomendaciones personalizadas, feedback persistido (`registrar_feedback`) y LLM local Ollama (llama3.2) para las recomendaciones, con PII masking, auditoría GROQ obligatoria y fallback heurístico (ADR-022/023/029).
-- **US-013:** Notificaciones automáticas de vencimiento (`RentalDueNotificationService`, tabla `Notifications`, endpoints `GET/PATCH /api/notifications`).
-- **US-014:** Documentación por módulo, configuración fail-fast por variables de entorno (ADR-025), rol Admin sin alquiler, acción «Alquilar» en el catálogo para usuarios y chatbot minimizado por defecto.
-- **US-015/016/017/018/019:** CI sobre todo el stack (ADR-028), Ollama local para recomendaciones y GROQ solo auditoría (ADR-029), 3 MCP empaquetados en la imagen del chatbot (ADR-030), CORS del chatbot (ADR-031), Ollama nativo del host (ADR-032), rutas de BD por `env_file` + reintento Open Library (ADR-033), auditoría degradada sin `[REDACTED]` (ADR-034) y memoria conversacional con `follow_up` (ADR-035).
-- **US-020 (post-E2E):** contrato `userId` case-insensitive (ADR-037), modelo auditoría GROQ final `openai/gpt-oss-20b` (ADR-036), smalltalk con prompt dedicado (sin recomendaciones inventadas), limpieza de residuo E2E en SQLite runtime y propagación de `GROQ_MODEL`/contrato `userId` a compose/CI/docs.
-- **US-021 (observaciones de runtime):** guía conversacional del chatbot para lectores novatos (intención `guidance` + `guide_prompt.txt`) y rechazo determinista de JWT/credenciales (detección `credential_request` unificada en Security-Audit-MCP, ADR-040); restricción de alquileres en backend — sin duplicado de título activo + tope de 5 concurrentes (`Rentals__MaxActivePerUser`, ADR-038); sala de lectura con contenido real (`Book.Content` + alineación de esquema idempotente, ADR-041); devolución self-service por propiedad (`rentals.return_own`, ADR-039); y superficie de UI para solicitar títulos (diálogo + "Mis solicitudes", ADR-042).
-- **US-027 (arquitectura híbrida del chatbot):** clasificación de intención con LLM como primera línea (`llm_classify_node` + `classify_intent_prompt.txt`), ejecución determinista de herramientas sugeridas por el LLM (`tool_executor_node`, diseño híbrido no-agentic), y unificación de toda la detección de credenciales en Security-Audit-MCP con fallback local bilingüe ES/EN (`local_audit.py`), eliminando el nodo `credential_guard` redundante del grafo. Resuelve el bug del subjuntivo «recomiendes» que el regex capturaba como búsqueda errónea. Open Library permanece determinista (no expuesta como tool del LLM).
-
-Detalle técnico de cada historia en los READMEs de módulo y en `workflow/opencode/user-stories/`.
-
----
-
-## 12. CI/CD
+## 11. CI/CD
 
 El pipeline de GitHub Actions (`.github/workflows/ci.yml`) valida todo el stack en `push` y `pull_request` con tres jobs:
 
