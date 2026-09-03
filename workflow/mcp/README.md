@@ -53,9 +53,11 @@ Audita la **entrada** del chatbot (antes del grafo) y la **salida** (antes del f
 | `audit_user_input(text, correlation_id)` | Auditoría de entrada (bloqueo si no es segura) |
 | `audit_model_output(text, correlation_id)` | Auditoría de salida antes del frontend |
 | `detect_prompt_injection(text)` | Detección de prompt injection |
-| `detect_sensitive_data(text)` | Detección de datos sensibles (emails, tokens, claves) |
+| `detect_sensitive_data(text)` | Detección de datos sensibles (emails, tokens, claves, **UUIDs** — US-029) |
 | `sanitize_text(text)` | Redacción de PII / contenido peligroso |
 | `register_audit_event(event_type, result, correlation_id)` | Registro estructurado de auditoría |
+
+**US-029:** el detector local determinista (`local_audit.py`) añade patrón **UUID** como dato sensible (marcador `uuid`) y `sanitize_local` lo enmascara como `[ID]`. El prompt Groq (`groq_audit._SENSITIVE_SYSTEM`) incluye explícitamente los UUIDs del usuario (`user_id`) como PII.
 
 ## Open Library MCP (externo)
 

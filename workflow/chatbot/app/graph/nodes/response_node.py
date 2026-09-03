@@ -2,6 +2,41 @@ from __future__ import annotations
 
 from app.graph.state import ChatState
 
+_VALID_READING_STATES = {
+    "sin_actividad",
+    "en_curso",
+    "por_vencer",
+    "vencido",
+    "recien_devuelto",
+}
+_READING_LABELS = {
+    "sin_actividad": "sin actividad",
+    "en_curso": "en curso",
+    "por_vencer": "por vencer",
+    "vencido": "vencido",
+    "recien_devuelto": "recién devuelto",
+}
+_READING_FALLBACK = (
+    "No pude recuperar tu estado de lectura en este momento. "
+    "Puedes consultar tus alquileres en la sección 'Mis alquileres'."
+)
+
+
+def _reading_state_text(state: ChatState) -> str:
+    """Devuelve el texto legible del estado de lectura o un fallback genérico.
+
+    Solo se interpola un valor whitelisteado; nunca contenido crudo/proveniente
+    de la serialización de una herramienta MCP (evita fugas de PII).
+    """
+    raw = state.reading_state or ""
+    if raw not in _VALID_READING_STATES:
+        return _READING_FALLBACK
+    label = _READING_LABELS[raw]
+    return (
+        f"Tu estado de lectura actual es «{label}». "
+        "Puedes consultar tus alquileres en la sección 'Mis alquileres'."
+    )
+
 
 def _recommendation_text(state: ChatState) -> str:
     """Compone la respuesta heurística con las recomendaciones disponibles."""
@@ -40,11 +75,7 @@ async def response_node(state: ChatState) -> ChatState:
         return state
 
     if state.intent == "status":
-        reading_state = state.reading_state or "sin_actividad"
-        state.response = (
-            f"Tu estado de lectura actual es «{reading_state}». "
-            "Puedes consultar tus alquileres en la sección 'Mis alquileres'."
-        )
+        state.response = _reading_state_text(state)
         return state
 
     if state.intent == "feedback":

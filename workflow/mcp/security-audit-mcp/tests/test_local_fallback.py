@@ -140,6 +140,16 @@ def test_detect_sensitive_local_flags_pii():
     assert "email" in flagged
 
 
+# ── UUID detection & masking (US-029) ─────────────────────────────
+
+def test_detect_sensitive_local_flags_uuid():
+    flagged = detect_sensitive_local(
+        "Tu estado de lectura es sin_actividad para el usuario "
+        "3acb4f67-3439-4d0d-a94e-892ddea034d7"
+    )
+    assert "uuid" in flagged
+
+
 def test_detect_sensitive_local_allows_clean_text():
     assert detect_sensitive_local("hola, recomiéndame un libro de fantasía") == []
 
@@ -159,6 +169,16 @@ def test_sanitize_local_preserves_clean_text():
     masked, was = sanitize_local(text)
     assert was is False
     assert masked == text
+
+
+def test_sanitize_local_masks_uuid_with_id_token():
+    text = "Tu estado es sin_actividad para 3acb4f67-3439-4d0d-a94e-892ddea034d7"
+    masked, was = sanitize_local(text)
+    assert was is True
+    assert "3acb4f67-3439-4d0d-a94e-892ddea034d7" not in masked
+    assert "[ID]" in masked
+    assert "sin_actividad" in masked
+    assert masked != "[REDACTED]"
 
 
 # ── server.py: degradación ante Groq caído ─────────────────────────
@@ -222,6 +242,24 @@ async def test_audit_model_output_degraded_does_not_block_all(server_module, mon
     result = await server_module.audit_model_output("Te recomiendo un libro de fantasía")
     assert result["safe"] is True
     assert result["degraded"] is True
+
+
+@pytest.mark.asyncio
+async def test_audit_model_output_degrada_flagged_by_local_uuid(server_module, monkeypatch):
+    """Un UUID en la salida debe marcar unsafe y degradado (fallback local detecta uuid)."""
+    async def boom_attention(text):
+        raise RuntimeError("Groq caído")
+
+    import groq_audit
+    monkeypatch.setattr(groq_audit, "detect_injection", boom_attention)
+    monkeypatch.setattr(groq_audit, "detect_sensitive", boom_attention)
+
+    result = await server_module.audit_model_output(
+        "Tu estado es sin_actividad para 3acb4f67-3439-4d0d-a94e-892ddea034d7"
+    )
+    assert result["safe"] is False
+    assert result["degraded"] is True
+    assert any("uuid" in r for r in result["reasons"])
 
 
 @pytest.mark.asyncio

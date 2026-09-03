@@ -7,11 +7,57 @@ API del backend con el JWT del usuario.
 
 from __future__ import annotations
 
+import ast
+import json
+import re
+
 from app.mcp_clients.stdio import require_env, run_mcp_tool
 
 
 def _command() -> str:
     return require_env("BIBLIOTECA_MCP_COMMAND")
+
+
+_EMBEDDED_JSON = re.compile(r"\{.*?\}", re.DOTALL)
+
+
+def _try_dict(candidate: str) -> dict | None:
+    """Intenta interpretar ``candidate`` como dict JSON o literal de Python."""
+    try:
+        parsed = json.loads(candidate)
+        return parsed if isinstance(parsed, dict) else None
+    except (json.JSONDecodeError, TypeError):
+        pass
+    try:
+        parsed = ast.literal_eval(candidate)
+        return parsed if isinstance(parsed, dict) else None
+    except (ValueError, SyntaxError):
+        return None
+
+
+def _extract_estado(result) -> str | None:
+    """Extrae el valor 'estado' de una respuesta de Biblioteca-MCP de forma robusta.
+
+    El resultado puede llegar como ``dict``, como ``str`` con JSON/literal válido,
+    o como la representación de un objeto ``CallToolResult`` con un JSON embebido
+    en su ``repr``. Nunca se devuelve la serialización cruda (evita fugas de
+    user_id).
+    """
+    if isinstance(result, dict):
+        estado = result.get("estado")
+        return str(estado) if isinstance(estado, str) and estado else None
+
+    if isinstance(result, str):
+        candidates = [result] + [m.group(0) for m in _EMBEDDED_JSON.finditer(result)]
+        for candidate in candidates:
+            parsed = _try_dict(candidate)
+            if parsed is not None:
+                estado = parsed.get("estado")
+                if isinstance(estado, str) and estado:
+                    return estado
+        return None
+
+    return None
 
 
 def _as_list(value) -> list[dict]:
@@ -43,6 +89,9 @@ async def buscar_libros(search: str | None = None, limit: int = 10) -> list[dict
 async def get_estado_lectura(user_id: str) -> str | None:
     """Devuelve el estado de lectura del usuario (sin_actividad, en_curso, ...).
 
+    Extrae únicamente el valor ``estado`` de la respuesta de Biblioteca-MCP,
+    sin exponer el ``user_id`` ni la serialización interna del cliente MCP.
+
     Raises:
         RuntimeError: si el servidor MCP no está disponible.
     """
@@ -55,9 +104,7 @@ async def get_estado_lectura(user_id: str) -> str | None:
             {"user_id": user_id},
             name="biblioteca-mcp",
         )
-        if isinstance(result, dict):
-            return result.get("estado")
-        return str(result) if result else None
+        return _extract_estado(result)
     except Exception:
         return None
 

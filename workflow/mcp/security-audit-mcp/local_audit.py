@@ -89,6 +89,13 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 
 _SENSITIVE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
+        "uuid",
+        re.compile(
+            r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+            r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+        ),
+    ),
+    (
         "email",
         re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
     ),
@@ -161,7 +168,8 @@ def sanitize_local(text: str) -> tuple[str, bool]:
     masked = text
     for kind, pattern in _SENSITIVE_PATTERNS:
         if pattern.search(masked):
-            new_masked = pattern.sub(f"[{kind.upper()}]", masked)
+            token = "[ID]" if kind == "uuid" else f"[{kind.upper()}]"
+            new_masked = pattern.sub(token, masked)
             if new_masked != masked:
                 masked = new_masked
                 was_sanitized = True
