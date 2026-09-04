@@ -76,20 +76,29 @@ class McpStdioClient:
 
 
 def _parse_result(result: Any) -> Any:
-    """Extrae el contenido de un resultado MCP a tipos JSON serializables."""
-    try:
-        if result.isError:
-            text = _text_content(result)
-            raise RuntimeError(f"MCP tool returned error: {text}")
-        text = _text_content(result)
-        import json
+    """Extrae el contenido de un resultado MCP a tipos JSON serializables.
 
-        try:
-            return json.loads(text)
-        except (json.JSONDecodeError, TypeError):
-            return text
-    except AttributeError:
-        return result
+    El SDK de MCP devuelve objetos ``CallToolResult`` que pueden exponer la
+    respuesta ya parseada en ``structured_content`` (dict) o como texto en
+    ``content``. Se prioriza ``structured_content`` para evitar depender de
+    ``json.loads`` sobre el repr y para no filtrar la serialización interna.
+    Nunca se devuelve el objeto ``CallToolResult`` crudo: si no se puede
+    extraer un tipo JSON, se lanza para que el llamador aplique su fallback.
+    """
+    if result.isError:
+        raise RuntimeError(f"MCP tool returned error: {_text_content(result)}")
+
+    structured = getattr(result, "structured_content", None)
+    if structured:
+        return structured
+
+    text = _text_content(result)
+    import json
+
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return text
 
 
 def _text_content(result: Any) -> str:
