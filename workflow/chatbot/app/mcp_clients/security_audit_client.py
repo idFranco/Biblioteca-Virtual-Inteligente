@@ -48,6 +48,27 @@ async def audit_output(text: str, correlation_id: str | None = None) -> dict:
     return _as_dict(result)
 
 
+def _safe_text(result) -> str | None:
+    """Extrae el texto saneado de la respuesta de Security-Audit-MCP.
+
+    El resultado puede llegar como ``dict`` o como ``str`` con un JSON válido.
+    Devuelve el ``safe_text`` (o ``text``) si existe; ``None`` si no se pudo
+    extraer. Nunca serializa un objeto MCP crudo.
+    """
+    if isinstance(result, dict):
+        return result.get("safe_text") or result.get("text") or None
+    if isinstance(result, str):
+        from json import JSONDecodeError, loads
+
+        try:
+            parsed = loads(result)
+        except JSONDecodeError:
+            return None
+        if isinstance(parsed, dict):
+            return parsed.get("safe_text") or parsed.get("text") or None
+    return None
+
+
 async def sanitize_text(text: str) -> str:
     """Sanitiza un texto eliminando contenido potencialmente peligroso."""
     result = await run_mcp_tool(
@@ -56,6 +77,4 @@ async def sanitize_text(text: str) -> str:
         {"text": text},
         name="security-audit-mcp",
     )
-    if isinstance(result, dict):
-        return result.get("safe_text") or result.get("text") or text
-    return str(result) if result else text
+    return _safe_text(result) or text
