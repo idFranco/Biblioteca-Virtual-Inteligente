@@ -39,3 +39,6 @@
 | Suite | Result |
 |---|---|
 | Chatbot (`pytest tests/`) | **214 passed**, 1 skipped |
+
+### PR
+- PR #31: https://github.com/idFranco/Biblioteca-Virtual-Inteligente/pull/31
