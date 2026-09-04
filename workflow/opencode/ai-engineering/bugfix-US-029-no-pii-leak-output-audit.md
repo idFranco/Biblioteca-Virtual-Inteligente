@@ -50,7 +50,7 @@
 | 8 | `_as_dict` raises on unparseable (no more `{"safe": True}` default) | ✅ PASS | `test_audit_fail_closed.py::test_as_dict_raises_on_unparseable_value` |
 | 9 | Regresión: rechazos de email/user_id existentes siguen bloqueados | ✅ PASS | `test_credential_guard.py::test_*` (suite existente, 0 regressions) |
 | 10 | Regresión: salidas legítimas no corruptas tras sanitización | ✅ PASS | `test_audit_fail_closed.py::test_audit_output_node_safe_state_not_flagged` |
-| 11 | UUID en salida con Groq caído → `safe=False, degraded=True, reasons=["uuid"]` | ✅ PASS | `test_local_fallback.py::test_audit_model_output_degrada_flagged_by_local_uuid` |
+| 11 | UUID en salida con Groq caído → `safe=False, degraded=true, reasons=["uuid"]` | ✅ PASS | `test_local_fallback.py::test_audit_model_output_degrada_flagged_by_local_uuid` |
 
 ### Suites de prueba
 | Suite | Result |
