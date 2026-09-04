@@ -28,9 +28,9 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 
 | Nodo | Responsabilidad |
 |---|---|
-| `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles, petición de credenciales). Si no es segura, el flujo va a `block_response`. |
+| `audit_input` | Audita la entrada del usuario con Security-Audit-MCP (prompt injection, datos sensibles, petición de credenciales). Si no es segura, el flujo va a `block_response`. **US-029 (fail-closed):** si el MCP de auditoría no responde, se aplica una detección local determinista y se bloquea si el input parece malicioso. |
 | `block_response` | Respuesta de bloqueo segura sin procesar el mensaje en el grafo. |
-| `load_user_state` | Carga el estado de lectura del usuario (por MCP) con fallback si MCP no está disponible. |
+| `load_user_state` | Carga el estado de lectura del usuario (por MCP) con fallback si MCP no está disponible. **US-029:** extrae **solo** el valor `estado` (sin exponer el `user_id` ni la serialización interna de la herramienta MCP). |
 | `llm_classify` | **Clasificación híbrida (US-027):** el LLM (`classify_intent` + `classify_intent_prompt.txt`) clasifica la intención y sugiere hasta 2 tools de Biblioteca-MCP como primera línea. Resuelve el bug del subjuntivo «recomiendes» que el regex no capturaba. Si el LLM no está disponible o devuelve `other` con confianza 0, cae al clasificador heurístico ({recommendation, follow_up, guidance, due_reminder, overdue, feedback, book_query, status_plain, other}) que enruta por `route_by_state`. |
 | `tool_executor` | **Ejecución determinista de tools (US-027):** ejecuta las tools sugeridas por el LLM (`state.suggested_tools`) sobre Biblioteca-MCP y guarda resultados en `state.tool_results`. El LLM SOLO sugiere nombres; la ejecución está controlada por el grafo (diseño híbrido, no agentic). |
 | `preferences` | Carga preferencias de género y perfil de historial vía Biblioteca-MCP (`obtener_preferencias`, `consultar_alquileres_usuario`). |
@@ -41,10 +41,10 @@ START → reset_turn (limpia transitorios + registra mensaje user)
 | `feedback` / `save_feedback` | Detectan el feedback del usuario y lo persisten vía `registrar_feedback` (Biblioteca-MCP, escritura acotada). |
 | `follow_up` | Resuelve preguntas sobre una recomendación previa («cuéntame más sobre la primera»): busca el selector en el historial, compone la respuesta con los detalles del libro elegido y enriquece con Open Library si hay OLID. |
 | `guidance` | **Guía conversacional para lectores novatos (US-021):** intención `guidance` evaluada antes del catch-all `book_query` y de `smalltalk`. Consulta `buscar_libros(tema, limit=10)` y `obtener_preferencias(user_id)` (try/except → `[]`), construye contexto con matches **reales** (solo `title/author/genre`) y llama `generate_guidance(context_text)` con `guide_prompt.txt`; si el LLM falla → fallback heurístico `_guidance_fallback` que referencia solo títulos reales (nunca inventa). |
-| `response` | Respuesta heurística (fallback y base). |
+| `response` | Respuesta heurística (fallback y base). **US-029:** en la intención `status` solo interpola estados whitelisteados con etiqueta legible (nunca tool-reprs crudos ni el `user_id`); ante un estado inesperado usa un fallback genérico. |
 | `llm_response` | Redacta la recomendación con el LLM local Ollama `llama3.2` (LangChain `ChatOpenAI` → `OLLAMA_BASE_URL`) **con PII masking**; prioridad Ollama → nube (`LLM_API_KEY`/`LLM_MODEL`) → heurística de `response` (ADR-023/029). Actúa también en `follow_up`. En la intención **`other` (smalltalk)** usa `generate_smalltalk()` con el prompt dedicado `smalltalk_prompt.txt` (respuesta breve/cortés, nunca recomienda libros ni consulta catálogo); si el LLM no responde, `_greeting_fallback()` garantiza una respuesta breve (US-020/AC#3). El prompt distingue **saludo** (mantener el hilo conversacional ABIERTO con una invitación) de **despedida/agradecimiento** (cierre cortés), de modo que un simple "hola" no cierra la conversación (US-026). **US-028:** pasa la ventana de historial enmascarada al prompt de smalltalk para que el LLM no repita el saludo inicial ni cierre con despedidas en medio de una conversación; idem para `guide_prompt.txt`/`recommendation_prompt.txt`. |
-| `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. |
-| `sanitize_response` | Sanitiza la salida si la auditoría lo requiere. |
+| `audit_output` | Audita la respuesta con Security-Audit-MCP antes de enviarla al frontend. **US-029 (fail-closed):** si el MCP no responde, marca la salida para sanitización obligatoria (nunca se envía sin sanear). |
+| `sanitize_response` | Sanitiza la salida si la auditoría lo requiere. Ante un fallo del auditor usa enmascaramiento PII local `mask_pii` (enmascara UUIDs → `[ID]`). |
 | `reset_turn` / `record_turn` | Abren/cierran el par user/assistant del turno en la ventana de historial (poda a 12 entradas); `record_turn` incrusta las recomendaciones compactas del turno para resolver seguimientos. |
 
 ## Memoria conversacional

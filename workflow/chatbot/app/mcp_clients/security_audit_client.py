@@ -21,9 +21,9 @@ def _as_dict(value) -> dict:
 
         try:
             return loads(value)
-        except JSONDecodeError:
-            return {"safe": True, "reason": value}
-    return {"safe": True}
+        except JSONDecodeError as exc:
+            raise ValueError("Security-Audit-MCP devolvió una respuesta no JSON") from exc
+    raise ValueError("Security-Audit-MCP devolvió una respuesta inesperada")
 
 
 async def audit_input(text: str, correlation_id: str | None = None) -> dict:

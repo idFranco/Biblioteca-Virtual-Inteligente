@@ -194,7 +194,8 @@ async def test_reading_state_loaded(monkeypatch):
 
     assert result.intent == "status"
     assert result.reading_state == "en_curso"
-    assert "en_curso" in result.response
+    assert "en curso" in result.response
+    assert "TextContent" not in result.response
 
 
 @pytest.mark.asyncio

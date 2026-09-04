@@ -8,7 +8,9 @@ async def audit_output_node(state: ChatState) -> ChatState:
     """Audita la salida antes de enviarla al frontend.
 
     Si el output se considera inseguro, lo marca para sanitización.
-    Un fallo del MCP no debe colapsar la respuesta.
+    Si el MCP de auditoría falla (excepción), se degrada a fail-closed: se
+    marca ``sanitized=True`` para que ``sanitize_response_node`` aplique si o si
+    la sanitización local ``mask_pii`` (nunca se envía salida sin sanear).
     """
     if not state.response:
         return state
@@ -18,5 +20,5 @@ async def audit_output_node(state: ChatState) -> ChatState:
         )
         state.sanitized = not bool(result.get("safe", True))
     except Exception:
-        state.sanitized = False
+        state.sanitized = True
     return state
